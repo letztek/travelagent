@@ -109,9 +109,9 @@
      * **綠燈 (Highlight):** 行程亮點話術（如：兼顧了自然景觀與人文體驗）。  
 * **INVEST Check:** Small, Valuable.
 
-### **🔹 Epic 3: 交付物生成 (Final Delivery)**
+### 🔹 Epic 3: 交付物生成 (Final Delivery)
 
-#### **US-107: 外部簡報工具 Prompt 生成 (Presentation Prompt Generation)**
+#### US-107: 外部簡報工具 Prompt 生成 (Presentation Prompt Generation)
 
 * **User Story:** 作為 **旅遊顧問**，我想要一鍵生成「針對簡報工具（如 Gamma/Seede）優化的 Prompt」，以便我複製貼上後，能快速產出包含「視覺情境描述」與「精簡文字」的行前說明會投影片。  
 * **Priority:** High (Sprint 2\)  
@@ -122,6 +122,26 @@
   3. **文字濃縮:** 將 Word 版的詳細行程自動摘要為 Bullet Points，適合 PPT 閱讀。  
   4. 提供「一鍵複製」按鈕。  
 * **INVEST Check:** Valuable (連結最終交付), Independent.
+
+### 🔹 Epic 4: 高階編輯與管理 (Advanced Management) 🔥 *New*
+
+#### US-401: 行程天數調整與排序 (Day Management)
+
+* **User Story:** 作為 **旅遊顧問**，我希望能夠調整整天的先後順序（例如將 Day 2 與 Day 3 對調），而不需要手動移動每個活動。
+* **Priority:** Medium
+* **Story Points:** 5
+* **Acceptance Criteria:**
+  1. 提供整天移動（上移/下移）的按鈕或拖拉手柄。
+  2. 移動天數後，系統需自動更新日期與行程內容。
+
+#### US-402: 剪下/複製/貼上與遠距離移動 (Clipboard & Jump Move)
+
+* **User Story:** 作為 **旅遊顧問**，當行程很長時，我不希望長距離拖拉活動，我希望能透過選單將活動從 Day 2 直接移動到 Day 10。
+* **Priority:** Medium
+* **Story Points:** 5
+* **Acceptance Criteria:**
+  1. 每個活動卡片提供「移動到特定天數/時段」的選單。
+  2. 支援活動的複製與貼上。
 
 ## **📊 預估總 Story Points**
 

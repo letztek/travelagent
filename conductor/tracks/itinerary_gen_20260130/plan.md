@@ -21,9 +21,9 @@
 ## Phase 3: 前端展示 UI
 - [x] Task: 需求列表頁功能擴充 a78830e
     - [x] 在 `/requirements` 頁面加入「生成行程」按鈕。
-- [ ] Task: 建立行程檢視頁面
-    - [ ] 建立 `/itineraries/[id]` 頁面。
-    - [ ] 以表格 (Table) 形式展示 AI 生成的每日行程內容。
+- [x] Task: 建立行程檢視頁面 65993e3
+    - [x] 建立 `/itineraries/[id]` 頁面。
+    - [x] 以表格 (Table) 形式展示 AI 生成的每日行程內容。
 
 ## Phase 4: 驗收與優化
 - [ ] Task: 測試不同天數的需求生成效果

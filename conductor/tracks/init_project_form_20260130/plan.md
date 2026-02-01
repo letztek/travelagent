@@ -18,7 +18,7 @@
 - [x] Task: 定義 Zod Schema c7703c6
     - [x] 建立 `schemas/requirement.ts` 用於驗證表單輸入
 
-## Phase 3: 前端表單實作 (US-101)
+## Phase 3: 前端表單實作 (US-101) [checkpoint: 3c010db]
 - [x] Task: 建立需求輸入表單頁面 740a38b
     - [x] 使用 `react-hook-form` 實作表單邏輯
     - [x] 實作日期區間選擇器
@@ -28,5 +28,5 @@
     - [x] 實作提交後的成功提示與導向
 
 ## Phase 4: 驗收與清理
-- [ ] Task: 手動測試表單完整流程
-- [ ] Task: 清理多餘的 Next.js 模板代碼
+- [x] Task: 手動測試表單完整流程
+- [x] Task: 清理多餘的 Next.js 模板代碼

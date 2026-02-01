@@ -1,12 +1,20 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { itinerarySchema, type Itinerary } from '@/schemas/itinerary'
 import { type Requirement } from '@/schemas/requirement'
-
-const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || ''
-const genAI = new GoogleGenerativeAI(apiKey)
+import { getSkillSchema } from './reader'
 
 export async function runItinerarySkill(requirement: Requirement): Promise<Itinerary> {
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+
+  if (!apiKey) {
+    throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is not defined')
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey)
   const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' })
+
+  // Dynamically load the schema from the skill definition
+  const schemaContent = getSkillSchema('itinerary-generator', 'itinerary-schema.md')
 
   const systemPrompt = `
     You are a professional travel consultant assistant. 
@@ -20,7 +28,9 @@ export async function runItinerarySkill(requirement: Requirement): Promise<Itine
     - Notes: ${requirement.notes || 'None'}
 
     Output Format:
-    You MUST return ONLY a JSON object that strictly adheres to the structure defined in the Itinerary Schema.
+    You MUST return ONLY a JSON object that strictly adheres to the schema defined below.
+    
+    ${schemaContent}
     
     Constraint: No Markdown blocks, no preamble, no postamble. Just pure JSON.
   `

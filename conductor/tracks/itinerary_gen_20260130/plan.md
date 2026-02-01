@@ -19,8 +19,8 @@
     - [x] 在 Server Action 中加入資料庫寫入操作。
 
 ## Phase 3: 前端展示 UI
-- [ ] Task: 需求列表頁功能擴充
-    - [ ] 在 `/requirements` 頁面加入「生成行程」按鈕。
+- [x] Task: 需求列表頁功能擴充 a78830e
+    - [x] 在 `/requirements` 頁面加入「生成行程」按鈕。
 - [ ] Task: 建立行程檢視頁面
     - [ ] 建立 `/itineraries/[id]` 頁面。
     - [ ] 以表格 (Table) 形式展示 AI 生成的每日行程內容。

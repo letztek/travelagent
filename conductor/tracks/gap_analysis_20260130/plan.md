@@ -1,11 +1,11 @@
 # Implementation Plan: 實作 AI 資訊缺口偵測 (US-102)
 
 ## Phase 1: AI 核心邏輯與 Skill 定義
-- [ ] Task: 定義 Gap Analysis JSON Schema
-    - [ ] 在 `schemas/gap-analysis.ts` 定義結構。
-- [ ] Task: 建立 `gap-analyzer` Skill
-    - [ ] 使用 `skill-creator` 定義 skill。
-    - [ ] 設計 System Prompt 進行邏輯偵測與建議生成。
+- [x] Task: 定義 Gap Analysis JSON Schema
+    - [x] 在 `schemas/gap-analysis.ts` 定義結構。
+- [x] Task: 建立 `gap-analyzer` Skill 44f9039
+    - [x] 使用 `skill-creator` 定義 skill。
+    - [x] 設計 System Prompt 進行邏輯偵測與建議生成。
 - [ ] Task: 實作診斷 Server Action
     - [ ] 撰寫 `actions/analyze-gaps.ts`。
     - [ ] 整合 Skill 讀取與 AI 呼叫。

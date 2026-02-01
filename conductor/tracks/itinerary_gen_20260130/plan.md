@@ -13,10 +13,10 @@
     - [x] 撰寫 `actions/generate-itinerary.ts` 整合上述邏輯。
 
 ## Phase 2: 資料持久化
-- [ ] Task: 建立 `itineraries` 資料表
-    - [ ] 在 Supabase 建立資料表並配置 RLS。
-- [ ] Task: 實作儲存與讀取邏輯
-    - [ ] 在 Server Action 中加入資料庫寫入操作。
+- [x] Task: 建立 `itineraries` 資料表
+    - [x] 在 Supabase 建立資料表並配置 RLS。
+- [x] Task: 實作儲存與讀取邏輯 29dfb33
+    - [x] 在 Server Action 中加入資料庫寫入操作。
 
 ## Phase 3: 前端展示 UI
 - [ ] Task: 需求列表頁功能擴充

@@ -218,10 +218,11 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const handleUpdateActivity = (dayIdx: number, actId: string, field: string, value: string) => {
     setData(prev => {
       const newDays = [...prev.days]
-      const act = newDays[dayIdx].activities.find(a => a.id === actId)
-      if (act) {
-        // @ts-ignore
-        act[field] = value
+      newDays[dayIdx] = {
+        ...newDays[dayIdx],
+        activities: newDays[dayIdx].activities.map(a => 
+          a.id === actId ? { ...a, [field]: value } : a
+        )
       }
       return { ...prev, days: newDays }
     })
@@ -231,21 +232,27 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     if (!confirm('確定要刪除此活動嗎？')) return
     setData(prev => {
       const newDays = [...prev.days]
-      newDays[dayIdx].activities = newDays[dayIdx].activities.filter(a => a.id !== actId)
+      newDays[dayIdx] = {
+        ...newDays[dayIdx],
+        activities: newDays[dayIdx].activities.filter(a => a.id !== actId)
+      }
       return { ...prev, days: newDays }
     })
   }
 
   const handleAddActivity = (dayIdx: number, timeSlot: 'Morning' | 'Afternoon' | 'Evening') => {
     const newAct: ActivityWithId = {
-      id: `new-${Date.now()}`,
+      id: `new-${dayIdx}-${timeSlot}-${Math.random().toString(36).substr(2, 9)}`,
       time_slot: timeSlot,
       activity: '新活動',
       description: ''
     }
     setData(prev => {
       const newDays = [...prev.days]
-      newDays[dayIdx].activities.push(newAct)
+      newDays[dayIdx] = {
+        ...newDays[dayIdx],
+        activities: [...newDays[dayIdx].activities, newAct]
+      }
       return { ...prev, days: newDays }
     })
   }
@@ -253,7 +260,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const handleUpdateAccommodation = (dayIdx: number, value: string) => {
     setData(prev => {
       const newDays = [...prev.days]
-      newDays[dayIdx].accommodation = value
+      newDays[dayIdx] = { ...newDays[dayIdx], accommodation: value }
       return { ...prev, days: newDays }
     })
   }
@@ -261,7 +268,10 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const handleUpdateMeals = (dayIdx: number, type: 'breakfast' | 'lunch' | 'dinner', value: string) => {
     setData(prev => {
       const newDays = [...prev.days]
-      newDays[dayIdx].meals[type] = value
+      newDays[dayIdx] = { 
+        ...newDays[dayIdx], 
+        meals: { ...newDays[dayIdx].meals, [type]: value } 
+      }
       return { ...prev, days: newDays }
     })
   }
@@ -300,6 +310,21 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     }
   }
 
+  const handleCancel = () => {
+    setIsEditing(false)
+    // Reset data to initial state (re-generate IDs for consistency)
+    setData({
+      ...itinerary,
+      days: itinerary.days.map((day, dIdx) => ({
+        ...day,
+        activities: day.activities.map((act, aIdx) => ({
+          ...act,
+          id: `act-${dIdx}-${aIdx}-${Math.random().toString(36).substr(2, 5)}`
+        }))
+      }))
+    })
+  }
+
   const activeItem = activeId 
     ? data.days.flatMap(d => d.activities).find(a => a.id === activeId)
     : null
@@ -315,7 +340,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       <div className="flex justify-end mb-4 gap-2 sticky top-4 z-10 bg-background/80 backdrop-blur-sm p-2 rounded-lg border shadow-sm">
         {isEditing ? (
           <div className="space-x-2">
-            <Button variant="ghost" onClick={() => setIsEditing(false)} disabled={loading}>
+            <Button variant="ghost" onClick={handleCancel} disabled={loading}>
               <X className="mr-2 h-4 w-4" /> 取消
             </Button>
             <Button onClick={handleSave} disabled={loading}>

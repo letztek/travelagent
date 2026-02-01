@@ -32,3 +32,20 @@ export async function generateItinerary(requirement: Requirement, requirementId:
     return { success: false, error: error.message || 'Failed to generate itinerary' }
   }
 }
+
+export async function getItinerary(id: string) {
+  const supabase = getSupabase()
+  const { data, error } = await supabase
+    .from('itineraries')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) {
+    console.error('Supabase error:', error)
+    return { success: false, error: error.message }
+  }
+
+  return { success: true, data }
+}
+

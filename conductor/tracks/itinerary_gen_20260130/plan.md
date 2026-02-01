@@ -1,8 +1,8 @@
 # Implementation Plan: 實作 AI 結構化行程生成 (US-104)
 
 ## Phase 1: AI 核心邏輯與 Prompt 設計
-- [ ] Task: 定義行程 JSON Schema (Zod)
-    - [ ] 在 `schemas/itinerary.ts` 定義結構。
+- [x] Task: 定義行程 JSON Schema (Zod) 6460f8f
+    - [x] 在 `schemas/itinerary.ts` 定義結構。
 - [ ] Task: 建立 AI 行程生成 Skill
     - [ ] 使用 `skill-creator` 定義 `itinerary-generator` skill。
     - [ ] 設計系統提示語與 Output Schema 約束。

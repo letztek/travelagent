@@ -12,11 +12,11 @@
     - [x] 安裝必要元件 (Button, Input, Form, DatePicker)
 
 ## Phase 2: 資料庫與後端驗證
-- [ ] Task: 定義資料庫 Schema
-    - [ ] 在 Supabase 建立 `requirements` 資料表
-    - [ ] 配置 RLS (Row Level Security) 策略
-- [ ] Task: 定義 Zod Schema
-    - [ ] 建立 `schemas/requirement.ts` 用於驗證表單輸入
+- [x] Task: 定義資料庫 Schema 3f1cf2e
+    - [x] 在 Supabase 建立 `requirements` 資料表
+    - [x] 配置 RLS (Row Level Security) 策略
+- [x] Task: 定義 Zod Schema c7703c6
+    - [x] 建立 `schemas/requirement.ts` 用於驗證表單輸入
 
 ## Phase 3: 前端表單實作 (US-101)
 - [ ] Task: 建立需求輸入表單頁面

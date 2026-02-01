@@ -12,7 +12,7 @@
     - [x] 實作錯誤處理與重試機制（若 Zod 驗證失敗，記錄錯誤並回傳結構化錯誤）。
     - [x] 撰寫 `actions/generate-itinerary.ts` 整合上述邏輯。
 
-## Phase 2: 資料持久化
+## Phase 2: 資料持久化 [checkpoint: 4bdcd16]
 - [x] Task: 建立 `itineraries` 資料表
     - [x] 在 Supabase 建立資料表並配置 RLS。
 - [x] Task: 實作儲存與讀取邏輯 29dfb33

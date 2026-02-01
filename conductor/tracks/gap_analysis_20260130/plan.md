@@ -1,0 +1,23 @@
+# Implementation Plan: 實作 AI 資訊缺口偵測 (US-102)
+
+## Phase 1: AI 核心邏輯與 Skill 定義
+- [ ] Task: 定義 Gap Analysis JSON Schema
+    - [ ] 在 `schemas/gap-analysis.ts` 定義結構。
+- [ ] Task: 建立 `gap-analyzer` Skill
+    - [ ] 使用 `skill-creator` 定義 skill。
+    - [ ] 設計 System Prompt 進行邏輯偵測與建議生成。
+- [ ] Task: 實作診斷 Server Action
+    - [ ] 撰寫 `actions/analyze-gaps.ts`。
+    - [ ] 整合 Skill 讀取與 AI 呼叫。
+
+## Phase 2: 前端 UI 實作
+- [ ] Task: 建立診斷結果展示組件
+    - [ ] 使用 Shadcn UI 實作 `GapChecklist` 元件。
+- [ ] Task: 整合至需求流程
+    - [ ] 在 `/requirements/new` 提交後導向至診斷頁面（或彈窗）。
+    - [ ] 提供「忽略並生成行程」與「返回修改」按鈕。
+
+## Phase 3: 驗收與優化
+- [ ] Task: 撰寫測試案例驗證 AI 診斷準確性
+    - [ ] 測試情境：有長輩、去極地、預算過低等。
+- [ ] Task: 優化建議文字的口吻

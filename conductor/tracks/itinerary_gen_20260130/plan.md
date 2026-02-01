@@ -6,10 +6,11 @@
 - [ ] Task: 建立 AI 行程生成 Skill
     - [ ] 使用 `skill-creator` 定義 `itinerary-generator` skill。
     - [ ] 設計系統提示語與 Output Schema 約束。
-- [ ] Task: 實作 AI 生成 Server Action
+- [ ] Task: 實作 AI 生成工作流與驗證機制 (Server Action)
     - [ ] 安裝並配置 Google Generative AI SDK。
-    - [ ] 整合 Custom Skill 進行生成。
-    - [ ] 撰寫 `actions/generate-itinerary.ts`。
+    - [ ] 實作「Skill 調用 -> JSON 解析 -> Zod 驗證」的完整 Pipeline。
+    - [ ] 實作錯誤處理與重試機制（若 Zod 驗證失敗，記錄錯誤並回傳結構化錯誤）。
+    - [ ] 撰寫 `actions/generate-itinerary.ts` 整合上述邏輯。
 
 ## Phase 2: 資料持久化
 - [ ] Task: 建立 `itineraries` 資料表

@@ -30,7 +30,7 @@
     - [x] 加入頁首頁尾、公司名稱占位符、樣式設定 (Implemented table layout).
 - [~] Task: 手動驗證完整編輯與匯出流程。
 
-## Phase 4: UI/UX 增強與功能補完
+## Phase 4: UI/UX 增強與功能補完 [checkpoint: 16769b9]
 - [x] Task: 實作跨時段與跨日拖拉 (Cross-Day DnD)
     - [x] 重構 UI：按時段 (Morning/Afternoon/Evening) 分組顯示。
     - [x] 實作跨容器拖拉：拖拉時自動更新 `time_slot` 與 `day`。

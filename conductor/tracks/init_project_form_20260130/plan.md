@@ -1,15 +1,15 @@
 # Implementation Plan: 初始化 Next.js 專案並實作結構化需求輸入表單
 
 ## Phase 1: 環境初始化
-- [ ] Task: 初始化 Next.js 專案
-    - [ ] 執行 `npx create-next-app@latest` (TypeScript, Tailwind, App Router)
-    - [ ] 配置專案目錄結構
-- [ ] Task: 整合 Supabase
-    - [ ] 安裝 `@supabase/supabase-js` 與 `@supabase/auth-helpers-nextjs`
-    - [ ] 配置環境變數 (`.env.local`)
-- [ ] Task: 安裝基礎 UI 元件庫
-    - [ ] 初始化 Shadcn UI
-    - [ ] 安裝必要元件 (Button, Input, Form, DatePicker)
+- [x] Task: 初始化 Next.js 專案
+    - [x] 執行 `npx create-next-app@latest` (TypeScript, Tailwind, App Router)
+    - [x] 配置專案目錄結構
+- [x] Task: 整合 Supabase 571de4c
+    - [x] 安裝 `@supabase/supabase-js` 與 `@supabase/auth-helpers-nextjs`
+    - [x] 配置環境變數 (`.env.local`)
+- [x] Task: 安裝基礎 UI 元件庫 4c791cf
+    - [x] 初始化 Shadcn UI
+    - [x] 安裝必要元件 (Button, Input, Form, DatePicker)
 
 ## Phase 2: 資料庫與後端驗證
 - [ ] Task: 定義資料庫 Schema

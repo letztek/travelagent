@@ -1,4 +1,4 @@
-# Track itinerary_gen_20260130 Context
+# Track edit_export_20260130 Context
 
 - [Specification](./spec.md)
 - [Implementation Plan](./plan.md)

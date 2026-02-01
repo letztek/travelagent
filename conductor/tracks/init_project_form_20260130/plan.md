@@ -1,6 +1,6 @@
 # Implementation Plan: 初始化 Next.js 專案並實作結構化需求輸入表單
 
-## Phase 1: 環境初始化
+## Phase 1: 環境初始化 [checkpoint: 3f1cf2e]
 - [x] Task: 初始化 Next.js 專案
     - [x] 執行 `npx create-next-app@latest` (TypeScript, Tailwind, App Router)
     - [x] 配置專案目錄結構

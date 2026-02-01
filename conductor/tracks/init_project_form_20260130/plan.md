@@ -11,7 +11,7 @@
     - [x] 初始化 Shadcn UI
     - [x] 安裝必要元件 (Button, Input, Form, DatePicker)
 
-## Phase 2: 資料庫與後端驗證
+## Phase 2: 資料庫與後端驗證 [checkpoint: d979dd4]
 - [x] Task: 定義資料庫 Schema 3f1cf2e
     - [x] 在 Supabase 建立 `requirements` 資料表
     - [x] 配置 RLS (Row Level Security) 策略

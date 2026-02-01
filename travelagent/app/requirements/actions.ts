@@ -25,3 +25,18 @@ export async function createRequirement(data: Requirement) {
 
   return { success: true, data: insertedData }
 }
+
+export async function getRequirements() {
+  const supabase = getSupabase()
+  const { data, error } = await supabase
+    .from('requirements')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Supabase error:', error)
+    return { success: false, error: error.message }
+  }
+
+  return { success: true, data }
+}

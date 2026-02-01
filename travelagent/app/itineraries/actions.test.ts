@@ -1,6 +1,19 @@
 import { expect, test, vi } from 'vitest'
 import { generateItinerary } from './actions'
 
+// Mock Supabase
+vi.mock('@/lib/supabase', () => ({
+  getSupabase: vi.fn(() => ({
+    from: vi.fn(() => ({
+      insert: vi.fn(() => ({
+        select: vi.fn(() => ({
+          single: vi.fn(() => Promise.resolve({ data: { id: 'itinerary-123' }, error: null }))
+        }))
+      }))
+    }))
+  }))
+}))
+
 // Mock Gemini SDK
 vi.mock('@google/generative-ai', () => ({
   GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
@@ -32,7 +45,7 @@ test('generateItinerary produces valid itinerary', async () => {
     preferences: { dietary: [], accommodation: [] }
   }
 
-  const result = await generateItinerary(requirement as any)
+  const result = await generateItinerary(requirement as any, 'req-123')
   expect(result.success).toBe(true)
-  expect(result.data?.days).toHaveLength(1)
+  expect(result.data?.id).toBe('itinerary-123')
 })

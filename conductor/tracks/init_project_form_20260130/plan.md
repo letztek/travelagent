@@ -19,13 +19,13 @@
     - [x] 建立 `schemas/requirement.ts` 用於驗證表單輸入
 
 ## Phase 3: 前端表單實作 (US-101)
-- [ ] Task: 建立需求輸入表單頁面
-    - [ ] 使用 `react-hook-form` 實作表單邏輯
-    - [ ] 實作日期區間選擇器
-    - [ ] 實作旅客結構輸入與預算範圍選單
-- [ ] Task: 實作資料提交邏輯
-    - [ ] 建立 Server Action 處理資料寫入 Supabase
-    - [ ] 實作提交後的成功提示與導向
+- [x] Task: 建立需求輸入表單頁面 740a38b
+    - [x] 使用 `react-hook-form` 實作表單邏輯
+    - [x] 實作日期區間選擇器
+    - [x] 實作旅客結構輸入與預算範圍選單
+- [x] Task: 實作資料提交邏輯 1d94f0a
+    - [x] 建立 Server Action 處理資料寫入 Supabase
+    - [x] 實作提交後的成功提示與導向
 
 ## Phase 4: 驗收與清理
 - [ ] Task: 手動測試表單完整流程

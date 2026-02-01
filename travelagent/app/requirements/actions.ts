@@ -1,9 +1,3 @@
-'use client' // Wait, Server Actions should NOT have 'use client' at the top of the file if they are in a separate file, but they need 'use server'
-
-/**
- * AI Agent Note: This file contains Server Actions for requirement management.
- */
-
 'use server'
 
 import { getSupabase } from '@/lib/supabase'

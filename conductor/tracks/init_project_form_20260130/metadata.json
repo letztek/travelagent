@@ -1,8 +1,0 @@
-{
-  "track_id": "init_project_form_20260130",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-01-30T10:00:00Z",
-  "updated_at": "2026-01-30T10:00:00Z",
-  "description": "初始化 Next.js 專案並實作結構化需求輸入表單 (US-101)"
-}

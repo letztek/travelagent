@@ -44,7 +44,11 @@ const budgetOptions = [
   { value: '100000_above', label: '100,000 以上' },
 ]
 
+import { useRouter } from 'next/navigation'
+import { createRequirement } from '../actions'
+
 export default function RequirementFormPage() {
+  const router = useRouter()
   const form = useForm<Requirement>({
     resolver: zodResolver(requirementSchema),
     defaultValues: {
@@ -67,9 +71,14 @@ export default function RequirementFormPage() {
     },
   })
 
-  function onSubmit(values: Requirement) {
-    console.log(values)
-    alert('需求已儲存！ (模擬)')
+  async function onSubmit(values: Requirement) {
+    const result = await createRequirement(values)
+    if (result.success) {
+      alert('需求已成功儲存！')
+      router.push('/requirements')
+    } else {
+      alert('儲存失敗：' + (typeof result.error === 'string' ? result.error : '格式錯誤'))
+    }
   }
 
   return (

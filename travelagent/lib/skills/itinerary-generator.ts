@@ -6,7 +6,7 @@ const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || ''
 const genAI = new GoogleGenerativeAI(apiKey)
 
 export async function runItinerarySkill(requirement: Requirement): Promise<Itinerary> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' })
 
   const systemPrompt = `
     You are a professional travel consultant assistant. 

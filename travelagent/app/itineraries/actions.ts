@@ -1,6 +1,7 @@
 'use server'
 
 import { runItinerarySkill } from '@/lib/skills/itinerary-generator'
+import { itinerarySchema, type Itinerary } from '@/schemas/itinerary'
 import { type Requirement } from '@/schemas/requirement'
 import { getSupabase } from '@/lib/supabase'
 
@@ -43,6 +44,29 @@ export async function getItinerary(id: string) {
 
   if (error) {
     console.error('Supabase error:', error)
+    return { success: false, error: error.message }
+  }
+
+  return { success: true, data }
+}
+
+export async function updateItinerary(id: string, content: Itinerary) {
+  // Validate content with Zod before saving
+  const validated = itinerarySchema.safeParse(content)
+  if (!validated.success) {
+    return { success: false, error: validated.error.format() }
+  }
+
+  const supabase = getSupabase()
+  const { data, error } = await supabase
+    .from('itineraries')
+    .update({ content: validated.data })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Supabase Update Error:', error)
     return { success: false, error: error.message }
   }
 

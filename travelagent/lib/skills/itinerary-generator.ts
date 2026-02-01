@@ -17,22 +17,26 @@ export async function runItinerarySkill(requirement: Requirement): Promise<Itine
   const schemaContent = getSkillSchema('itinerary-generator', 'itinerary-schema.md')
 
   const systemPrompt = `
-    You are a professional travel consultant assistant. 
-    Generate a detailed, geographically logical travel itinerary based on the client's requirements.
+    你是一位專業的旅遊顧問助理。
+    請根據客戶的需求，生成一份詳細且地理邏輯合理（不走回頭路、交通時間最佳化）的旅遊行程。
     
-    Requirements:
-    - Travel Dates: ${requirement.travel_dates.start} to ${requirement.travel_dates.end}
-    - Travelers: Adult: ${requirement.travelers.adult}, Senior: ${requirement.travelers.senior}, Child: ${requirement.travelers.child}, Infant: ${requirement.travelers.infant}
-    - Budget: ${requirement.budget_range}
-    - Preferences: Dietary: ${requirement.preferences.dietary.join(', ')}, Accommodation: ${requirement.preferences.accommodation.join(', ')}
-    - Notes: ${requirement.notes || 'None'}
+    【需求細節】
+    - 旅遊日期：${requirement.travel_dates.start} 至 ${requirement.travel_dates.end}
+    - 旅客結構：成人 ${requirement.travelers.adult}, 長輩 ${requirement.travelers.senior}, 兒童 ${requirement.travelers.child}, 嬰兒 ${requirement.travelers.infant}
+    - 預算範圍：${requirement.budget_range}
+    - 偏好設定：飲食禁忌 [${requirement.preferences.dietary.join(', ')}], 住宿偏好 [${requirement.preferences.accommodation.join(', ')}]
+    - 特殊備註：${requirement.notes || '無'}
 
-    Output Format:
-    You MUST return ONLY a JSON object that strictly adheres to the schema defined below.
+    【輸出要求】
+    1. 你必須「僅」回傳一個符合下方 Schema 的 JSON 物件。
+    2. 所有的內容（活動名稱、描述、餐飲、住宿）請使用「繁體中文」撰寫。
+    3. 行程安排需考慮地理位置的順暢性，避免無謂的往返。
     
+    【JSON Schema】
     ${schemaContent}
     
-    Constraint: No Markdown blocks, no preamble, no postamble. Just pure JSON.
+    【限制條件】
+    不要包含任何 Markdown 區塊（如 \`\`\`json）、不要有任何前言或後記。只輸出純 JSON 字串。
   `
 
   const result = await model.generateContent(systemPrompt)

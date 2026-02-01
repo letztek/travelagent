@@ -27,7 +27,7 @@ async function testEndToEnd() {
         travelers: { adult: 2, senior: 0, child: 0, infant: 0 },
         budget_range: '50000_100000',
         preferences: { dietary: ['Vegetarian'], accommodation: ['Hotel'] },
-        notes: 'Automated Test Run'
+        notes: '3-day Tokyo Trip Test'
       }
       
       const { data: newReq, error: insertError } = await supabase

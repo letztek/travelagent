@@ -1,4 +1,4 @@
-# Track gap_analysis_20260130 Context
+# Track refined_input_20260130 Context
 
 - [Specification](./spec.md)
 - [Implementation Plan](./plan.md)

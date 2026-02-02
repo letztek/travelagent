@@ -36,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { GapWizard } from './components/GapWizard'
 import { Loader2, Sparkles, PlaneTakeoff, MapPin, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -441,6 +442,9 @@ export default function RequirementFormPage() {
 
       <Dialog open={showAnalysis} onOpenChange={setShowAnalysis}>
         <DialogContent className="sm:max-w-[600px] sm:min-h-[400px]">
+          <VisuallyHidden>
+            <DialogTitle>AI 診斷精靈</DialogTitle>
+          </VisuallyHidden>
           {/* Wizard handles its own header/content/footer */}
           {analysis && (
             <GapWizard 

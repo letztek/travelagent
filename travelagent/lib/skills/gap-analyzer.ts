@@ -23,10 +23,12 @@ export async function runGapAnalyzerSkill(requirement: Requirement): Promise<Gap
     1. **Senior / Accessibility**: If seniors are present, check for 'accessibility' or 'walking difficulty' notes.
     2. **Infant / Equipment**: If infants are present, check for 'crib', 'stroller', or 'car seat' needs.
     3. **Dietary**: If "Vegetarian" or "Vegan" is selected, ensure no conflicting restaurant requests in notes.
-    4. **Budget**: Check if the budget range aligns reasonably with the requested duration and accommodation type.
+    4. **Budget**: Check if the budget range aligns reasonably with the requested duration and accommodation type. Unless specified otherwise, assume the currency is **New Taiwan Dollar (TWD)**.
     5. **Location / Season**: If destination implies extreme weather, check for gear mentions.
 
     【Client Requirements】
+    - Origin: ${requirement.origin || 'Not specified'}
+    - Destinations: ${requirement.destinations && requirement.destinations.length > 0 ? requirement.destinations.join(', ') : 'Not specified'}
     - Travel Dates: ${requirement.travel_dates.start} to ${requirement.travel_dates.end}
     - Travelers: Adult: ${requirement.travelers.adult}, Senior: ${requirement.travelers.senior}, Child: ${requirement.travelers.child}, Infant: ${requirement.travelers.infant}
     - Budget: ${requirement.budget_range}

@@ -101,8 +101,8 @@ export default function RequirementFormPage() {
     const result = await createRequirement(values)
     setIsSaving(false)
     if (result.success) {
-      alert('需求已成功儲存！')
-      router.push('/requirements')
+      alert('需求已成功儲存！接著將進行初步路線規劃。')
+      router.push(`/requirements/${result.data.id}/route`)
     } else {
       alert('儲存失敗：' + (typeof result.error === 'string' ? result.error : '格式錯誤'))
     }

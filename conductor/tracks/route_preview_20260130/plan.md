@@ -1,16 +1,16 @@
 # Implementation Plan: 初步行程概念與路線預覽 (US-103)
 
 ## Phase 1: AI 核心邏輯 (Route Planner)
-- [ ] Task: 定義 Route Concept JSON Schema
-    - [ ] 在 `schemas/route.ts` 定義結構 (nodes, rationale, transport)。
-- [ ] Task: 建立 `route-planner` Skill
-    - [ ] 使用 `skill-creator` 定義 skill。
-    - [ ] 設計 System Prompt 強調地理效率與高層次規劃。
-- [ ] Task: 實作路線規劃 Server Action
-    - [ ] 撰寫 `actions/plan-route.ts`。
+- [x] Task: 定義 Route Concept JSON Schema
+    - [x] 在 `schemas/route.ts` 定義結構 (nodes, rationale, transport)。
+- [x] Task: 建立 `route-planner` Skill f8d2089
+    - [x] 使用 `skill-creator` 定義 skill。
+    - [x] 設計 System Prompt 強調地理效率與高層次規劃。
+- [x] Task: 實作路線規劃 Server Action
+    - [x] 撰寫 `actions/plan-route.ts`。
 
 ## Phase 2: 前端預覽 UI
-- [ ] Task: 建立路線預覽組件
+- [~] Task: 建立路線預覽組件
     - [ ] 實作 `RouteFlow` 元件（時間軸或流程圖樣式）。
     - [ ] 展示規劃理由 (Rationale)。
 - [ ] Task: 建立路線預覽頁面

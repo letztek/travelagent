@@ -4,10 +4,11 @@ import { runItinerarySkill } from '@/lib/skills/itinerary-generator'
 import { itinerarySchema, type Itinerary } from '@/schemas/itinerary'
 import { type Requirement } from '@/schemas/requirement'
 import { getSupabase } from '@/lib/supabase'
+import { RouteConcept } from '@/schemas/route'
 
-export async function generateItinerary(requirement: Requirement, requirementId: string) {
+export async function generateItinerary(requirement: Requirement, requirementId: string, routeConcept?: RouteConcept) {
   try {
-    const itineraryData = await runItinerarySkill(requirement)
+    const itineraryData = await runItinerarySkill(requirement, routeConcept)
     
     // Save to Supabase
     const supabase = getSupabase()

@@ -40,3 +40,19 @@ export async function getRequirements() {
 
   return { success: true, data }
 }
+
+export async function getRequirement(id: string) {
+  const supabase = getSupabase()
+  const { data, error } = await supabase
+    .from('requirements')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) {
+    console.error('Supabase error:', error)
+    return { success: false, error: error.message }
+  }
+
+  return { success: true, data }
+}

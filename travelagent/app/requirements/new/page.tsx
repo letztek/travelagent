@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { requirementSchema, type Requirement } from '@/schemas/requirement'
@@ -23,6 +24,20 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { useRouter } from 'next/navigation'
+import { createRequirement } from '../actions'
+import { analyzeGaps } from '../gap-actions'
+import { GapAnalysis } from '@/schemas/gap-analysis'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { GapChecklist } from './components/GapChecklist'
+import { Loader2, Sparkles } from 'lucide-react'
 
 const dietaryOptions = [
   { id: 'vegetarian', label: '素食' },
@@ -44,11 +59,14 @@ const budgetOptions = [
   { value: '100000_above', label: '100,000 以上' },
 ]
 
-import { useRouter } from 'next/navigation'
-import { createRequirement } from '../actions'
-
 export default function RequirementFormPage() {
   const router = useRouter()
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [analysis, setAnalysis] = useState<GapAnalysis | null>(null)
+  const [showAnalysis, setShowAnalysis] = useState(false)
+  const [pendingValues, setPendingValues] = useState<Requirement | null>(null)
+
   const form = useForm<Requirement>({
     resolver: zodResolver(requirementSchema),
     defaultValues: {
@@ -71,13 +89,36 @@ export default function RequirementFormPage() {
     },
   })
 
-  async function onSubmit(values: Requirement) {
+  async function handleFinalSubmit(values: Requirement) {
+    setIsSaving(true)
     const result = await createRequirement(values)
+    setIsSaving(false)
     if (result.success) {
       alert('需求已成功儲存！')
       router.push('/requirements')
     } else {
       alert('儲存失敗：' + (typeof result.error === 'string' ? result.error : '格式錯誤'))
+    }
+  }
+
+  async function onSubmit(values: Requirement) {
+    setIsAnalyzing(true)
+    const result = await analyzeGaps(values)
+    setIsAnalyzing(false)
+
+    if (result.success && result.data) {
+      if (result.data.overall_status === 'ready' && result.data.missing_info.length === 0) {
+        // No gaps found, proceed directly
+        handleFinalSubmit(values)
+      } else {
+        // Gaps found, show diagnosis
+        setAnalysis(result.data)
+        setPendingValues(values)
+        setShowAnalysis(true)
+      }
+    } else {
+      // Analysis failed, but let's allow saving anyway as a fallback
+      handleFinalSubmit(values)
     }
   }
 
@@ -289,9 +330,53 @@ export default function RequirementFormPage() {
             )}
           />
 
-          <Button type="submit" className="w-full">儲存需求</Button>
+          <Button type="submit" className="w-full" disabled={isAnalyzing || isSaving}>
+            {isAnalyzing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                AI 正在診斷需求...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                進行 AI 診斷並儲存
+              </>
+            )}
+          </Button>
         </form>
       </Form>
+
+      <Dialog open={showAnalysis} onOpenChange={setShowAnalysis}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-500" />
+              AI 需求診斷結果
+            </DialogTitle>
+            <DialogDescription>
+              為了提供更精準的行程規劃，AI 建議您考慮以下補充資訊。
+            </DialogDescription>
+          </DialogHeader>
+          
+          {analysis && <GapChecklist analysis={analysis} />}
+
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowAnalysis(false)}>
+              返回修改
+            </Button>
+            <Button 
+              onClick={() => {
+                if (pendingValues) handleFinalSubmit(pendingValues)
+                setShowAnalysis(false)
+              }}
+              disabled={isSaving}
+            >
+              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              忽略並繼續儲存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

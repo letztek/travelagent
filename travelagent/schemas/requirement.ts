@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
 export const requirementSchema = z.object({
+  origin: z.string().optional(),
+  destinations: z.array(z.string()).default([]),
   travel_dates: z.object({
     start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid start date format'),
     end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid end date format'),

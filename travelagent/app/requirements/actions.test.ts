@@ -15,6 +15,8 @@ vi.mock('@/lib/supabase', () => ({
 
 test('createRequirement saves data successfully', async () => {
   const validData = {
+    origin: 'Taipei',
+    destinations: ['Japan'],
     travel_dates: { start: '2026-06-01', end: '2026-06-10' },
     travelers: { adult: 2, senior: 0, child: 0, infant: 0 },
     budget_range: '50000_100000',

@@ -36,8 +36,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { GapChecklist } from './components/GapChecklist'
-import { Loader2, Sparkles } from 'lucide-react'
+import { GapWizard } from './components/GapWizard'
+import { Loader2, Sparkles, PlaneTakeoff, MapPin, X } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 
 const dietaryOptions = [
   { id: 'vegetarian', label: '素食' },
@@ -66,10 +67,15 @@ export default function RequirementFormPage() {
   const [analysis, setAnalysis] = useState<GapAnalysis | null>(null)
   const [showAnalysis, setShowAnalysis] = useState(false)
   const [pendingValues, setPendingValues] = useState<Requirement | null>(null)
+  
+  // Local state for destinations input
+  const [destInput, setDestInput] = useState('')
 
   const form = useForm<Requirement>({
     resolver: zodResolver(requirementSchema),
     defaultValues: {
+      origin: '',
+      destinations: [],
       travel_dates: {
         start: '',
         end: '',
@@ -107,19 +113,50 @@ export default function RequirementFormPage() {
     setIsAnalyzing(false)
 
     if (result.success && result.data) {
-      if (result.data.overall_status === 'ready' && result.data.missing_info.length === 0) {
-        // No gaps found, proceed directly
+      if (result.data.overall_status === 'ready' && result.data.missing_info.length === 0 && result.data.logic_issues.length === 0) {
         handleFinalSubmit(values)
       } else {
-        // Gaps found, show diagnosis
         setAnalysis(result.data)
         setPendingValues(values)
         setShowAnalysis(true)
       }
     } else {
-      // Analysis failed, but let's allow saving anyway as a fallback
       handleFinalSubmit(values)
     }
+  }
+
+  const handleWizardComplete = (answers: Record<string, string>) => {
+    if (!pendingValues) return
+
+    const newValues = { ...pendingValues }
+    
+    // Auto-fill logic: Append to notes
+    const entries = Object.entries(answers)
+    if (entries.length > 0) {
+      const additionalNotes = entries.map(([field, answer]) => `- ${field}: ${answer}`).join('\n')
+      newValues.notes = newValues.notes 
+        ? `${newValues.notes}\n\n【補充資訊】\n${additionalNotes}`
+        : `【補充資訊】\n${additionalNotes}`
+    }
+
+    setShowAnalysis(false)
+    handleFinalSubmit(newValues)
+  }
+
+  const handleAddDestination = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (destInput.trim()) {
+        const current = form.getValues('destinations') || []
+        form.setValue('destinations', [...current, destInput.trim()])
+        setDestInput('')
+      }
+    }
+  }
+
+  const removeDestination = (index: number) => {
+    const current = form.getValues('destinations')
+    form.setValue('destinations', current.filter((_, i) => i !== index))
   }
 
   return (
@@ -127,6 +164,62 @@ export default function RequirementFormPage() {
       <h1 className="text-2xl font-bold mb-6">新增旅遊需求</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="origin"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <PlaneTakeoff className="h-4 w-4" /> 出發地
+                  </FormLabel>
+                  <FormControl>
+                    <Input placeholder="例如：台北 (TPE)" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="destinations"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" /> 目的地
+                  </FormLabel>
+                  <div className="space-y-2">
+                    <FormControl>
+                      <Input 
+                        placeholder="輸入後按 Enter 新增" 
+                        value={destInput}
+                        onChange={e => setDestInput(e.target.value)}
+                        onKeyDown={handleAddDestination}
+                      />
+                    </FormControl>
+                    <div className="flex flex-wrap gap-2">
+                      {field.value?.map((dest, idx) => (
+                        <Badge key={idx} variant="secondary" className="pl-2 pr-1 py-1">
+                          {dest}
+                          <button 
+                            type="button"
+                            onClick={() => removeDestination(idx)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
@@ -347,34 +440,15 @@ export default function RequirementFormPage() {
       </Form>
 
       <Dialog open={showAnalysis} onOpenChange={setShowAnalysis}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-purple-500" />
-              AI 需求診斷結果
-            </DialogTitle>
-            <DialogDescription>
-              為了提供更精準的行程規劃，AI 建議您考慮以下補充資訊。
-            </DialogDescription>
-          </DialogHeader>
-          
-          {analysis && <GapChecklist analysis={analysis} />}
-
-          <DialogFooter className="flex gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setShowAnalysis(false)}>
-              返回修改
-            </Button>
-            <Button 
-              onClick={() => {
-                if (pendingValues) handleFinalSubmit(pendingValues)
-                setShowAnalysis(false)
-              }}
-              disabled={isSaving}
-            >
-              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              忽略並繼續儲存
-            </Button>
-          </DialogFooter>
+        <DialogContent className="sm:max-w-[600px] sm:min-h-[400px]">
+          {/* Wizard handles its own header/content/footer */}
+          {analysis && (
+            <GapWizard 
+              analysis={analysis} 
+              onComplete={handleWizardComplete}
+              onCancel={() => setShowAnalysis(false)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

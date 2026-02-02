@@ -3,6 +3,8 @@ import { requirementSchema } from './requirement'
 
 test('requirementSchema validates correct data', () => {
   const validData = {
+    origin: 'Taipei',
+    destinations: ['Tokyo', 'Osaka'],
     travel_dates: {
       start: '2026-06-01',
       end: '2026-06-10',

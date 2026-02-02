@@ -25,6 +25,7 @@ vi.mock('@google/generative-ai', () => ({
 }))
 
 test('runItinerarySkill produces valid itinerary', async () => {
+  vi.stubEnv('GOOGLE_GENERATIVE_AI_API_KEY', 'fake-key')
   const requirement = {
     travel_dates: { start: '2026-06-01', end: '2026-06-02' },
     travelers: { adult: 1, senior: 0, child: 0, infant: 0 },

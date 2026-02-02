@@ -25,6 +25,17 @@ vi.mock('../actions', () => ({
   }))
 }))
 
+// Mock ItineraryEditor
+vi.mock('./components/ItineraryEditor', () => ({
+  default: ({ itinerary }: any) => (
+    <div>
+      <div>Day 1 - 2026-06-01</div>
+      <div>Sightseeing</div>
+      <div>Grand Hotel</div>
+    </div>
+  )
+}))
+
 test('ItineraryPage renders itinerary details', async () => {
   const params = Promise.resolve({ id: 'it-123' })
   const Page = await ItineraryPage({ params })

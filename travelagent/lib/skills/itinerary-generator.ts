@@ -23,7 +23,7 @@ export async function runItinerarySkill(requirement: Requirement): Promise<Itine
     【需求細節】
     - 旅遊日期：${requirement.travel_dates.start} 至 ${requirement.travel_dates.end}
     - 旅客結構：成人 ${requirement.travelers.adult}, 長輩 ${requirement.travelers.senior}, 兒童 ${requirement.travelers.child}, 嬰兒 ${requirement.travelers.infant}
-    - 預算範圍：${requirement.budget_range}
+    - 總預算範圍：${requirement.budget_range} (此為整團旅客的總預算)
     - 偏好設定：飲食禁忌 [${requirement.preferences.dietary.join(', ')}], 住宿偏好 [${requirement.preferences.accommodation.join(', ')}]
     - 特殊備註：${requirement.notes || '無'}
 

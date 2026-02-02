@@ -23,7 +23,7 @@ export async function runGapAnalyzerSkill(requirement: Requirement): Promise<Gap
     1. **Senior / Accessibility**: If seniors are present, check for 'accessibility' or 'walking difficulty' notes.
     2. **Infant / Equipment**: If infants are present, check for 'crib', 'stroller', or 'car seat' needs.
     3. **Dietary**: If "Vegetarian" or "Vegan" is selected, ensure no conflicting restaurant requests in notes.
-    4. **Budget**: Check if the budget range aligns reasonably with the requested duration and accommodation type. Unless specified otherwise, assume the currency is **New Taiwan Dollar (TWD)**.
+    4. **Budget**: The budget range is the **TOTAL budget** for the entire group and entire duration. Check if this total budget aligns reasonably with the requested duration and party size. Unless specified otherwise, assume the currency is **New Taiwan Dollar (TWD)**.
     5. **Location / Season**: If destination implies extreme weather, check for gear mentions.
 
     【Client Requirements】

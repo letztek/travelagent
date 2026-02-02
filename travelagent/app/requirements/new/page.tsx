@@ -310,11 +310,11 @@ export default function RequirementFormPage() {
             name="budget_range"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>預算範圍</FormLabel>
+                <FormLabel>總預算範圍</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="選擇人均預算" />
+                      <SelectValue placeholder="選擇預計總預算" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>

@@ -24,10 +24,10 @@
 
 
 ## Phase 2.5: AI 對話輔助整合 (Route Architect Agent)
-- [ ] Task: 設定 AI Server Action (Gemini Structured Output)
-    - [ ] 定義 Zod Schema for AI Response (`thought`, `analysis`, `proposed_route`).
-    - [ ] 實作 `refineRouteWithAI`，使用 Gemini SDK 的 `responseSchema` 模式。
-    - [ ] 設計 System Prompt：設定為「路線架構師」，強調邏輯檢查。
+- [x] Task: 設定 AI Server Action (Gemini Structured Output) (240b433)
+    - [x] 定義 Zod Schema for AI Response (`thought`, `analysis`, `proposed_route`).
+    - [x] 實作 `refineRouteWithAI`，使用 Gemini SDK 的 `responseSchema` 模式。
+    - [x] 設計 System Prompt：設定為「路線架構師」，強調邏輯檢查。
 - [ ] Task: 實作狀態管理 (History & Proposal)
     - [ ] 在 `RouteEditor` 實作 `useHistory` hook (Undo/Redo)。
     - [ ] 實作 `proposal` state，用於暫存 AI 的建議。

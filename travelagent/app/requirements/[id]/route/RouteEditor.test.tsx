@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { expect, test, vi } from 'vitest'
 import { RouteEditor } from './RouteEditor'
 import { RouteConcept } from '@/schemas/route'
@@ -17,6 +17,31 @@ vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
   ),
+}))
+
+// Mock dnd-kit
+vi.mock('@dnd-kit/core', () => ({
+  DndContext: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  closestCenter: vi.fn(),
+  PointerSensor: vi.fn(),
+  KeyboardSensor: vi.fn(),
+  useSensor: vi.fn(),
+  useSensors: vi.fn(),
+}))
+
+vi.mock('@dnd-kit/sortable', () => ({
+  SortableContext: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  verticalListSortingStrategy: {},
+  sortableKeyboardCoordinates: vi.fn(),
+  arrayMove: vi.fn(),
+  useSortable: () => ({
+    attributes: {},
+    listeners: {},
+    setNodeRef: vi.fn(),
+    transform: null,
+    transition: null,
+    isDragging: false,
+  }),
 }))
 
 const mockConcept: RouteConcept = {
@@ -48,4 +73,26 @@ test('RouteEditor renders initial concept', () => {
   expect(screen.getByText('Tokyo')).toBeDefined()
   expect(screen.getByText('Kyoto')).toBeDefined()
   expect(screen.getByText('AI 規劃理由')).toBeDefined()
+})
+
+test('RouteEditor handles deletion', () => {
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  render(
+    <RouteEditor 
+      initialConcept={mockConcept} 
+      requirement={mockRequirement} 
+      requirementId="123" 
+    />
+  )
+  
+  const deleteButtons = screen.getAllByRole('button').filter(btn => {
+    // Look for the delete icon button (Trash2)
+    // In our component it's the one with the trash icon
+    return btn.querySelector('svg.lucide-trash2')
+  })
+  
+  fireEvent.click(deleteButtons[0])
+  
+  expect(window.confirm).toHaveBeenCalled()
+  expect(screen.queryByText('Tokyo')).toBeNull()
 })

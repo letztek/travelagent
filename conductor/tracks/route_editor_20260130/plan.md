@@ -4,9 +4,9 @@
 - [x] Task: 轉換為 Client Component (732af68)
     - [x] `RoutePreviewPage` 目前是 Server Component，需將主要邏輯移至新的 Client Component `RouteEditor`。
     - [x] 將 `RouteFlow` 的顯示邏輯整合進 `RouteEditor`。
-- [ ] Task: 整合 Dnd-kit
-    - [ ] 在 `RouteEditor` 中設定 `DndContext` 與 `SortableContext`。
-    - [ ] 實作 `SortableRouteNode` 元件。
+- [x] Task: 整合 Dnd-kit (225f502)
+    - [x] 在 `RouteEditor` 中設定 `DndContext` 與 `SortableContext`。
+    - [x] 實作 `SortableRouteNode` 元件。
 
 ## Phase 2: 實作編輯功能
 - [ ] Task: 實作拖拉排序邏輯

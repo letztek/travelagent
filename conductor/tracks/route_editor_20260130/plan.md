@@ -16,10 +16,9 @@
 
     - [x] 自動更新 `day` 欄位（Day 1, Day 2...）以符合新順序。
 
-- [ ] Task: 實作刪除與新增功能
-    - [ ] 在節點旁加入「刪除」按鈕。
-    - [ ] 在列表底部加入「新增節點」按鈕（Dialog 或 Inline Input）。
-
+- [x] Task: 實作刪除與新增功能 (058d770)
+    - [x] 在節點旁加入「刪除」按鈕。
+    - [x] 在列表底部加入「新增節點」按鈕（Dialog 或 Inline Input）。
 ## Phase 2.5: AI 對話輔助整合 (Route Architect Agent)
 - [ ] Task: 設定 AI Server Action (Gemini Structured Output)
     - [ ] 定義 Zod Schema for AI Response (`thought`, `analysis`, `proposed_route`).

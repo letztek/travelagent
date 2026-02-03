@@ -36,5 +36,5 @@ test('RequirementsListPage renders requirements and generate button', async () =
   
   expect(screen.getByText(/需求列表/i)).toBeDefined()
   expect(screen.getByText(/2026-06-01/i)).toBeDefined()
-  expect(screen.getByRole('button', { name: /生成行程/i })).toBeDefined()
+  expect(screen.getByRole('button', { name: /規劃路線/i })).toBeDefined()
 })

@@ -1,6 +1,6 @@
 # Implementation Plan: 互動式路線規劃編輯器 (US-103-2)
 
-## Phase 1: 重構路線預覽 UI
+## Phase 1: 重構路線預覽 UI [checkpoint: 8c970c8]
 - [x] Task: 轉換為 Client Component (732af68)
     - [x] `RoutePreviewPage` 目前是 Server Component，需將主要邏輯移至新的 Client Component `RouteEditor`。
     - [x] 將 `RouteFlow` 的顯示邏輯整合進 `RouteEditor`。

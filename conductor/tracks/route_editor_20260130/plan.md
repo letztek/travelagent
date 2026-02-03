@@ -28,13 +28,15 @@
     - [x] 定義 Zod Schema for AI Response (`thought`, `analysis`, `proposed_route`).
     - [x] 實作 `refineRouteWithAI`，使用 Gemini SDK 的 `responseSchema` 模式。
     - [x] 設計 System Prompt：設定為「路線架構師」，強調邏輯檢查。
-- [ ] Task: 實作狀態管理 (History & Proposal)
-    - [ ] 在 `RouteEditor` 實作 `useHistory` hook (Undo/Redo)。
-    - [ ] 實作 `proposal` state，用於暫存 AI 的建議。
-- [ ] Task: 實作 Chat 與 Feedback UI
-    - [ ] 建立 `RouteAgentChat` 元件：顯示對話與 AI 的 "Thinking"。
-    - [ ] 建立 `TrafficLightStatus` 元件：顯示紅/綠燈與分析訊息。
-    - [ ] 實作 [Accept] / [Reject] 按鈕邏輯。
+- [x] Task: 實作狀態管理 (History & Proposal) (deb3168)
+    - [x] 在 `RouteEditor` 實作 `useHistory` hook (Undo/Redo)。
+    - [x] 實作 `proposal` state，用於暫存 AI 的建議。
+- [x] Task: 實作 Chat 與 Feedback UI (deb3168)
+    - [x] 建立 `RouteAgentChat` 元件：顯示對話與 AI 的 "Thinking"。
+    - [x] 建立 `TrafficLightStatus` 元件：顯示紅/綠燈與分析訊息。
+    - [x] 實作 [Accept] / [Reject] 按鈕邏輯。
+    - [x] 串接前後端：在 Client 端呼叫 Action，接收回傳的 updated `RouteConcept`。
+    - [x] 更新 `RouteEditor` 的 React State 以反映 AI 的修改。
 
 ## Phase 3: 整合與提交
 - [ ] Task: 更新確認按鈕邏輯

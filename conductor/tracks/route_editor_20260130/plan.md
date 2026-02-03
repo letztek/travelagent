@@ -8,7 +8,7 @@
     - [x] 在 `RouteEditor` 中設定 `DndContext` 與 `SortableContext`。
     - [x] 實作 `SortableRouteNode` 元件。
 
-## Phase 2: 實作編輯功能
+## Phase 2: 實作編輯功能 [checkpoint: 398be79]
 
 - [x] Task: 實作拖拉排序邏輯 (225f502)
 
@@ -17,8 +17,12 @@
     - [x] 自動更新 `day` 欄位（Day 1, Day 2...）以符合新順序。
 
 - [x] Task: 實作刪除與新增功能 (058d770)
+
     - [x] 在節點旁加入「刪除」按鈕。
+
     - [x] 在列表底部加入「新增節點」按鈕（Dialog 或 Inline Input）。
+
+
 ## Phase 2.5: AI 對話輔助整合 (Route Architect Agent)
 - [ ] Task: 設定 AI Server Action (Gemini Structured Output)
     - [ ] 定義 Zod Schema for AI Response (`thought`, `analysis`, `proposed_route`).

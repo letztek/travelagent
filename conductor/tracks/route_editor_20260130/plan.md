@@ -39,9 +39,9 @@
     - [x] 更新 `RouteEditor` 的 React State 以反映 AI 的修改。
 
 ## Phase 3: 整合與提交
-- [ ] Task: 更新確認按鈕邏輯
-    - [ ] 確保 `ConfirmRouteButton` 使用的是編輯後的最新 `nodes` 資料。
-    - [ ] 呼叫 `generateItinerary`。
+- [x] Task: 更新確認按鈕邏輯 (deb3168)
+    - [x] 確保 `ConfirmRouteButton` 使用的是編輯後的最新 `nodes` 資料。
+    - [x] 呼叫 `generateItinerary`。
 
 ## Phase 4: 驗收
 - [ ] Task: 手動驗證排序、新增、刪除功能是否正常。

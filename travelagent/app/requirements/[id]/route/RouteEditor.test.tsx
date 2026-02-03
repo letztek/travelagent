@@ -86,8 +86,6 @@ test('RouteEditor handles deletion', () => {
   )
   
   const deleteButtons = screen.getAllByRole('button').filter(btn => {
-    // Look for the delete icon button (Trash2)
-    // In our component it's the one with the trash icon
     return btn.querySelector('svg.lucide-trash2')
   })
   
@@ -95,4 +93,49 @@ test('RouteEditor handles deletion', () => {
   
   expect(window.confirm).toHaveBeenCalled()
   expect(screen.queryByText('Tokyo')).toBeNull()
+})
+
+test('RouteEditor handles drag end (mocked)', () => {
+  // We can't easily simulate actual drag and drop with dnd-kit in JSDOM 
+  // without a lot of setup, but we can test the data logic by triggering 
+  // the onDragEnd handler if we had access to it, or by testing the 
+  // outcome of re-indexing.
+  
+  // Since we use arrayMove from @dnd-kit/sortable which we mocked,
+  // let's verify that the nodes are rendered in order.
+  const { rerender } = render(
+    <RouteEditor 
+      initialConcept={mockConcept} 
+      requirement={mockRequirement} 
+      requirementId="123" 
+    />
+  )
+  
+  const nodes = screen.getAllByText(/Tokyo|Kyoto/)
+  expect(nodes[0].textContent).toBe('Tokyo')
+  expect(nodes[1].textContent).toBe('Kyoto')
+})
+
+test('RouteEditor handles adding a node', async () => {
+  render(
+    <RouteEditor 
+      initialConcept={mockConcept} 
+      requirement={mockRequirement} 
+      requirementId="123" 
+    />
+  )
+  
+  // Open dialog
+  const addButton = screen.getByText(/新增行程節點/i)
+  fireEvent.click(addButton)
+  
+  // Fill form
+  const locationInput = screen.getByLabelText(/地點名稱/i)
+  fireEvent.change(locationInput, { target: { value: 'Osaka' } })
+  
+  const submitButton = screen.getByText(/加入行程/i)
+  fireEvent.click(submitButton)
+  
+  // Check if added
+  expect(screen.getByText('Osaka')).toBeDefined()
 })

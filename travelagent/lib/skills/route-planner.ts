@@ -1,7 +1,6 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
 import { routeConceptSchema, type RouteConcept } from '@/schemas/route'
 import { type Requirement } from '@/schemas/requirement'
-import { getSkillSchema } from './reader'
 
 export async function runRoutePlannerSkill(requirement: Requirement): Promise<RouteConcept> {
   const apiKey = process.env.GEMINI_API_KEY
@@ -12,9 +11,33 @@ export async function runRoutePlannerSkill(requirement: Requirement): Promise<Ro
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: modelName })
-
-  const schemaContent = getSkillSchema('route-planner', 'route-concept-schema.md')
+  const model = genAI.getGenerativeModel({
+    model: modelName,
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: SchemaType.OBJECT,
+        properties: {
+          nodes: {
+            type: SchemaType.ARRAY,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                day: { type: SchemaType.INTEGER },
+                location: { type: SchemaType.STRING },
+                description: { type: SchemaType.STRING },
+                transport: { type: SchemaType.STRING }
+              },
+              required: ["day", "location"]
+            }
+          },
+          rationale: { type: SchemaType.STRING },
+          total_days: { type: SchemaType.INTEGER }
+        },
+        required: ["nodes", "rationale", "total_days"]
+      }
+    }
+  })
 
   const systemPrompt = `
     You are a strategic travel planner.
@@ -35,20 +58,14 @@ export async function runRoutePlannerSkill(requirement: Requirement): Promise<Ro
     - Notes: ${requirement.notes || 'None'}
 
     【Output Requirement】
-    You MUST return ONLY a JSON object that strictly adheres to the schema defined below.
     The response (locations and rationale) MUST be in Traditional Chinese (繁體中文).
-    
-    ${schemaContent}
-    
-    Constraint: No Markdown blocks, no preamble, no postamble. Just pure JSON.
   `
 
   const result = await model.generateContent(systemPrompt)
   const response = await result.response
-  const text = response.text().trim()
+  const text = response.text()
 
-  const cleanJson = text.replace(/^```json/, '').replace(/```$/, '').trim()
-  const parsedData = JSON.parse(cleanJson)
+  const parsedData = JSON.parse(text)
   
   return routeConceptSchema.parse(parsedData)
 }

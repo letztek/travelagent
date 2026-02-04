@@ -3,6 +3,7 @@ import { runRoutePlannerSkill } from './route-planner'
 
 // Mock Gemini SDK
 vi.mock('@google/generative-ai', () => ({
+  SchemaType: { OBJECT: 'OBJECT', STRING: 'STRING', INTEGER: 'INTEGER', ARRAY: 'ARRAY' },
   GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
     getGenerativeModel: vi.fn().mockReturnValue({
       generateContent: vi.fn().mockResolvedValue({

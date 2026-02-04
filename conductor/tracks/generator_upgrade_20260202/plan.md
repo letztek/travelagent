@@ -5,7 +5,7 @@
     - [x] 掃描並替換 `lib/skills/` 中所有 `GOOGLE_GENERATIVE_AI_API_KEY` 為 `GEMINI_API_KEY`。
     - [x] 在 `route-planner.ts` 與 `itinerary-generator.ts` 中引入模型名稱變數 `GEMINI_MODEL_NAME` (Default: `gemini-3-pro-preview`)。
 
-## Phase 2: Upgrade Route Planner (US-103)
+## Phase 2: Upgrade Route Planner (US-103) [checkpoint: e936f58]
 - [x] Task: 重構 Route Planner Skill (b9d5daf)
     - [x] 在 `lib/skills/route-planner.ts` 中手動定義對應 `routeConceptSchema` 的 JSON Schema。
     - [x] 更新 `model.generateContent` 設定，啟用 `responseMimeType: "application/json"` 與 `responseSchema`。

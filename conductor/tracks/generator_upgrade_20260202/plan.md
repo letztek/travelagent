@@ -1,6 +1,6 @@
 # Implementation Plan: 核心產生器升級 (Core Generator Upgrade)
 
-## Phase 1: Environment & Configuration Cleanup
+## Phase 1: Environment & Configuration Cleanup [checkpoint: 6011fa3]
 - [x] Task: 統一環境變數配置 (ba2c88c)
     - [x] 掃描並替換 `lib/skills/` 中所有 `GOOGLE_GENERATIVE_AI_API_KEY` 為 `GEMINI_API_KEY`。
     - [x] 在 `route-planner.ts` 與 `itinerary-generator.ts` 中引入模型名稱變數 `GEMINI_MODEL_NAME` (Default: `gemini-3-pro-preview`)。

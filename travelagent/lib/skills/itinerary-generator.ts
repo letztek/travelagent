@@ -1,7 +1,6 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
 import { itinerarySchema, type Itinerary } from '@/schemas/itinerary'
 import { type Requirement } from '@/schemas/requirement'
-import { getSkillSchema } from './reader'
 import { RouteConcept } from '@/schemas/route'
 
 export async function runItinerarySkill(requirement: Requirement, routeConcept?: RouteConcept): Promise<Itinerary> {
@@ -13,10 +12,51 @@ export async function runItinerarySkill(requirement: Requirement, routeConcept?:
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: modelName })
-
-  // Dynamically load the schema from the skill definition
-  const schemaContent = getSkillSchema('itinerary-generator', 'itinerary-schema.md')
+  const model = genAI.getGenerativeModel({
+    model: modelName,
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: SchemaType.OBJECT,
+        properties: {
+          days: {
+            type: SchemaType.ARRAY,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                day: { type: SchemaType.INTEGER },
+                date: { type: SchemaType.STRING },
+                activities: {
+                  type: SchemaType.ARRAY,
+                  items: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                      time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'] },
+                      activity: { type: SchemaType.STRING },
+                      description: { type: SchemaType.STRING }
+                    },
+                    required: ["time_slot", "activity", "description"]
+                  }
+                },
+                meals: {
+                  type: SchemaType.OBJECT,
+                  properties: {
+                    breakfast: { type: SchemaType.STRING },
+                    lunch: { type: SchemaType.STRING },
+                    dinner: { type: SchemaType.STRING }
+                  },
+                  required: ["breakfast", "lunch", "dinner"]
+                },
+                accommodation: { type: SchemaType.STRING }
+              },
+              required: ["day", "date", "activities", "meals", "accommodation"]
+            }
+          }
+        },
+        required: ["days"]
+      }
+    }
+  })
 
   const systemPrompt = `
     你是一位專業的旅遊顧問助理。
@@ -38,25 +78,17 @@ export async function runItinerarySkill(requirement: Requirement, routeConcept?:
     - 特殊備註：${requirement.notes || '無'}
 
     【輸出要求】
-    1. 你必須「僅」回傳一個符合下方 Schema 的 JSON 物件。
-    2. 所有的內容（活動名稱、描述、餐飲、住宿）請使用「繁體中文」撰寫。
-    3. **【關鍵約束】行程必須完全發生在「目的地」(${requirement.destinations?.join(', ')}) 及其周邊地區。嚴禁安排目的地以外的地點（如：若目的地是日本，絕不可安排日月潭）。**
-    ${routeConcept ? `4. **【路線骨架】必須嚴格遵循上述路線骨架安排每日活動地點。**` : `4. **【交通邏輯】第一天請明確安排從「出發地」(${requirement.origin}) 前往「目的地」的交通方式（如：搭乘飛機、高鐵等），最後一天安排返回。**`}
-    5. 行程安排需考慮地理位置的順暢性，避免無謂的往返。
-    
-    【JSON Schema】
-    ${schemaContent}
-    
-    【限制條件】
-    不要包含任何 Markdown 區塊、不要有任何前言或後記。只輸出純 JSON 字串。
+    1. 所有的內容（活動名稱、描述、餐飲、住宿）請使用「繁體中文」撰寫。
+    2. **【關鍵約束】行程必須完全發生在「目的地」(${requirement.destinations?.join(', ')}) 及其周邊地區。嚴禁安排目的地以外的地點（如：若目的地是日本，絕不可安排日月潭）。**
+    ${routeConcept ? `3. **【路線骨架】必須嚴格遵循上述路線骨架安排每日活動地點。**` : `3. **【交通邏輯】第一天請明確安排從「出發地」(${requirement.origin}) 前往「目的地」的交通方式（如：搭乘飛機、高鐵等），最後一天安排返回。**`}
+    4. 行程安排需考慮地理位置的順暢性，避免無謂的往返。
   `
 
   const result = await model.generateContent(systemPrompt)
   const response = await result.response
-  const text = response.text().trim()
+  const text = response.text()
 
-  const cleanJson = text.replace(/^```json/, '').replace(/```$/, '').trim()
-  const parsedData = JSON.parse(cleanJson)
+  const parsedData = JSON.parse(text)
   
   return itinerarySchema.parse(parsedData)
 }

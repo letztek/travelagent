@@ -22,4 +22,4 @@
     - [x] 執行並通過 `lib/skills/itinerary-generator.test.ts`。
 
 ## Phase 4: System Verification
-- [ ] Task: Conductor - User Manual Verification 'System Verification' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'System Verification' (Protocol in workflow.md)

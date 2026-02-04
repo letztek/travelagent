@@ -21,7 +21,9 @@ vi.mock('@google/generative-ai', () => ({
 }))
 
 test('runRoutePlannerSkill produces valid route', async () => {
-  vi.stubEnv('GOOGLE_GENERATIVE_AI_API_KEY', 'fake-key')
+  vi.stubEnv('GEMINI_API_KEY', 'fake-key')
+  vi.stubEnv('GOOGLE_GENERATIVE_AI_API_KEY', '')
+
   const requirement = {
     origin: 'Taipei',
     destinations: ['Tohoku'],

@@ -25,7 +25,10 @@ vi.mock('@google/generative-ai', () => ({
 }))
 
 test('runItinerarySkill produces valid itinerary', async () => {
-  vi.stubEnv('GOOGLE_GENERATIVE_AI_API_KEY', 'fake-key')
+  vi.stubEnv('GEMINI_API_KEY', 'fake-key')
+  // Ensure legacy key is NOT present to verify we aren't falling back silently during transition (if we were supporting fallback, but spec says 'Unify')
+  vi.stubEnv('GOOGLE_GENERATIVE_AI_API_KEY', '') 
+  
   const requirement = {
     travel_dates: { start: '2026-06-01', end: '2026-06-02' },
     travelers: { adult: 1, senior: 0, child: 0, infant: 0 },

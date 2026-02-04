@@ -5,14 +5,15 @@ import { getSkillSchema } from './reader'
 import { RouteConcept } from '@/schemas/route'
 
 export async function runItinerarySkill(requirement: Requirement, routeConcept?: RouteConcept): Promise<Itinerary> {
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY
+  const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3-pro-preview'
 
   if (!apiKey) {
-    throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is not defined')
+    throw new Error('GEMINI_API_KEY is not defined')
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' })
+  const model = genAI.getGenerativeModel({ model: modelName })
 
   // Dynamically load the schema from the skill definition
   const schemaContent = getSkillSchema('itinerary-generator', 'itinerary-schema.md')

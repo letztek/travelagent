@@ -26,7 +26,8 @@ vi.mock('@google/generative-ai', () => ({
 }))
 
 test('runGapAnalyzerSkill produces valid analysis', async () => {
-  vi.stubEnv('GOOGLE_GENERATIVE_AI_API_KEY', 'fake-key')
+  vi.stubEnv('GEMINI_API_KEY', 'fake-key')
+  vi.stubEnv('GOOGLE_GENERATIVE_AI_API_KEY', '') // Ensure legacy is gone
   const requirement = {
     travel_dates: { start: '2026-06-01', end: '2026-06-02' },
     travelers: { adult: 1, senior: 1, child: 0, infant: 0 },

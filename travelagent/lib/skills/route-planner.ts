@@ -4,14 +4,15 @@ import { type Requirement } from '@/schemas/requirement'
 import { getSkillSchema } from './reader'
 
 export async function runRoutePlannerSkill(requirement: Requirement): Promise<RouteConcept> {
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY
+  const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3-pro-preview'
 
   if (!apiKey) {
-    throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is not defined')
+    throw new Error('GEMINI_API_KEY is not defined')
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' })
+  const model = genAI.getGenerativeModel({ model: modelName })
 
   const schemaContent = getSkillSchema('route-planner', 'route-concept-schema.md')
 

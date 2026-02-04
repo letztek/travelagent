@@ -6,12 +6,12 @@
     - [x] 在 `route-planner.ts` 與 `itinerary-generator.ts` 中引入模型名稱變數 `GEMINI_MODEL_NAME` (Default: `gemini-3-pro-preview`)。
 
 ## Phase 2: Upgrade Route Planner (US-103)
-- [ ] Task: 重構 Route Planner Skill
-    - [ ] 在 `lib/skills/route-planner.ts` 中手動定義對應 `routeConceptSchema` 的 JSON Schema。
-    - [ ] 更新 `model.generateContent` 設定，啟用 `responseMimeType: "application/json"` 與 `responseSchema`。
-    - [ ] 移除舊有的 Regex Markdown 清理邏輯。
-- [ ] Task: 驗證 Route Planner
-    - [ ] 執行並通過 `lib/skills/route-planner.test.ts`。
+- [x] Task: 重構 Route Planner Skill (b9d5daf)
+    - [x] 在 `lib/skills/route-planner.ts` 中手動定義對應 `routeConceptSchema` 的 JSON Schema。
+    - [x] 更新 `model.generateContent` 設定，啟用 `responseMimeType: "application/json"` 與 `responseSchema`。
+    - [x] 移除舊有的 Regex Markdown 清理邏輯。
+- [x] Task: 驗證 Route Planner (b9d5daf)
+    - [x] 執行並通過 `lib/skills/route-planner.test.ts`。
 
 ## Phase 3: Upgrade Itinerary Generator (US-104)
 - [ ] Task: 重構 Itinerary Generator Skill

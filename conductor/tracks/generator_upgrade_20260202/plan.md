@@ -13,7 +13,7 @@
 - [x] Task: 驗證 Route Planner (b9d5daf)
     - [x] 執行並通過 `lib/skills/route-planner.test.ts`。
 
-## Phase 3: Upgrade Itinerary Generator (US-104)
+## Phase 3: Upgrade Itinerary Generator (US-104) [checkpoint: 038c67d]
 - [x] Task: 重構 Itinerary Generator Skill (4ca333d)
     - [x] 在 `lib/skills/itinerary-generator.ts` 中手動定義對應 `itinerarySchema` 的 JSON Schema。
     - [x] 更新 `model.generateContent` 設定，啟用 `responseMimeType: "application/json"` 與 `responseSchema`。

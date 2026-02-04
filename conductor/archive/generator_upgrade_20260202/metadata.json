@@ -1,0 +1,8 @@
+{
+  "track_id": "generator_upgrade_20260202",
+  "type": "chore",
+  "status": "new",
+  "created_at": "2026-02-02T10:00:00Z",
+  "updated_at": "2026-02-02T10:00:00Z",
+  "description": "US-603: 核心產生器升級 (Core Generator Upgrade)"
+}

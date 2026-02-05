@@ -17,7 +17,7 @@
     - [x] 設計 System Prompt：強調細節規劃能力，但也允許跨城市調整。
 - [x] Task: Conductor - User Manual Verification 'AI Logic' (Protocol in workflow.md) (68bdbd9)
 
-## Phase 3: Chat UI & Integration
+## Phase 3: Chat UI & Integration [checkpoint: a2016e7]
 - [x] Task: Create ItineraryAgentChat (3f5cb01)
     - [x] 建立側邊欄聊天元件，顯示當前選取的 Context Badge。
     - [x] 實作 Proposal Mode：收到 AI 建議時，顯示預覽與 [套用]/[放棄] 按鈕。

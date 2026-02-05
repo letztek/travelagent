@@ -18,12 +18,12 @@
 - [x] Task: Conductor - User Manual Verification 'AI Logic' (Protocol in workflow.md) (68bdbd9)
 
 ## Phase 3: Chat UI & Integration
-- [ ] Task: Create ItineraryAgentChat
-    - [ ] 建立側邊欄聊天元件，顯示當前選取的 Context Badge。
-    - [ ] 實作 Proposal Mode：收到 AI 建議時，顯示預覽與 [套用]/[放棄] 按鈕。
-- [ ] Task: Integrate Layout
-    - [ ] 調整 `ItineraryEditor` 版面為左右分割 (Editor + Chat)。
-    - [ ] 串接 Chat 的 Proposal 回呼函式至 Editor 的 `setHistory` (或臨時 Proposal State)。
+- [x] Task: Create ItineraryAgentChat (3f5cb01)
+    - [x] 建立側邊欄聊天元件，顯示當前選取的 Context Badge。
+    - [x] 實作 Proposal Mode：收到 AI 建議時，顯示預覽與 [套用]/[放棄] 按鈕。
+- [x] Task: Integrate Layout (3f5cb01)
+    - [x] 調整 `ItineraryEditor` 版面為左右分割 (Editor + Chat)。
+    - [x] 串接 Chat 的 Proposal 回呼函式至 Editor 的 `setHistory` (或臨時 Proposal State)。
 - [ ] Task: Conductor - User Manual Verification 'Full Integration' (Protocol in workflow.md)
 
 ## Phase 4: Verification

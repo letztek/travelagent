@@ -15,6 +15,9 @@ interface TimeSlotColumnProps {
   onActivityUpdate: (activityId: string, field: string, value: string) => void
   onActivityDelete: (activityId: string) => void
   onAddActivity: () => void
+  dayIndex: number
+  selectedContext: { dayIndex: number; itemId?: string; type: string } | null
+  onSelectContext: (ctx: { dayIndex: number; itemId?: string; type: 'activity' | 'meal' | 'accommodation' | 'day' }) => void
 }
 
 export function TimeSlotColumn({ 
@@ -24,7 +27,10 @@ export function TimeSlotColumn({
   isEditing, 
   onActivityUpdate, 
   onActivityDelete,
-  onAddActivity
+  onAddActivity,
+  dayIndex,
+  selectedContext,
+  onSelectContext
 }: TimeSlotColumnProps) {
   const { setNodeRef } = useDroppable({ id })
 
@@ -53,6 +59,8 @@ export function TimeSlotColumn({
               isEditing={isEditing}
               onUpdate={(field, value) => onActivityUpdate(activity.id, field, value)}
               onDelete={() => onActivityDelete(activity.id)}
+              isSelected={selectedContext?.type === 'activity' && selectedContext?.itemId === activity.id}
+              onSelect={() => onSelectContext({ dayIndex, itemId: activity.id, type: 'activity' })}
             />
           ))}
         </SortableContext>

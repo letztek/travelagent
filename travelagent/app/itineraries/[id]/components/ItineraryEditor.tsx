@@ -56,9 +56,16 @@ const dropAnimation: DropAnimation = {
   }),
 }
 
+type SelectedContext = {
+  dayIndex: number
+  itemId?: string
+  type: 'activity' | 'meal' | 'accommodation' | 'day'
+} | null
+
 export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEditorProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [selectedContext, setSelectedContext] = useState<SelectedContext>(null)
   const router = useRouter()
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -288,6 +295,10 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     // For now, toggling isEditing off is sufficient as the user can just reload to reset if they haven't saved.
   }
 
+  const handleSelectContext = (ctx: SelectedContext) => {
+    setSelectedContext(ctx)
+  }
+
   const activeItem = activeId 
     ? data.days.flatMap(d => d.activities).find(a => a.id === activeId)
     : null
@@ -355,6 +366,9 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
                     onActivityUpdate={(actId, f, v) => handleUpdateActivity(dayIndex, actId, f, v)}
                     onActivityDelete={(actId) => handleDeleteActivity(dayIndex, actId)}
                     onAddActivity={() => handleAddActivity(dayIndex, slot)}
+                    dayIndex={dayIndex}
+                    selectedContext={selectedContext}
+                    onSelectContext={handleSelectContext}
                   />
                 ))}
               </div>

@@ -13,9 +13,19 @@ interface SortableActivityCardProps {
   isEditing: boolean
   onUpdate: (field: string, value: string) => void
   onDelete: () => void
+  isSelected?: boolean
+  onSelect?: () => void
 }
 
-export function SortableActivityCard({ id, activity, isEditing, onUpdate, onDelete }: SortableActivityCardProps) {
+export function SortableActivityCard({ 
+  id, 
+  activity, 
+  isEditing, 
+  onUpdate, 
+  onDelete, 
+  isSelected, 
+  onSelect 
+}: SortableActivityCardProps) {
   const {
     attributes,
     listeners,
@@ -32,7 +42,17 @@ export function SortableActivityCard({ id, activity, isEditing, onUpdate, onDele
   }
 
   return (
-    <div ref={setNodeRef} style={style} className="bg-white border rounded-md p-3 shadow-sm mb-2 group">
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`bg-white border rounded-md p-3 shadow-sm mb-2 group transition-all cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : 'hover:border-primary/50'}`}
+      onClick={(e) => {
+        // Prevent triggering selection when editing inputs
+        if ((e.target as HTMLElement).tagName !== 'INPUT' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+          onSelect?.()
+        }
+      }}
+    >
       <div className="flex items-start gap-2">
         {isEditing && (
           <div {...attributes} {...listeners} className="mt-1 cursor-grab active:cursor-grabbing">

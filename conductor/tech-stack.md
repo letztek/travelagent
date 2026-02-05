@@ -17,7 +17,7 @@
   - *原由：* 用於管理產出的資產或上傳的參考文件。
 
 ## AI 與邏輯 (AI & Logic)
-- **AI 整合：** Google Gemini SDK (支援 Structured Output)
+- **AI 整合：** Google Gemini SDK (支援 Structured Output, Gemini 3.0 Models)
 - **結構驗證：** Zod
   - *原由：* **關鍵技術需求。** 用於對 AI 輸出進行執行期驗證，確保在應用程式處理前，AI 回傳的內容嚴格符合預定義的 JSON Schema。
 - **文件生成：** docx.js

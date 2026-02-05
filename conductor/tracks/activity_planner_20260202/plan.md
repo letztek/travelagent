@@ -8,7 +8,7 @@
     - [x] 在 `ItineraryEditor` 新增 `selectedContext` state。
     - [x] 更新 `SortableActivityCard`, `MealsEdit`, `AccommodationEdit` 接收 `onSelect` 與 `isSelected` props。
     - [x] 實作點擊 Highlight 效果。
-- [ ] Task: Conductor - User Manual Verification 'Foundation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Foundation' (Protocol in workflow.md) (53f7cdb)
 
 ## Phase 2: AI Server Action
 - [ ] Task: Implement refineItineraryWithAI

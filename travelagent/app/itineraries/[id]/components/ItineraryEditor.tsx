@@ -91,6 +91,12 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     canRedo 
   } = useHistory(initialData)
 
+  // Transient state for drag operations to avoid flooding history
+  const [transientData, setTransientData] = useState<ItineraryWithIds | null>(null)
+  
+  // Use transient data if available (during drag), otherwise use history data
+  const currentData = transientData || data
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), // Prevent accidental drags
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -102,8 +108,8 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     if (id.startsWith('day-')) return id
 
     // Otherwise find which day/slot contains the activity
-    for (let d = 0; d < data.days.length; d++) {
-      const activity = data.days[d].activities.find(a => a.id === id)
+    for (let d = 0; d < currentData.days.length; d++) {
+      const activity = currentData.days[d].activities.find(a => a.id === id)
       if (activity) {
         return `day-${d}-${activity.time_slot}`
       }
@@ -113,6 +119,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string)
+    setTransientData(data) // Start transient state from current valid state
   }
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -134,8 +141,9 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     const overDayIndex = parseInt(overContainer.split('-')[1])
     const overTimeSlot = overContainer.split('-')[2] as 'Morning' | 'Afternoon' | 'Evening'
 
-    const activeItems = data.days[activeDayIndex].activities
-    const overItems = data.days[overDayIndex].activities
+    // Use currentData (transient) for calculations
+    const activeItems = currentData.days[activeDayIndex].activities
+    const overItems = currentData.days[overDayIndex].activities
 
     const activeIndex = activeItems.findIndex(i => i.id === activeId)
     const overIndex = overItems.findIndex(i => i.id === overId)
@@ -154,8 +162,8 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
     }
 
-    // Clone days
-    const newDays = [...data.days]
+    // Clone days from currentData
+    const newDays = currentData.days.map(d => ({ ...d, activities: [...d.activities] }))
     
     // Remove from old
     const [movedItem] = newDays[activeDayIndex].activities.splice(activeIndex, 1)
@@ -166,8 +174,8 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     // Add to new
     newDays[overDayIndex].activities.push(movedItem)
     
-    // Update state via history hook
-    setData({ ...data, days: newDays })
+    // Update transient state only
+    setTransientData({ ...currentData, days: newDays })
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -177,6 +185,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
 
     if (!over) {
       setActiveId(null)
+      setTransientData(null) // Cancel drag
       return
     }
 
@@ -187,7 +196,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       // Sorting within same container (Day + Slot)
       const dayIndex = parseInt(activeContainer.split('-')[1])
       
-      const newDays = [...data.days]
+      const newDays = currentData.days.map(d => ({ ...d, activities: [...d.activities] }))
       const items = newDays[dayIndex].activities
       
       const oldIndex = items.findIndex(i => i.id === activeId)
@@ -195,10 +204,22 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
 
       if (oldIndex !== newIndex) {
          newDays[dayIndex].activities = arrayMove(items, oldIndex, newIndex)
+         // Commit to history
          setData({ ...data, days: newDays })
+      } else {
+         // No change, just reset transient
+         setTransientData(null)
+      }
+    } else {
+      // Cross-container move (DragOver handled the structure, DragEnd commits it)
+      // Since DragOver updated transientData, we take that result and commit to history
+      if (transientData) {
+        setData(transientData)
       }
     }
+    
     setActiveId(null)
+    setTransientData(null)
   }
 
   // CRUD Handlers
@@ -300,7 +321,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   }
 
   const activeItem = activeId 
-    ? data.days.flatMap(d => d.activities).find(a => a.id === activeId)
+    ? currentData.days.flatMap(d => d.activities).find(a => a.id === activeId)
     : null
 
   return (
@@ -342,7 +363,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       </div>
 
       <div className="space-y-8">
-        {data.days.map((day, dayIndex) => (
+        {currentData.days.map((day, dayIndex) => (
           <Card key={day.day} className="overflow-hidden">
             <CardHeader className="bg-muted/30 pb-4">
               <CardTitle className="flex justify-between items-center">

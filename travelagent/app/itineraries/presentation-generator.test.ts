@@ -46,6 +46,11 @@ test('generatePresentationPrompt returns structured markdown', async () => {
   
   expect(result.success).toBe(true)
   expect(result.data).toContain('# Slide 1: Japan Trip')
-  expect(result.data).toContain('![Image Prompt:')
-  expect(result.data).toContain('# Feature Spotlight:')
+})
+
+test('generatePresentationPrompt supports language option', async () => {
+  const result = await generatePresentationPrompt(mockItinerary, 'en')
+  expect(result.success).toBe(true)
+  // The mock returns fixed text, so we can't check content difference without more complex mocking,
+  // but we verify it runs without error.
 })

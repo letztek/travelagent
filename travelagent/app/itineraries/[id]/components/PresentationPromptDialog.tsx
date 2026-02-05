@@ -17,13 +17,17 @@ interface PresentationPromptDialogProps {
   onOpenChange: (open: boolean) => void
   prompt: string | null
   isLoading: boolean
+  language: 'zh' | 'en'
+  onLanguageChange: (lang: 'zh' | 'en') => void
 }
 
 export function PresentationPromptDialog({ 
   open, 
   onOpenChange, 
   prompt, 
-  isLoading 
+  isLoading,
+  language,
+  onLanguageChange
 }: PresentationPromptDialogProps) {
   const [copied, setCopied] = useState(false)
 
@@ -43,7 +47,29 @@ export function PresentationPromptDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>簡報 Prompt 已生成</DialogTitle>
+          <div className="flex justify-between items-center pr-8">
+            <DialogTitle>簡報 Prompt 已生成</DialogTitle>
+            <div className="flex bg-muted rounded-lg p-1 gap-1">
+              <Button 
+                variant={language === 'zh' ? 'secondary' : 'ghost'} 
+                size="sm" 
+                className="h-7 text-xs"
+                onClick={() => onLanguageChange('zh')}
+                disabled={isLoading}
+              >
+                中文
+              </Button>
+              <Button 
+                variant={language === 'en' ? 'secondary' : 'ghost'} 
+                size="sm" 
+                className="h-7 text-xs"
+                onClick={() => onLanguageChange('en')}
+                disabled={isLoading}
+              >
+                English
+              </Button>
+            </div>
+          </div>
           <DialogDescription>
             請複製下方 Markdown 內容，貼入 Gamma 或其他簡報工具中。
           </DialogDescription>

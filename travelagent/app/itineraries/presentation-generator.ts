@@ -9,10 +9,14 @@ if (!apiKey) {
 }
 const genAI = new GoogleGenerativeAI(apiKey || '')
 
-export async function generatePresentationPrompt(itinerary: Itinerary) {
+export async function generatePresentationPrompt(itinerary: Itinerary, language: 'zh' | 'en' = 'zh') {
   try {
     // Use Pro model for creative writing
     const model = genAI.getGenerativeModel({ model: "gemini-3-pro-preview" })
+
+    const langInstruction = language === 'zh' 
+      ? "The response content (Slide Titles, Bullet points, Descriptions) MUST be in Traditional Chinese (繁體中文)."
+      : "The response content (Slide Titles, Bullet points, Descriptions) MUST be in English.";
 
     const prompt = `
       You are a specialized creative writer for high-end travel proposals.
@@ -33,13 +37,14 @@ export async function generatePresentationPrompt(itinerary: Itinerary) {
       【Visual Instructions】
       - For EVERY slide, you MUST provide an Image Prompt in this exact format:
         \`![Image Prompt: A cinematic, photorealistic shot of [Scene Description], 8k resolution]\`
-      - The image prompt should be in English.
+      - The image prompt should be in English regardless of the output language.
 
       【Format Requirement】
       - Use Markdown headers (# for Slide Titles).
       - Use standard Markdown lists for content.
       - Keep text concise (presentation style, not paragraphs).
       - Output ONLY the Markdown text. No conversational filler.
+      - ${langInstruction}
 
       【Example Output】
       # Slide 1: [Title]

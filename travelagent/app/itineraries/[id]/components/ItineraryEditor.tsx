@@ -33,8 +33,8 @@ import { SortableActivityCard } from './SortableActivityCard'
 import { AccommodationEdit } from './AccommodationEdit'
 import { MealsEdit } from './MealsEdit'
 import { ItineraryAgentChat } from './ItineraryAgentChat'
-import { ItineraryAgentResponse, AgentContext } from '../itinerary-agent'
-import { generatePresentationPrompt } from '../presentation-generator'
+import { ItineraryAgentResponse, AgentContext } from '../../itinerary-agent'
+import { generatePresentationPrompt } from '../../presentation-generator'
 import { PresentationPromptDialog } from './PresentationPromptDialog'
 
 interface ItineraryEditorProps {
@@ -73,6 +73,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const [presentationPrompt, setPresentationPrompt] = useState<string | null>(null)
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
   const [isPromptDialogOpen, setIsPromptDialogOpen] = useState(false)
+  const [promptLanguage, setPromptLanguage] = useState<'zh' | 'en'>('zh')
 
   // Initialize history with stable IDs
   const initialData: ItineraryWithIds = {
@@ -81,7 +82,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       ...day,
       activities: day.activities.map((act, aIdx) => ({
         ...act,
-        id: `act-${dIdx}-${aIdx}-${Math.random().toString(36).substr(2, 5)}`
+        id: `act-\${dIdx}-\${aIdx}-\${Math.random().toString(36).substr(2, 5)}`
       }))
     }))
   }
@@ -114,7 +115,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     for (let d = 0; d < currentData.days.length; d++) {
       const activity = currentData.days[d].activities.find(a => a.id === id)
       if (activity) {
-        return `day-${d}-${activity.time_slot}`
+        return `day-\${d}-\${activity.time_slot}`
       }
     }
     return undefined
@@ -223,7 +224,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
 
   const handleAddActivity = (dayIdx: number, timeSlot: 'Morning' | 'Afternoon' | 'Evening') => {
     const newAct: ActivityWithId = {
-      id: `new-${dayIdx}-${timeSlot}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `new-\${dayIdx}-\${timeSlot}-\${Math.random().toString(36).substr(2, 9)}`,
       time_slot: timeSlot,
       activity: '新活動',
       description: ''
@@ -275,7 +276,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
         }))
       }
       const blob = await generateItineraryDoc(cleanData)
-      saveAs(blob, `itinerary-${itineraryId.slice(0, 8)}.docx`)
+      saveAs(blob, `itinerary-\${itineraryId.slice(0, 8)}.docx`)
     } catch (e) {
       console.error(e)
       alert('匯出失敗')
@@ -298,7 +299,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
         ...day,
         activities: day.activities.map((act, aIdx) => ({
           ...act,
-          id: `ai-${dIdx}-${aIdx}-${Math.random().toString(36).substr(2, 5)}`
+          id: `ai-\${dIdx}-\${aIdx}-\${Math.random().toString(36).substr(2, 5)}`
         }))
       }))
     }
@@ -316,21 +317,20 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     setProposal(null)
   }
 
-  const handleGeneratePresentationPrompt = async () => {
+  const handleGeneratePresentationPrompt = async (lang: 'zh' | 'en' = promptLanguage) => {
+    setPromptLanguage(lang)
     setIsGeneratingPrompt(true)
     setIsPromptDialogOpen(true)
     try {
-      const result = await generatePresentationPrompt(data)
+      const result = await generatePresentationPrompt(data, lang)
       if (result.success) {
         setPresentationPrompt(result.data)
       } else {
         alert('生成失敗: ' + result.error)
-        setIsPromptDialogOpen(false)
       }
     } catch (e) {
       console.error(e)
       alert('發生錯誤')
-      setIsPromptDialogOpen(false)
     } finally {
       setIsGeneratingPrompt(false)
     }
@@ -371,7 +371,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
               </div>
             ) : (
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleGeneratePresentationPrompt} disabled={isGeneratingPrompt}>
+                <Button variant="outline" onClick={() => handleGeneratePresentationPrompt()} disabled={isGeneratingPrompt}>
                   <Sparkles className="mr-2 h-4 w-4" /> 簡報 Prompt
                 </Button>
                 <Button variant="outline" onClick={handleExport}>
@@ -404,9 +404,9 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
               </div>
             )}
 
-            <div className={`space-y-8 ${proposal ? 'opacity-80' : ''}`}>
+            <div className={`space-y-8 \${proposal ? 'opacity-80' : ''}`}>
               {currentData.days.map((day, dayIndex) => (
-                <Card key={day.day} className={`overflow-hidden transition-all ${proposal ? 'border-primary/30' : ''}`}>
+                <Card key={day.day} className={`overflow-hidden transition-all \${proposal ? 'border-primary/30' : ''}`}>
                   <CardHeader className="bg-muted/30 pb-4">
                     <CardTitle className="flex justify-between items-center mb-2">
                       <span>Day {day.day} - {day.date}</span>
@@ -425,7 +425,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
                       {(['Morning', 'Afternoon', 'Evening'] as const).map(slot => (
                         <TimeSlotColumn
                           key={slot}
-                          id={`day-${dayIndex}-${slot}`}
+                          id={`day-\${dayIndex}-\${slot}`}
                           title={slot}
                           activities={day.activities.filter(a => a.time_slot === slot)}
                           isEditing={isEditing && !proposal}
@@ -482,6 +482,8 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
         onOpenChange={setIsPromptDialogOpen} 
         prompt={presentationPrompt} 
         isLoading={isGeneratingPrompt} 
+        language={promptLanguage}
+        onLanguageChange={handleGeneratePresentationPrompt}
       />
     </DndContext>
   )

@@ -26,5 +26,5 @@
     - [x] 串接 Chat 的 Proposal 回呼函式至 Editor 的 `setHistory` (或臨時 Proposal State)。
 - [x] Task: Conductor - User Manual Verification 'Full Integration' (Protocol in workflow.md) (a1e2129)
 
-## Phase 4: Verification
-- [ ] Task: Conductor - User Manual Verification 'Activity Planner' (Protocol in workflow.md)
+## Phase 4: Verification [checkpoint: 39d5b2c]
+- [x] Task: Conductor - User Manual Verification 'Activity Planner' (Protocol in workflow.md) (a1e2129)

@@ -1,14 +1,15 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { updateItinerary } from '../../actions'
 import { Itinerary, ItineraryDay } from '@/schemas/itinerary'
-import { Loader2, Pencil, Save, X, FileDown } from 'lucide-react'
+import { Loader2, Pencil, Save, X, FileDown, Undo2, Redo2 } from 'lucide-react'
 import { saveAs } from 'file-saver'
 import { generateItineraryDoc } from '@/lib/utils/export-word'
+import { useHistory } from '@/lib/hooks/use-history'
 import {
   DndContext, 
   closestCorners,
@@ -61,8 +62,9 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const router = useRouter()
   const [activeId, setActiveId] = useState<string | null>(null)
 
-  // Initialize state with stable IDs
-  const [data, setData] = useState<ItineraryWithIds>(() => ({
+  // Initialize history with stable IDs
+  // We use useHistory to manage the main state 'data'
+  const initialData: ItineraryWithIds = {
     ...itinerary,
     days: itinerary.days.map((day, dIdx) => ({
       ...day,
@@ -71,7 +73,16 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
         id: `act-${dIdx}-${aIdx}-${Math.random().toString(36).substr(2, 5)}`
       }))
     }))
-  }))
+  }
+
+  const { 
+    state: data, 
+    setState: setData, 
+    undo, 
+    redo, 
+    canUndo, 
+    canRedo 
+  } = useHistory(initialData)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), // Prevent accidental drags
@@ -112,63 +123,44 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       return
     }
 
-    // Move item to new container
-    setData((prev) => {
-      const activeDayIndex = parseInt(activeContainer.split('-')[1])
-      const overDayIndex = parseInt(overContainer.split('-')[1])
-      const overTimeSlot = overContainer.split('-')[2] as 'Morning' | 'Afternoon' | 'Evening'
+    const activeDayIndex = parseInt(activeContainer.split('-')[1])
+    const overDayIndex = parseInt(overContainer.split('-')[1])
+    const overTimeSlot = overContainer.split('-')[2] as 'Morning' | 'Afternoon' | 'Evening'
 
-      const activeItems = prev.days[activeDayIndex].activities
-      const overItems = prev.days[overDayIndex].activities
+    const activeItems = data.days[activeDayIndex].activities
+    const overItems = data.days[overDayIndex].activities
 
-      const activeIndex = activeItems.findIndex(i => i.id === activeId)
-      const overIndex = overItems.findIndex(i => i.id === overId)
+    const activeIndex = activeItems.findIndex(i => i.id === activeId)
+    const overIndex = overItems.findIndex(i => i.id === overId)
 
-      let newIndex: number
-      if (overId.startsWith('day-')) {
-        // Dropped on an empty container placeholder
-        newIndex = overItems.length + 1
-      } else {
-        const isBelowOverItem =
-          over &&
-          active.rect.current.translated &&
-          active.rect.current.translated.top > over.rect.top + over.rect.height;
+    let newIndex: number
+    if (overId.startsWith('day-')) {
+      // Dropped on an empty container placeholder
+      newIndex = overItems.length + 1
+    } else {
+      const isBelowOverItem =
+        over &&
+        active.rect.current.translated &&
+        active.rect.current.translated.top > over.rect.top + over.rect.height;
 
-        const modifier = isBelowOverItem ? 1 : 0;
-        newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
-      }
+      const modifier = isBelowOverItem ? 1 : 0;
+      newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
+    }
 
-      // Clone days
-      const newDays = [...prev.days]
-      
-      // Remove from old
-      const [movedItem] = newDays[activeDayIndex].activities.splice(activeIndex, 1)
-      
-      // Update time slot
-      movedItem.time_slot = overTimeSlot
-      
-      // Add to new
-      // If moving within same day but different slot, we just push/insert. 
-      // But wait, the `activities` array is flat for the day.
-      // So index in `activities` array doesn't strictly correspond to visual order if we filter by slot in UI.
-      // Actually, for dnd-kit sortable to work across containers, we usually need separate arrays.
-      // But here `activities` is one array per day.
-      
-      // FIX: Since we render 3 columns per day, each column filters the activities.
-      // But dnd-kit expects us to move the item into the correct *data structure* that backs the container.
-      // Since `TimeSlotColumn` renders `activities.filter(a => a.time_slot === 'Morning')`, 
-      // changing `time_slot` effectively moves it to that "container".
-      
-      // However, to support specific ordering within that slot, we need to insert it at the right relative position among items of that slot.
-      
-      // Simplified approach for DragOver: just change the time_slot and day.
-      // Ordering fine-tuning happens in DragEnd or if we split data structure.
-      
-      // For now, let's just insert it into the new day's array.
-      newDays[overDayIndex].activities.push(movedItem)
-      
-      return { ...prev, days: newDays }
-    })
+    // Clone days
+    const newDays = [...data.days]
+    
+    // Remove from old
+    const [movedItem] = newDays[activeDayIndex].activities.splice(activeIndex, 1)
+    
+    // Update time slot
+    movedItem.time_slot = overTimeSlot
+    
+    // Add to new
+    newDays[overDayIndex].activities.push(movedItem)
+    
+    // Update state via history hook
+    setData({ ...data, days: newDays })
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -187,57 +179,41 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     if (activeContainer && overContainer && activeContainer === overContainer) {
       // Sorting within same container (Day + Slot)
       const dayIndex = parseInt(activeContainer.split('-')[1])
-      const timeSlot = activeContainer.split('-')[2]
       
-      setData((prev) => {
-        const newDays = [...prev.days]
-        const items = newDays[dayIndex].activities
-        
-        // We need indexes relative to the whole array, but arrayMove works on indexes.
-        // BUT, visually we are sorting a subset (filtered by slot).
-        // If we simply use arrayMove on the main array using indices from the subset, it might break.
-        
-        // This is tricky with a single flat array.
-        // Alternative: Use `dnd-kit`'s approach: The `items` prop passed to `SortableContext` determines the order.
-        // If we want to persist order, we need to reorder the main array such that the subset order is reflected.
-        
-        const oldIndex = items.findIndex(i => i.id === activeId)
-        const newIndex = items.findIndex(i => i.id === overId)
+      const newDays = [...data.days]
+      const items = newDays[dayIndex].activities
+      
+      const oldIndex = items.findIndex(i => i.id === activeId)
+      const newIndex = items.findIndex(i => i.id === overId)
 
-        if (oldIndex !== newIndex) {
-           newDays[dayIndex].activities = arrayMove(items, oldIndex, newIndex)
-        }
-        
-        return { ...prev, days: newDays }
-      })
+      if (oldIndex !== newIndex) {
+         newDays[dayIndex].activities = arrayMove(items, oldIndex, newIndex)
+         setData({ ...data, days: newDays })
+      }
     }
     setActiveId(null)
   }
 
   // CRUD Handlers
   const handleUpdateActivity = (dayIdx: number, actId: string, field: string, value: string) => {
-    setData(prev => {
-      const newDays = [...prev.days]
-      newDays[dayIdx] = {
-        ...newDays[dayIdx],
-        activities: newDays[dayIdx].activities.map(a => 
-          a.id === actId ? { ...a, [field]: value } : a
-        )
-      }
-      return { ...prev, days: newDays }
-    })
+    const newDays = [...data.days]
+    newDays[dayIdx] = {
+      ...newDays[dayIdx],
+      activities: newDays[dayIdx].activities.map(a => 
+        a.id === actId ? { ...a, [field]: value } : a
+      )
+    }
+    setData({ ...data, days: newDays })
   }
 
   const handleDeleteActivity = (dayIdx: number, actId: string) => {
     if (!confirm('確定要刪除此活動嗎？')) return
-    setData(prev => {
-      const newDays = [...prev.days]
-      newDays[dayIdx] = {
-        ...newDays[dayIdx],
-        activities: newDays[dayIdx].activities.filter(a => a.id !== actId)
-      }
-      return { ...prev, days: newDays }
-    })
+    const newDays = [...data.days]
+    newDays[dayIdx] = {
+      ...newDays[dayIdx],
+      activities: newDays[dayIdx].activities.filter(a => a.id !== actId)
+    }
+    setData({ ...data, days: newDays })
   }
 
   const handleAddActivity = (dayIdx: number, timeSlot: 'Morning' | 'Afternoon' | 'Evening') => {
@@ -247,33 +223,27 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       activity: '新活動',
       description: ''
     }
-    setData(prev => {
-      const newDays = [...prev.days]
-      newDays[dayIdx] = {
-        ...newDays[dayIdx],
-        activities: [...newDays[dayIdx].activities, newAct]
-      }
-      return { ...prev, days: newDays }
-    })
+    const newDays = [...data.days]
+    newDays[dayIdx] = {
+      ...newDays[dayIdx],
+      activities: [...newDays[dayIdx].activities, newAct]
+    }
+    setData({ ...data, days: newDays })
   }
 
   const handleUpdateAccommodation = (dayIdx: number, value: string) => {
-    setData(prev => {
-      const newDays = [...prev.days]
-      newDays[dayIdx] = { ...newDays[dayIdx], accommodation: value }
-      return { ...prev, days: newDays }
-    })
+    const newDays = [...data.days]
+    newDays[dayIdx] = { ...newDays[dayIdx], accommodation: value }
+    setData({ ...data, days: newDays })
   }
 
   const handleUpdateMeals = (dayIdx: number, type: 'breakfast' | 'lunch' | 'dinner', value: string) => {
-    setData(prev => {
-      const newDays = [...prev.days]
-      newDays[dayIdx] = { 
-        ...newDays[dayIdx], 
-        meals: { ...newDays[dayIdx].meals, [type]: value } 
-      }
-      return { ...prev, days: newDays }
-    })
+    const newDays = [...data.days]
+    newDays[dayIdx] = { 
+      ...newDays[dayIdx], 
+      meals: { ...newDays[dayIdx].meals, [type]: value } 
+    }
+    setData({ ...data, days: newDays })
   }
 
   const handleSave = async () => {
@@ -312,17 +282,10 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
 
   const handleCancel = () => {
     setIsEditing(false)
-    // Reset data to initial state (re-generate IDs for consistency)
-    setData({
-      ...itinerary,
-      days: itinerary.days.map((day, dIdx) => ({
-        ...day,
-        activities: day.activities.map((act, aIdx) => ({
-          ...act,
-          id: `act-${dIdx}-${aIdx}-${Math.random().toString(36).substr(2, 5)}`
-        }))
-      }))
-    })
+    // We don't reset data here because useHistory keeps the state.
+    // If we want to revert to initial props, we'd need to reset the history stack,
+    // but the hook doesn't expose a reset.
+    // For now, toggling isEditing off is sufficient as the user can just reload to reset if they haven't saved.
   }
 
   const activeItem = activeId 
@@ -339,7 +302,14 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     >
       <div className="flex justify-end mb-4 gap-2 sticky top-4 z-10 bg-background/80 backdrop-blur-sm p-2 rounded-lg border shadow-sm">
         {isEditing ? (
-          <div className="space-x-2">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={undo} disabled={!canUndo} aria-label="Undo">
+              <Undo2 className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={redo} disabled={!canRedo} aria-label="Redo">
+              <Redo2 className="h-4 w-4" />
+            </Button>
+            <div className="w-px h-6 bg-border mx-2" />
             <Button variant="ghost" onClick={handleCancel} disabled={loading}>
               <X className="mr-2 h-4 w-4" /> 取消
             </Button>

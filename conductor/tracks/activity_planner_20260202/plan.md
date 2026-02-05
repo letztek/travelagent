@@ -24,7 +24,7 @@
 - [x] Task: Integrate Layout (3f5cb01)
     - [x] 調整 `ItineraryEditor` 版面為左右分割 (Editor + Chat)。
     - [x] 串接 Chat 的 Proposal 回呼函式至 Editor 的 `setHistory` (或臨時 Proposal State)。
-- [ ] Task: Conductor - User Manual Verification 'Full Integration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Full Integration' (Protocol in workflow.md) (a1e2129)
 
 ## Phase 4: Verification
 - [ ] Task: Conductor - User Manual Verification 'Activity Planner' (Protocol in workflow.md)

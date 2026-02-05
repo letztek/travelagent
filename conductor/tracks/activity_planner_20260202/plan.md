@@ -1,6 +1,6 @@
 # Implementation Plan: 互動式行程細節規劃師 (Activity Planner Agent)
 
-## Phase 1: Foundation & State Management [checkpoint: 145e279]
+## Phase 1: Foundation & State Management [checkpoint: 12d8dab]
 - [x] Task: Refactor ItineraryEditor State (6f51ab2)
     - [x] 將 `ItineraryEditor` 的內部狀態遷移至 `useHistory` hook，以支援 Undo/Redo。
     - [x] 確保現有的拖拉 (DnD) 與 CRUD 功能與新的 History State 相容。
@@ -8,14 +8,14 @@
     - [x] 在 `ItineraryEditor` 新增 `selectedContext` state。
     - [x] 更新 `SortableActivityCard`, `MealsEdit`, `AccommodationEdit` 接收 `onSelect` 與 `isSelected` props。
     - [x] 實作點擊 Highlight 效果。
-- [x] Task: Conductor - User Manual Verification 'Foundation' (Protocol in workflow.md) (53f7cdb)
+- [x] Task: Conductor - User Manual Verification 'Foundation' (Protocol in workflow.md) (cefc314)
 
 ## Phase 2: AI Server Action
-- [ ] Task: Implement refineItineraryWithAI
-    - [ ] 定義 `ItineraryAgentResponse` Zod Schema (含 thought, analysis, proposed_itinerary)。
-    - [ ] 實作 Server Action，使用 `Gemini 3.0` 模型與 Structured Output。
-    - [ ] 設計 System Prompt：強調細節規劃能力，但也允許跨城市調整。
-- [ ] Task: Conductor - User Manual Verification 'AI Logic' (Protocol in workflow.md)
+- [x] Task: Implement refineItineraryWithAI (68bdbd9)
+    - [x] 定義 `ItineraryAgentResponse` Zod Schema (含 thought, analysis, proposed_itinerary)。
+    - [x] 實作 Server Action，使用 `Gemini 3.0` 模型與 Structured Output。
+    - [x] 設計 System Prompt：強調細節規劃能力，但也允許跨城市調整。
+- [~] Task: Conductor - User Manual Verification 'AI Logic' (Protocol in workflow.md)
 
 ## Phase 3: Chat UI & Integration
 - [ ] Task: Create ItineraryAgentChat

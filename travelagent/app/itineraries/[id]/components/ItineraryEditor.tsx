@@ -74,7 +74,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       ...day,
       activities: day.activities.map((act, aIdx) => ({
         ...act,
-        id: `act-\${dIdx}-\${aIdx}-\${Math.random().toString(36).substr(2, 5)}`
+        id: `act-${dIdx}-${aIdx}-${Math.random().toString(36).substr(2, 5)}`
       }))
     }))
   }
@@ -107,7 +107,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     for (let d = 0; d < currentData.days.length; d++) {
       const activity = currentData.days[d].activities.find(a => a.id === id)
       if (activity) {
-        return `day-\${d}-\${activity.time_slot}`
+        return `day-${d}-${activity.time_slot}`
       }
     }
     return undefined
@@ -216,7 +216,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
 
   const handleAddActivity = (dayIdx: number, timeSlot: 'Morning' | 'Afternoon' | 'Evening') => {
     const newAct: ActivityWithId = {
-      id: `new-\${dayIdx}-\${timeSlot}-\${Math.random().toString(36).substr(2, 9)}`,
+      id: `new-${dayIdx}-${timeSlot}-${Math.random().toString(36).substr(2, 9)}`,
       time_slot: timeSlot,
       activity: '新活動',
       description: ''
@@ -268,7 +268,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
         }))
       }
       const blob = await generateItineraryDoc(cleanData)
-      saveAs(blob, `itinerary-\${itineraryId.slice(0, 8)}.docx`)
+      saveAs(blob, `itinerary-${itineraryId.slice(0, 8)}.docx`)
     } catch (e) {
       console.error(e)
       alert('匯出失敗')
@@ -291,7 +291,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
         ...day,
         activities: day.activities.map((act, aIdx) => ({
           ...act,
-          id: `ai-\${dIdx}-\${aIdx}-\${Math.random().toString(36).substr(2, 5)}`
+          id: `ai-${dIdx}-${aIdx}-${Math.random().toString(36).substr(2, 5)}`
         }))
       }))
     }
@@ -374,9 +374,9 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
               </div>
             )}
 
-            <div className={`space-y-8 \${proposal ? 'opacity-80' : ''}`}>
+            <div className={`space-y-8 ${proposal ? 'opacity-80' : ''}`}>
               {currentData.days.map((day, dayIndex) => (
-                <Card key={day.day} className={`overflow-hidden transition-all \${proposal ? 'border-primary/30' : ''}`}>
+                <Card key={day.day} className={`overflow-hidden transition-all ${proposal ? 'border-primary/30' : ''}`}>
                   <CardHeader className="bg-muted/30 pb-4">
                     <CardTitle className="flex justify-between items-center mb-2">
                       <span>Day {day.day} - {day.date}</span>
@@ -395,7 +395,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
                       {(['Morning', 'Afternoon', 'Evening'] as const).map(slot => (
                         <TimeSlotColumn
                           key={slot}
-                          id={`day-\${dayIndex}-\${slot}`}
+                          id={`day-${dayIndex}-${slot}`}
                           title={slot}
                           activities={day.activities.filter(a => a.time_slot === slot)}
                           isEditing={isEditing && !proposal}

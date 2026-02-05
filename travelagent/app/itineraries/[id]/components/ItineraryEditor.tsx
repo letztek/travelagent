@@ -162,7 +162,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
     }
 
-    // Clone days from currentData
+    // Clone days and activities to avoid mutation of history state
     const newDays = currentData.days.map(d => ({ ...d, activities: [...d.activities] }))
     
     // Remove from old

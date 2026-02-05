@@ -17,7 +17,7 @@
 - [x] Task: Integrate into ItineraryEditor (46e6c60)
     - [x] 在編輯器 Header 加入 [簡報 Prompt] 按鈕。
     - [x] 串接 Server Action，處理 Loading 狀態。
-- [ ] Task: Conductor - User Manual Verification 'UI Integration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'UI Integration' (Protocol in workflow.md) (7a86e58)
 
-## Phase 3: Verification
-- [ ] Task: Conductor - User Manual Verification 'Presentation Prompt' (Protocol in workflow.md)
+## Phase 3: Verification [checkpoint: d1a595b]
+- [x] Task: Conductor - User Manual Verification 'Presentation Prompt' (Protocol in workflow.md) (d1a595b)

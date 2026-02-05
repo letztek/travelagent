@@ -15,7 +15,7 @@
     - [x] 定義 `ItineraryAgentResponse` Zod Schema (含 thought, analysis, proposed_itinerary)。
     - [x] 實作 Server Action，使用 `Gemini 3.0` 模型與 Structured Output。
     - [x] 設計 System Prompt：強調細節規劃能力，但也允許跨城市調整。
-- [~] Task: Conductor - User Manual Verification 'AI Logic' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'AI Logic' (Protocol in workflow.md) (68bdbd9)
 
 ## Phase 3: Chat UI & Integration
 - [ ] Task: Create ItineraryAgentChat

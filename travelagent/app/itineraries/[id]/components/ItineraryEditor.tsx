@@ -34,6 +34,8 @@ import { AccommodationEdit } from './AccommodationEdit'
 import { MealsEdit } from './MealsEdit'
 import { ItineraryAgentChat } from './ItineraryAgentChat'
 import { ItineraryAgentResponse, AgentContext } from '../itinerary-agent'
+import { generatePresentationPrompt } from '../presentation-generator'
+import { PresentationPromptDialog } from './PresentationPromptDialog'
 
 interface ItineraryEditorProps {
   itinerary: Itinerary
@@ -66,6 +68,11 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const [selectedContext, setSelectedContext] = useState<SelectedContext>(null)
   const router = useRouter()
   const [activeId, setActiveId] = useState<string | null>(null)
+
+  // Presentation Prompt State
+  const [presentationPrompt, setPresentationPrompt] = useState<string | null>(null)
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
+  const [isPromptDialogOpen, setIsPromptDialogOpen] = useState(false)
 
   // Initialize history with stable IDs
   const initialData: ItineraryWithIds = {
@@ -309,6 +316,26 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     setProposal(null)
   }
 
+  const handleGeneratePresentationPrompt = async () => {
+    setIsGeneratingPrompt(true)
+    setIsPromptDialogOpen(true)
+    try {
+      const result = await generatePresentationPrompt(data)
+      if (result.success) {
+        setPresentationPrompt(result.data)
+      } else {
+        alert('生成失敗: ' + result.error)
+        setIsPromptDialogOpen(false)
+      }
+    } catch (e) {
+      console.error(e)
+      alert('發生錯誤')
+      setIsPromptDialogOpen(false)
+    } finally {
+      setIsGeneratingPrompt(false)
+    }
+  }
+
   const activeItem = activeId 
     ? currentData.days.flatMap(d => d.activities).find(a => a.id === activeId)
     : null
@@ -343,14 +370,17 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
                 </Button>
               </div>
             ) : (
-              <>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleGeneratePresentationPrompt} disabled={isGeneratingPrompt}>
+                  <Sparkles className="mr-2 h-4 w-4" /> 簡報 Prompt
+                </Button>
                 <Button variant="outline" onClick={handleExport}>
                   <FileDown className="mr-2 h-4 w-4" /> 匯出 Word
                 </Button>
                 <Button onClick={() => setIsEditing(true)}>
                   <Pencil className="mr-2 h-4 w-4" /> 編輯行程
                 </Button>
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -446,6 +476,13 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
           </div>
         ) : null}
       </DragOverlay>
+
+      <PresentationPromptDialog 
+        open={isPromptDialogOpen} 
+        onOpenChange={setIsPromptDialogOpen} 
+        prompt={presentationPrompt} 
+        isLoading={isGeneratingPrompt} 
+      />
     </DndContext>
   )
 }

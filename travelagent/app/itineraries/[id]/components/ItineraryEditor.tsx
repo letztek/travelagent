@@ -69,8 +69,8 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const router = useRouter()
   const [activeId, setActiveId] = useState<string | null>(null)
 
-  // Presentation Prompt State
-  const [presentationPrompt, setPresentationPrompt] = useState<string | null>(null)
+  // Presentation Prompt State with Cache
+  const [presentationPrompts, setPresentationPrompts] = useState<{ zh: string | null; en: string | null }>({ zh: null, en: null })
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
   const [isPromptDialogOpen, setIsPromptDialogOpen] = useState(false)
   const [promptLanguage, setPromptLanguage] = useState<'zh' | 'en'>('zh')
@@ -319,12 +319,17 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
 
   const handleGeneratePresentationPrompt = async (lang: 'zh' | 'en' = promptLanguage) => {
     setPromptLanguage(lang)
-    setIsGeneratingPrompt(true)
     setIsPromptDialogOpen(true)
+
+    if (presentationPrompts[lang]) {
+      return
+    }
+
+    setIsGeneratingPrompt(true)
     try {
       const result = await generatePresentationPrompt(data, lang)
       if (result.success) {
-        setPresentationPrompt(result.data)
+        setPresentationPrompts(prev => ({ ...prev, [lang]: result.data }))
       } else {
         alert('生成失敗: ' + result.error)
       }
@@ -480,7 +485,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       <PresentationPromptDialog 
         open={isPromptDialogOpen} 
         onOpenChange={setIsPromptDialogOpen} 
-        prompt={presentationPrompt} 
+        prompt={presentationPrompts[promptLanguage]} 
         isLoading={isGeneratingPrompt} 
         language={promptLanguage}
         onLanguageChange={handleGeneratePresentationPrompt}

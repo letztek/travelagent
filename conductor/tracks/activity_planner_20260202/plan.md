@@ -1,9 +1,9 @@
 # Implementation Plan: 互動式行程細節規劃師 (Activity Planner Agent)
 
 ## Phase 1: Foundation & State Management
-- [ ] Task: Refactor ItineraryEditor State
-    - [ ] 將 `ItineraryEditor` 的內部狀態遷移至 `useHistory` hook，以支援 Undo/Redo。
-    - [ ] 確保現有的拖拉 (DnD) 與 CRUD 功能與新的 History State 相容。
+- [x] Task: Refactor ItineraryEditor State (6f51ab2)
+    - [x] 將 `ItineraryEditor` 的內部狀態遷移至 `useHistory` hook，以支援 Undo/Redo。
+    - [x] 確保現有的拖拉 (DnD) 與 CRUD 功能與新的 History State 相容。
 - [ ] Task: Implement Context Selection
     - [ ] 在 `ItineraryEditor` 新增 `selectedContext` state。
     - [ ] 更新 `SortableActivityCard`, `MealsEdit`, `AccommodationEdit` 接收 `onSelect` 與 `isSelected` props。

@@ -4,10 +4,10 @@
 - [x] Task: Refactor ItineraryEditor State (6f51ab2)
     - [x] 將 `ItineraryEditor` 的內部狀態遷移至 `useHistory` hook，以支援 Undo/Redo。
     - [x] 確保現有的拖拉 (DnD) 與 CRUD 功能與新的 History State 相容。
-- [ ] Task: Implement Context Selection
-    - [ ] 在 `ItineraryEditor` 新增 `selectedContext` state。
-    - [ ] 更新 `SortableActivityCard`, `MealsEdit`, `AccommodationEdit` 接收 `onSelect` 與 `isSelected` props。
-    - [ ] 實作點擊 Highlight 效果。
+- [x] Task: Implement Context Selection (d1ad505)
+    - [x] 在 `ItineraryEditor` 新增 `selectedContext` state。
+    - [x] 更新 `SortableActivityCard`, `MealsEdit`, `AccommodationEdit` 接收 `onSelect` 與 `isSelected` props。
+    - [x] 實作點擊 Highlight 效果。
 - [ ] Task: Conductor - User Manual Verification 'Foundation' (Protocol in workflow.md)
 
 ## Phase 2: AI Server Action

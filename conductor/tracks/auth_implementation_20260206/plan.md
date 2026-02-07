@@ -4,10 +4,10 @@
 - [x] Task: Install and Config @supabase/ssr (fd6e3ed)
     - [x] 安裝 `@supabase/ssr` 並移除舊版不需要的套件。
     - [x] 實作 `lib/supabase/server.ts` 與 `lib/supabase/client.ts` 輔助函數。
-- [ ] Task: Database Schema & Migrations
-    - [ ] 建立 `public.profiles` 資料表。
-    - [ ] 實作 Database Trigger 同步帳號至個人檔案。
-    - [ ] 執行 Migration：為 `requirements` 與 `itineraries` 新增 `user_id` 欄位並設定 FK。
+- [x] Task: Database Schema & Migrations (a729ae3)
+    - [x] 建立 `public.profiles` 資料表。
+    - [x] 實作 Database Trigger 同步帳號至個人檔案。
+    - [x] 執行 Migration：為 `requirements` 與 `itineraries` 新增 `user_id` 欄位並設定 FK。
 - [ ] Task: Apply RLS Policies
     - [ ] 為所有表 (Profiles, Requirements, Itineraries) 開啟 RLS。
     - [ ] 設定 `auth.uid() = user_id` 的存取政策。

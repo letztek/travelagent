@@ -13,14 +13,14 @@
     - [x] 設定 `auth.uid() = user_id` 的存取政策。
 - [x] Task: Conductor - User Manual Verification 'DB & Setup'
 
-## Phase 2: Auth Logic & Middleware
+## Phase 2: Auth Logic & Middleware [checkpoint: 97fb9ba]
 - [x] Task: Implement Middleware Protection (4f33d9d)
     - [x] 建立 `middleware.ts` 攔截受保護路徑。
     - [x] 實作 Session 更新機制。
 - [x] Task: Auth Server Actions (1dd78c7)
     - [x] 實作 `signIn`, `signUp`, `signOut` 的 Server Actions。
     - [x] 在 `signUp` 中處理 `display_name` 的 metadata 寫入。
-- [ ] Task: Conductor - User Manual Verification 'Auth Logic'
+- [x] Task: Conductor - User Manual Verification 'Auth Logic'
 
 ## Phase 3: UI Implementation
 - [ ] Task: Create Login & Signup Pages

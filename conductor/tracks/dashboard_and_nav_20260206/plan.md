@@ -1,12 +1,12 @@
 # Implementation Plan: 個人儀表板與導航流程優化 (Dashboard & Navigation)
 
-## Phase 1: Itinerary List Page (US-702)
+## Phase 1: Itinerary List Page (US-702) [checkpoint: 00974ee]
 - [x] Task: Implement getItineraries Server Action (a89a4c0)
     - [x] 在 `app/itineraries/actions.ts` 實作獲取使用者行程列表的邏輯。
 - [x] Task: Create Itinerary List Page (1a16725)
     - [x] 建立 `app/itineraries/page.tsx`。
     - [x] 實作卡片式清單 UI，支援空狀態處理。
-- [ ] Task: Conductor - User Manual Verification 'Itinerary List'
+- [x] Task: Conductor - User Manual Verification 'Itinerary List'
 
 ## Phase 2: Navigation & Flow Optimization (US-701)
 - [ ] Task: Add Back Navigation to Editors

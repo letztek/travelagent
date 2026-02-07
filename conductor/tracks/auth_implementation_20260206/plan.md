@@ -22,14 +22,14 @@
     - [x] 在 `signUp` 中處理 `display_name` 的 metadata 寫入。
 - [x] Task: Conductor - User Manual Verification 'Auth Logic'
 
-## Phase 3: UI Implementation
+## Phase 3: UI Implementation [checkpoint: bbf6416]
 - [x] Task: Create Login & Signup Pages (7d90c03)
     - [x] 使用 Shadcn 實作美觀的登入與註冊頁面。
     - [x] 實作表單驗證 (Zod)。
 - [x] Task: Global User UI Components (fcaee50)
     - [x] 在 Header 顯示當前使用者名稱。
     - [x] 實作 登出按鈕。
-- [ ] Task: Conductor - User Manual Verification 'UI & E2E'
+- [x] Task: Conductor - User Manual Verification 'UI & E2E'
 
 ## Phase 4: Final Verification
 - [ ] Task: Conductor - User Manual Verification 'Auth System'

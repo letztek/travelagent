@@ -17,7 +17,7 @@
 - [x] Task: Conductor - User Manual Verification 'Nav Flow'
 
 ## Phase 3: UI/UX Polish
-- [ ] Task: Unify List Aesthetics
-    - [ ] 將 `app/requirements/page.tsx` 的視覺風格調整為與新版首頁/登入頁一致。
+- [x] Task: Unify List Aesthetics (a88ebf8)
+    - [x] 將 `app/requirements/page.tsx` 的視覺風格調整為與新版首頁/登入頁一致。
 - [ ] Task: Final End-to-End Polish
 - [ ] Task: Conductor - User Manual Verification 'Dashboard Complete'

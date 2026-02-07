@@ -1,8 +1,17 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, Compass, Clock } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect('/itineraries');
+  }
+
   return (
     <div className="relative min-h-screen bg-white overflow-hidden font-sans">
       {/* Aesthetic Background Elements */}

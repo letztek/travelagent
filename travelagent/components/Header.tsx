@@ -21,7 +21,7 @@ export default async function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md">
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href={user ? "/itineraries" : "/"} className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white">
             <Map size={20} />
           </div>

@@ -3,9 +3,9 @@
 ## Phase 1: Itinerary List Page (US-702)
 - [x] Task: Implement getItineraries Server Action (a89a4c0)
     - [x] 在 `app/itineraries/actions.ts` 實作獲取使用者行程列表的邏輯。
-- [ ] Task: Create Itinerary List Page
-    - [ ] 建立 `app/itineraries/page.tsx`。
-    - [ ] 實作卡片式清單 UI，支援空狀態處理。
+- [x] Task: Create Itinerary List Page (1a16725)
+    - [x] 建立 `app/itineraries/page.tsx`。
+    - [x] 實作卡片式清單 UI，支援空狀態處理。
 - [ ] Task: Conductor - User Manual Verification 'Itinerary List'
 
 ## Phase 2: Navigation & Flow Optimization (US-701)

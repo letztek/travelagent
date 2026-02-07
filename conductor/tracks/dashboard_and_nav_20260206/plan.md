@@ -19,5 +19,5 @@
 ## Phase 3: UI/UX Polish
 - [x] Task: Unify List Aesthetics (a88ebf8)
     - [x] 將 `app/requirements/page.tsx` 的視覺風格調整為與新版首頁/登入頁一致。
-- [ ] Task: Final End-to-End Polish
+- [x] Task: Final End-to-End Polish (eb98c65)
 - [ ] Task: Conductor - User Manual Verification 'Dashboard Complete'

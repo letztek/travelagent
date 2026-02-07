@@ -11,7 +11,8 @@
   - *原由：* 提供現代化且無障礙的 Drag & Drop 體驗，用於路線編輯器。
 
 ## 後端與資料 (Backend & Data)
-- **資料庫：** Supabase (PostgreSQL)
+- **認證：** Supabase Auth (@supabase/ssr)
+- **資料庫：** Supabase (PostgreSQL, Row Level Security)
   - *原由：* 提供強大的關聯式資料庫並支援 JSONB，非常適合儲存結構化的行程資料與使用者設定。
 - **儲存：** Supabase Storage
   - *原由：* 用於管理產出的資產或上傳的參考文件。

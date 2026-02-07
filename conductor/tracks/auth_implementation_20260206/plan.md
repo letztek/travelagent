@@ -1,17 +1,17 @@
 # Implementation Plan: 使用者認證與授權 (US-703)
 
-## Phase 1: Database & SSR Setup
+## Phase 1: Database & SSR Setup [checkpoint: 14d4abc]
 - [x] Task: Install and Config @supabase/ssr (fd6e3ed)
     - [x] 安裝 `@supabase/ssr` 並移除舊版不需要的套件。
     - [x] 實作 `lib/supabase/server.ts` 與 `lib/supabase/client.ts` 輔助函數。
 - [x] Task: Database Schema & Migrations (a729ae3)
-    - [x] 建立 `public.profiles` 資料表。
+    - [x] 建立 `public.profiles` 資料表向。
     - [x] 實作 Database Trigger 同步帳號至個人檔案。
     - [x] 執行 Migration：為 `requirements` 與 `itineraries` 新增 `user_id` 欄位並設定 FK。
-- [ ] Task: Apply RLS Policies
-    - [ ] 為所有表 (Profiles, Requirements, Itineraries) 開啟 RLS。
-    - [ ] 設定 `auth.uid() = user_id` 的存取政策。
-- [ ] Task: Conductor - User Manual Verification 'DB & Setup'
+- [x] Task: Apply RLS Policies (fff1478)
+    - [x] 為所有表 (Profiles, Requirements, Itineraries) 開啟 RLS。
+    - [x] 設定 `auth.uid() = user_id` 的存取政策。
+- [x] Task: Conductor - User Manual Verification 'DB & Setup'
 
 ## Phase 2: Auth Logic & Middleware
 - [ ] Task: Implement Middleware Protection

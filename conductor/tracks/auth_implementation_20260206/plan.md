@@ -26,9 +26,9 @@
 - [x] Task: Create Login & Signup Pages (7d90c03)
     - [x] 使用 Shadcn 實作美觀的登入與註冊頁面。
     - [x] 實作表單驗證 (Zod)。
-- [ ] Task: Global User UI Components
-    - [ ] 在 Header 顯示當前使用者名稱。
-    - [ ] 實作登出按鈕。
+- [x] Task: Global User UI Components (fcaee50)
+    - [x] 在 Header 顯示當前使用者名稱。
+    - [x] 實作 登出按鈕。
 - [ ] Task: Conductor - User Manual Verification 'UI & E2E'
 
 ## Phase 4: Final Verification

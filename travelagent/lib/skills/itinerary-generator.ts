@@ -19,6 +19,7 @@ export async function runItinerarySkill(requirement: Requirement, routeConcept?:
       responseSchema: {
         type: SchemaType.OBJECT,
         properties: {
+          title: { type: SchemaType.STRING },
           days: {
             type: SchemaType.ARRAY,
             items: {
@@ -82,6 +83,7 @@ export async function runItinerarySkill(requirement: Requirement, routeConcept?:
     2. **【關鍵約束】行程必須完全發生在「目的地」(${requirement.destinations?.join(', ')}) 及其周邊地區。嚴禁安排目的地以外的地點（如：若目的地是日本，絕不可安排日月潭）。**
     ${routeConcept ? `3. **【路線骨架】必須嚴格遵循上述路線骨架安排每日活動地點。**` : `3. **【交通邏輯】第一天請明確安排從「出發地」(${requirement.origin}) 前往「目的地」的交通方式（如：搭乘飛機、高鐵等），最後一天安排返回。**`}
     4. 行程安排需考慮地理位置的順暢性，避免無謂的往返。
+    5. 請為這份行程起一個吸引人且符合主題的「標題」(title)，例如：「台東山海慢漫遊 4 日」、「京都古都之美深度探索」。
   `
 
   const result = await model.generateContent(systemPrompt)

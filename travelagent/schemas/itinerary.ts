@@ -19,6 +19,7 @@ export const itineraryDaySchema = z.object({
 })
 
 export const itinerarySchema = z.object({
+  title: z.string().optional(),
   days: z.array(itineraryDaySchema).min(1),
 })
 

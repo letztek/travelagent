@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -76,16 +76,16 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const [promptLanguage, setPromptLanguage] = useState<'zh' | 'en'>('zh')
 
   // Initialize history with stable IDs
-  const initialData: ItineraryWithIds = {
+  const initialData = useMemo(() => ({
     ...itinerary,
     days: itinerary.days.map((day, dIdx) => ({
       ...day,
       activities: day.activities.map((act, aIdx) => ({
         ...act,
-        id: `act-\${dIdx}-\${aIdx}-\${Math.random().toString(36).substr(2, 5)}`
+        id: act.id || `act-${dIdx}-${aIdx}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
       }))
     }))
-  }
+  }), [itinerary])
 
   const { 
     state: data, 

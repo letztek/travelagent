@@ -3,7 +3,7 @@
 import { runItinerarySkill } from '@/lib/skills/itinerary-generator'
 import { itinerarySchema, type Itinerary } from '@/schemas/itinerary'
 import { type Requirement } from '@/schemas/requirement'
-import { getSupabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import { RouteConcept } from '@/schemas/route'
 
 export async function generateItinerary(requirement: Requirement, requirementId: string, routeConcept?: RouteConcept) {
@@ -11,7 +11,7 @@ export async function generateItinerary(requirement: Requirement, requirementId:
     const itineraryData = await runItinerarySkill(requirement, routeConcept)
     
     // Save to Supabase
-    const supabase = getSupabase()
+    const supabase = await createClient()
     const { data, error } = await supabase
       .from('itineraries')
       .insert([
@@ -36,7 +36,7 @@ export async function generateItinerary(requirement: Requirement, requirementId:
 }
 
 export async function getItinerary(id: string) {
-  const supabase = getSupabase()
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('itineraries')
     .select('*')
@@ -58,7 +58,7 @@ export async function updateItinerary(id: string, content: Itinerary) {
     return { success: false, error: validated.error.format() }
   }
 
-  const supabase = getSupabase()
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('itineraries')
     .update({ content: validated.data })

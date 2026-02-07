@@ -1,6 +1,6 @@
 'use server'
 
-import { getSupabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import { requirementSchema, type Requirement } from '@/schemas/requirement'
 
 export async function createRequirement(data: Requirement) {
@@ -11,7 +11,7 @@ export async function createRequirement(data: Requirement) {
   }
 
   // 2. Insert into Supabase
-  const supabase = getSupabase()
+  const supabase = await createClient()
   const { data: insertedData, error } = await supabase
     .from('requirements')
     .insert([validated.data])
@@ -27,7 +27,7 @@ export async function createRequirement(data: Requirement) {
 }
 
 export async function getRequirements() {
-  const supabase = getSupabase()
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('requirements')
     .select('*')
@@ -42,7 +42,7 @@ export async function getRequirements() {
 }
 
 export async function getRequirement(id: string) {
-  const supabase = getSupabase()
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('requirements')
     .select('*')

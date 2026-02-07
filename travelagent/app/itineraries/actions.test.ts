@@ -2,12 +2,24 @@ import { expect, test, vi } from 'vitest'
 import { generateItinerary } from './actions'
 
 // Mock Supabase
-vi.mock('@/lib/supabase', () => ({
-  getSupabase: vi.fn(() => ({
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(() => Promise.resolve({
     from: vi.fn(() => ({
       insert: vi.fn(() => ({
         select: vi.fn(() => ({
           single: vi.fn(() => Promise.resolve({ data: { id: 'itinerary-123' }, error: null }))
+        }))
+      })),
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn(() => Promise.resolve({ data: { id: 'itinerary-123' }, error: null }))
+        }))
+      })),
+      update: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          select: vi.fn(() => ({
+            single: vi.fn(() => Promise.resolve({ data: { id: 'itinerary-123' }, error: null }))
+          }))
         }))
       }))
     }))
@@ -16,6 +28,12 @@ vi.mock('@/lib/supabase', () => ({
 
 // Mock Gemini SDK
 vi.mock('@google/generative-ai', () => ({
+  SchemaType: {
+    OBJECT: 'OBJECT',
+    ARRAY: 'ARRAY',
+    INTEGER: 'INTEGER',
+    STRING: 'STRING',
+  },
   GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
     getGenerativeModel: vi.fn().mockReturnValue({
       generateContent: vi.fn().mockResolvedValue({
@@ -38,7 +56,7 @@ vi.mock('@google/generative-ai', () => ({
 }))
 
 test('generateItinerary produces valid itinerary', async () => {
-  vi.stubEnv('GOOGLE_GENERATIVE_AI_API_KEY', 'fake-key')
+  vi.stubEnv('GEMINI_API_KEY', 'fake-key')
   const requirement = {
     travel_dates: { start: '2026-06-01', end: '2026-06-02' },
     travelers: { adult: 1, senior: 0, child: 0, infant: 0 },

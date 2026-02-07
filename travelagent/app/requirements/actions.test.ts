@@ -1,11 +1,17 @@
 import { expect, test, vi } from 'vitest'
 import { createRequirement } from './actions'
 
-vi.mock('@/lib/supabase', () => ({
-  getSupabase: vi.fn(() => ({
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(() => Promise.resolve({
     from: vi.fn(() => ({
       insert: vi.fn(() => ({
         select: vi.fn(() => ({
+          single: vi.fn(() => Promise.resolve({ data: { id: '123' }, error: null })),
+        })),
+      })),
+      select: vi.fn(() => ({
+        order: vi.fn(() => Promise.resolve({ data: [], error: null })),
+        eq: vi.fn(() => ({
           single: vi.fn(() => Promise.resolve({ data: { id: '123' }, error: null })),
         })),
       })),

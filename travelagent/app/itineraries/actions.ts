@@ -51,6 +51,21 @@ export async function getItinerary(id: string) {
   return { success: true, data }
 }
 
+export async function getItineraries() {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('itineraries')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Supabase error:', error)
+    return { success: false, error: error.message }
+  }
+
+  return { success: true, data }
+}
+
 export async function updateItinerary(id: string, content: Itinerary) {
   // Validate content with Zod before saving
   const validated = itinerarySchema.safeParse(content)

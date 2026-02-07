@@ -30,7 +30,17 @@ export default async function Header() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-4">
+        <nav className="flex items-center gap-6">
+          {user && (
+            <div className="hidden md:flex items-center gap-6 mr-4">
+              <Link href="/requirements" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+                需求管理
+              </Link>
+              <Link href="/itineraries" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+                我的行程
+              </Link>
+            </div>
+          )}
           {user ? (
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 text-sm font-medium">

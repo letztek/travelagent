@@ -14,9 +14,9 @@
 - [x] Task: Conductor - User Manual Verification 'DB & Setup'
 
 ## Phase 2: Auth Logic & Middleware
-- [ ] Task: Implement Middleware Protection
-    - [ ] 建立 `middleware.ts` 攔截受保護路徑。
-    - [ ] 實作 Session 更新機制。
+- [x] Task: Implement Middleware Protection (4f33d9d)
+    - [x] 建立 `middleware.ts` 攔截受保護路徑。
+    - [x] 實作 Session 更新機制。
 - [ ] Task: Auth Server Actions
     - [ ] 實作 `signIn`, `signUp`, `signOut` 的 Server Actions。
     - [ ] 在 `signUp` 中處理 `display_name` 的 metadata 寫入。

@@ -1,9 +1,9 @@
 # Implementation Plan: 使用者認證與授權 (US-703)
 
 ## Phase 1: Database & SSR Setup
-- [ ] Task: Install and Config @supabase/ssr
-    - [ ] 安裝 `@supabase/ssr` 並移除舊版不需要的套件。
-    - [ ] 實作 `lib/supabase/server.ts` 與 `lib/supabase/client.ts` 輔助函數。
+- [x] Task: Install and Config @supabase/ssr (fd6e3ed)
+    - [x] 安裝 `@supabase/ssr` 並移除舊版不需要的套件。
+    - [x] 實作 `lib/supabase/server.ts` 與 `lib/supabase/client.ts` 輔助函數。
 - [ ] Task: Database Schema & Migrations
     - [ ] 建立 `public.profiles` 資料表。
     - [ ] 實作 Database Trigger 同步帳號至個人檔案。

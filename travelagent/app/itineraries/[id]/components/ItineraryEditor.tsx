@@ -355,7 +355,14 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     >
       <div className="container mx-auto py-10 max-w-7xl">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">行程詳情編輯器</h1>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" asChild className="rounded-full">
+              <Link href="/itineraries">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+            </Button>
+            <h1 className="text-2xl font-bold">行程詳情編輯器</h1>
+          </div>
           <div className="flex gap-2">
             {isEditing ? (
               <div className="flex items-center gap-2">

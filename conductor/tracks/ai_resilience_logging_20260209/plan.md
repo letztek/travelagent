@@ -11,7 +11,7 @@
 - [x] Task: 實作核心 `Logger` 工具 f22ead6
     - [ ] 建立 `travelagent/lib/utils/logger.ts`
     - [ ] 支援 `info`, `warn`, `error`, `debug` 級別，區分開發與生產環境輸出
-- [ ] Task: 實作 `ai_audit` 資料庫記錄邏輯
+- [x] Task: 實作 `ai_audit` 資料庫記錄邏輯 12ac3e0
     - [ ] 在 `travelagent/lib/supabase/audit.ts` 建立非阻塞的日誌寫入函數
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: 基礎設施建立' (Protocol in workflow.md)
 

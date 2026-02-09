@@ -8,7 +8,7 @@
 - [x] Task: 建立 Supabase `ai_audit_logs` 資料表 e75bbe8
     - [ ] 撰寫 SQL 遷移檔案，建立包含 `id`, `user_id`, `prompt`, `response`, `model`, `duration_ms`, `error_code`, `created_at` 的資料表
     - [ ] 執行遷移並驗證資料表結構
-- [ ] Task: 實作核心 `Logger` 工具
+- [x] Task: 實作核心 `Logger` 工具 f22ead6
     - [ ] 建立 `travelagent/lib/utils/logger.ts`
     - [ ] 支援 `info`, `warn`, `error`, `debug` 級別，區分開發與生產環境輸出
 - [ ] Task: 實作 `ai_audit` 資料庫記錄邏輯

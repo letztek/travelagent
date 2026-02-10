@@ -29,13 +29,13 @@
 ## Phase 3: 系統整合 (Integration)
 將重試與日誌邏輯整合進現有的 AI Skills。
 
-- [ ] Task: 整合 `itinerary-generator` Skill
-    - [ ] 加入 `withRetry` 包裝 AI 呼叫
-    - [ ] 加入 `ai_audit` 紀錄每次生成內容與耗時
-- [ ] Task: 整合 `gap-analyzer` 與其他 AI Skills
-    - [ ] 統一所有 AI 呼叫點的重試與日誌邏輯
-- [ ] Task: 驗證整合後的系統行為
-    - [ ] 確保現有功能在正常情況下不受影響，且日誌能正確寫入 Supabase
+- [x] Task: 整合 `itinerary-generator` Skill 6b396d2
+    - [x] 加入 `withRetry` 包裝 AI 呼叫
+    - [x] 加入 `ai_audit` 紀錄每次生成內容與耗時
+- [x] Task: 整合 `gap-analyzer` 與其他 AI Skills 6b396d2
+    - [x] 統一所有 AI 呼叫點的重試與日誌邏輯
+- [x] Task: 驗證整合後的系統行為 6b396d2
+    - [x] 確保現有功能在正常情況下不受影響，且日誌能正確寫入 Supabase
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: 系統整合' (Protocol in workflow.md)
 
 ## Phase 4: UI 強化 (UI Enhancements)

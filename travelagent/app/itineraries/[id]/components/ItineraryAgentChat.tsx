@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { refineItineraryWithAI, ItineraryAgentResponse, AgentContext } from '../../itinerary-agent'
 import { Itinerary } from '@/schemas/itinerary'
-import { Bot, Loader2, Sparkles, X, Check, Target } from 'lucide-react'
+import { Bot, Loader2, Sparkles, X, Check, Target, RefreshCw } from 'lucide-react'
 import { TrafficLightStatus } from './TrafficLightStatus'
 import { Badge } from '@/components/ui/badge'
 
@@ -38,6 +38,7 @@ export function ItineraryAgentChat({
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [lastRequest, setLastRequest] = useState<{ itinerary: Itinerary, context: AgentContext | null, instruction: string } | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,6 +48,7 @@ export function ItineraryAgentChat({
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setIsLoading(true)
+    setLastRequest({ itinerary: currentItinerary, context: focusedContext, instruction: input })
 
     try {
       const result = await refineItineraryWithAI(currentItinerary, focusedContext, userMsg.content)
@@ -63,6 +65,37 @@ export function ItineraryAgentChat({
         onProposal(aiResponse)
       } else {
         setMessages(prev => [...prev, { role: 'assistant', content: '抱歉，處理您的請求時發生錯誤。' }])
+      }
+    } catch (error) {
+      console.error(error)
+      setMessages(prev => [...prev, { role: 'assistant', content: '抱歉，發生未知錯誤。' }])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleRegenerate = async () => {
+    if (!lastRequest || isLoading) return
+    
+    setIsLoading(true)
+    // Remove last assistant message to replace it
+    setMessages(prev => prev.slice(0, -1))
+
+    try {
+      const result = await refineItineraryWithAI(lastRequest.itinerary, lastRequest.context, lastRequest.instruction)
+      
+      if (result.success && result.data) {
+        const aiResponse = result.data
+        const aiMsg: Message = {
+          role: 'assistant',
+          content: '我已重新生成了調整建議，請查看主畫面中的預覽。',
+          thought: aiResponse.thought,
+          status: { type: aiResponse.analysis.status, message: aiResponse.analysis.message }
+        }
+        setMessages(prev => [...prev, aiMsg])
+        onProposal(aiResponse)
+      } else {
+        setMessages(prev => [...prev, { role: 'assistant', content: '抱歉，重新生成時發生錯誤。' }])
       }
     } catch (error) {
       console.error(error)
@@ -140,10 +173,19 @@ export function ItineraryAgentChat({
           <div className="p-3 border-t bg-primary/5 space-y-2">
             <p className="text-[10px] font-bold text-center uppercase tracking-wider text-primary">檢視提案中</p>
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1 h-8 text-xs" onClick={onRejectProposal}>
+              <Button 
+                variant="outline" 
+                className="flex-1 h-8 text-[10px] px-1 border-amber-200 text-amber-600 hover:bg-amber-50" 
+                onClick={handleRegenerate}
+                disabled={isLoading}
+              >
+                {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="mr-1 h-3 w-3" />}
+                重新生成
+              </Button>
+              <Button variant="outline" className="flex-1 h-8 text-[10px] px-1" onClick={onRejectProposal} disabled={isLoading}>
                 <X className="mr-1 h-3 w-3" /> 捨棄
               </Button>
-              <Button className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700" onClick={onAcceptProposal}>
+              <Button className="flex-1 h-8 text-[10px] px-1 bg-green-600 hover:bg-green-700" onClick={onAcceptProposal} disabled={isLoading}>
                 <Check className="mr-1 h-3 w-3" /> 套用
               </Button>
             </div>

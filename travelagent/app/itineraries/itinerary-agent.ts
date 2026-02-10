@@ -3,6 +3,9 @@
 import { Itinerary, itinerarySchema } from '@/schemas/itinerary'
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
 import { z } from 'zod'
+import { withRetry } from '@/lib/utils/ai-retry'
+import { logAiAudit } from '@/lib/supabase/audit'
+import { logger } from '@/lib/utils/logger'
 
 const itineraryAgentResponseSchema = z.object({
   thought: z.string().describe('The agent\'s reasoning process.'),
@@ -22,9 +25,6 @@ export type AgentContext = {
 }
 
 const apiKey = process.env.GEMINI_API_KEY
-if (!apiKey) {
-  console.error('Error: GEMINI_API_KEY is not set in environment variables.')
-}
 const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3-flash-preview'
 const genAI = new GoogleGenerativeAI(apiKey || '')
 
@@ -33,11 +33,21 @@ export async function refineItineraryWithAI(
   context: AgentContext | null,
   instruction: string
 ) {
+  if (!apiKey) {
+    logger.error('GEMINI_API_KEY is not set')
+    return { success: false, error: 'API key missing' }
+  }
+
+  const startTime = Date.now()
+  let responseText = ''
+  let errorCode: string | undefined
+
   try {
     const model = genAI.getGenerativeModel({
       model: modelName,
       generationConfig: {
         responseMimeType: "application/json",
+        // ... rest of config
         responseSchema: {
           type: SchemaType.OBJECT,
           properties: {
@@ -124,9 +134,22 @@ export async function refineItineraryWithAI(
       - Ensure 'analysis' provides feedback on logic (e.g., if a restaurant is closed or far away -> Red light).
     `
 
-    const result = await model.generateContent(prompt)
-    const responseText = result.response.text()
-    console.log('Gemini Raw Response:', responseText)
+    try {
+      const result = await withRetry(() => model.generateContent(prompt))
+      responseText = result.response.text()
+    } catch (err: any) {
+      errorCode = err.status?.toString() || err.message
+      throw err
+    } finally {
+      const duration = Date.now() - startTime
+      logAiAudit({
+        prompt,
+        response: responseText,
+        model: modelName,
+        duration_ms: duration,
+        error_code: errorCode
+      })
+    }
 
     // Clean markdown code blocks if present
     const cleanJson = responseText.replace(/```json\n?|\n?```/g, '').trim()
@@ -135,18 +158,14 @@ export async function refineItineraryWithAI(
     try {
         data = JSON.parse(cleanJson) as ItineraryAgentResponse
     } catch (parseError) {
-        console.error('JSON Parse Error. Raw text:', responseText)
+        logger.error('JSON Parse Error', { raw: responseText })
         throw new Error('Failed to parse AI response as JSON')
     }
 
     return { success: true, data }
 
-  } catch (error) {
-    console.error('AI Refinement Error:', error)
-    if (error instanceof Error) {
-        console.error('Error Message:', error.message)
-        console.error('Error Stack:', error.stack)
-    }
+  } catch (error: any) {
+    logger.error('AI Refinement Error', { error: error.message })
     return { success: false, error: 'Failed to refine itinerary with AI' }
   }
 }

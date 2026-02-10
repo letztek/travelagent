@@ -3,6 +3,9 @@
 import { RouteConcept, routeConceptSchema } from '@/schemas/route'
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
 import { z } from 'zod'
+import { withRetry } from '@/lib/utils/ai-retry'
+import { logAiAudit } from '@/lib/supabase/audit'
+import { logger } from '@/lib/utils/logger'
 
 // Define the response schema for the agent
 const agentResponseSchema = z.object({
@@ -16,14 +19,26 @@ const agentResponseSchema = z.object({
 
 export type AgentResponse = z.infer<typeof agentResponseSchema>
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+const apiKey = process.env.GEMINI_API_KEY
+const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3-flash-preview'
+const genAI = new GoogleGenerativeAI(apiKey || '')
 
 export async function refineRouteWithAI(currentRoute: RouteConcept, instruction: string) {
+  if (!apiKey) {
+    logger.error('GEMINI_API_KEY is not set')
+    return { success: false, error: 'API key missing' }
+  }
+
+  const startTime = Date.now()
+  let responseText = ''
+  let errorCode: string | undefined
+
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: modelName,
       generationConfig: {
         responseMimeType: "application/json",
+        // ... rest of config
         responseSchema: {
           type: SchemaType.OBJECT,
           properties: {
@@ -84,14 +99,38 @@ export async function refineRouteWithAI(currentRoute: RouteConcept, instruction:
       - If the instruction is impossible or highly illogical, set status to "red" and explain why in the message, but still provide a best-effort modification if possible.
     `
 
-    const result = await model.generateContent(prompt)
-    const responseText = result.response.text()
-    const data = JSON.parse(responseText) as AgentResponse
+    try {
+      const result = await withRetry(() => model.generateContent(prompt))
+      responseText = result.response.text()
+    } catch (err: any) {
+      errorCode = err.status?.toString() || err.message
+      throw err
+    } finally {
+      const duration = Date.now() - startTime
+      logAiAudit({
+        prompt,
+        response: responseText,
+        model: modelName,
+        duration_ms: duration,
+        error_code: errorCode
+      })
+    }
+
+    // Clean markdown code blocks if present
+    const cleanJson = responseText.replace(/```json\n?|\n?```/g, '').trim()
+    
+    let data: AgentResponse
+    try {
+        data = JSON.parse(cleanJson) as AgentResponse
+    } catch (parseError) {
+        logger.error('JSON Parse Error', { raw: responseText })
+        throw new Error('Failed to parse AI response as JSON')
+    }
 
     return { success: true, data }
 
-  } catch (error) {
-    console.error('AI Refinement Error:', error)
+  } catch (error: any) {
+    logger.error('AI Refinement Error', { error: error.message })
     return { success: false, error: 'Failed to refine route with AI' }
   }
 }

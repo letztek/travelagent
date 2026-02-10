@@ -303,7 +303,13 @@ export function RouteEditor({ initialConcept, requirement, requirementId }: Rout
         </div>
 
         {/* AI Chat Sidebar */}
-        <RouteAgentChat currentRoute={concept} onProposal={handleAIProposal} />
+        <RouteAgentChat 
+          currentRoute={concept} 
+          onProposal={handleAIProposal}
+          onAcceptProposal={acceptProposal}
+          onRejectProposal={rejectProposal}
+          isProposalMode={!!proposal}
+        />
       </div>
     </div>
   )

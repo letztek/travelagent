@@ -7,12 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { refineRouteWithAI, AgentResponse } from '../../route-agent'
 import { RouteConcept } from '@/schemas/route'
-import { Bot, User, Loader2, Sparkles } from 'lucide-react'
+import { Bot, User, Loader2, Sparkles, RefreshCw, X, Check } from 'lucide-react'
 import { TrafficLightStatus } from './TrafficLightStatus'
 
 interface RouteAgentChatProps {
   currentRoute: RouteConcept
   onProposal: (response: AgentResponse) => void
+  onAcceptProposal: () => void
+  onRejectProposal: () => void
+  isProposalMode: boolean
 }
 
 type Message = {
@@ -22,19 +25,27 @@ type Message = {
   status?: { type: 'green' | 'red'; message: string }
 }
 
-export function RouteAgentChat({ currentRoute, onProposal }: RouteAgentChatProps) {
+export function RouteAgentChat({ 
+  currentRoute, 
+  onProposal,
+  onAcceptProposal,
+  onRejectProposal,
+  isProposalMode
+}: RouteAgentChatProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [lastRequest, setLastRequest] = useState<{ route: RouteConcept, instruction: string } | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || isLoading) return
+    if (!input.trim() || isLoading || isProposalMode) return
 
     const userMsg: Message = { role: 'user', content: input }
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setIsLoading(true)
+    setLastRequest({ route: currentRoute, instruction: input })
 
     try {
       const result = await refineRouteWithAI(currentRoute, userMsg.content)
@@ -51,6 +62,37 @@ export function RouteAgentChat({ currentRoute, onProposal }: RouteAgentChatProps
         onProposal(aiResponse)
       } else {
         setMessages(prev => [...prev, { role: 'assistant', content: '抱歉，處理您的請求時發生錯誤。' }])
+      }
+    } catch (error) {
+      console.error(error)
+      setMessages(prev => [...prev, { role: 'assistant', content: '抱歉，發生未知錯誤。' }])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleRegenerate = async () => {
+    if (!lastRequest || isLoading) return
+    
+    setIsLoading(true)
+    // Remove last assistant message
+    setMessages(prev => prev.slice(0, -1))
+
+    try {
+      const result = await refineRouteWithAI(lastRequest.route, lastRequest.instruction)
+      
+      if (result.success && result.data) {
+        const aiResponse = result.data
+        const aiMsg: Message = {
+          role: 'assistant',
+          content: '我已重新嘗試優化了路線，請查看右側建議。',
+          thought: aiResponse.thought,
+          status: { type: aiResponse.analysis.status, message: aiResponse.analysis.message }
+        }
+        setMessages(prev => [...prev, aiMsg])
+        onProposal(aiResponse)
+      } else {
+        setMessages(prev => [...prev, { role: 'assistant', content: '抱歉，重新生成時發生錯誤。' }])
       }
     } catch (error) {
       console.error(error)
@@ -105,18 +147,42 @@ export function RouteAgentChat({ currentRoute, onProposal }: RouteAgentChatProps
             )}
           </div>
         </ScrollArea>
-        <form onSubmit={handleSubmit} className="p-3 border-t flex gap-2">
-          <Input 
-            value={input} 
-            onChange={(e) => setInput(e.target.value)} 
-            placeholder="輸入調整指令..."
-            className="text-xs"
-            disabled={isLoading}
-          />
-          <Button size="icon" type="submit" disabled={isLoading}>
-            <Sparkles className="h-4 w-4" />
-          </Button>
-        </form>
+
+        {isProposalMode ? (
+          <div className="p-3 border-t bg-primary/5 space-y-2">
+            <p className="text-[10px] font-bold text-center uppercase tracking-wider text-primary">檢視路線提案中</p>
+            <div className="flex gap-1">
+              <Button 
+                variant="outline" 
+                className="flex-1 h-8 text-[10px] px-1 border-amber-200 text-amber-600 hover:bg-amber-50" 
+                onClick={handleRegenerate}
+                disabled={isLoading}
+              >
+                {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="mr-1 h-3 w-3" />}
+                重試
+              </Button>
+              <Button variant="outline" className="flex-1 h-8 text-[10px] px-1" onClick={onRejectProposal} disabled={isLoading}>
+                <X className="mr-1 h-3 w-3" /> 捨棄
+              </Button>
+              <Button className="flex-1 h-8 text-[10px] px-1 bg-green-600 hover:bg-green-700 text-white" onClick={onAcceptProposal} disabled={isLoading}>
+                <Check className="mr-1 h-3 w-3" /> 套用
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="p-3 border-t flex gap-2">
+            <Input 
+              value={input} 
+              onChange={(e) => setInput(e.target.value)} 
+              placeholder="輸入調整指令..."
+              className="text-xs"
+              disabled={isLoading}
+            />
+            <Button size="icon" type="submit" disabled={isLoading || !input.trim()}>
+              <Sparkles className="h-4 w-4" />
+            </Button>
+          </form>
+        )}
       </CardContent>
     </Card>
   )

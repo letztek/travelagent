@@ -26,3 +26,70 @@ AI 智慧旅遊業務助理系統 (TravelAgent)：透過生成式 AI 技術，�
 7. **外部簡報工具 Prompt 生成 (已實作 US-107)**：自動生成適合外部 AI 簡報工具的結構化 Prompt。
 8. **使用者認證與資料隔離 (已實作 US-703)**：提供安全的登入與註冊流程，並透過資料庫層級的 RLS 確保使用者只能存取自己的需求單與行程。
 9. **個人化儀表板與流程優化 (已實作 US-702 & US-701)**：提供中心化的管理介面查看歷史需求與行程，並優化各規劃階段間的跳轉與返回機制。
+
+# 專案進度與待辦清單 (Project Status & Backlog)
+
+這是專案的唯一事實來源 (Source of Truth)，用於追蹤所有功能的實作狀態、新增需求及待修復事項。
+
+## 📊 整體進度摘要
+- **Sprint 1 (核心閉環):** ✅ 100% 已完成
+- **Sprint 2 (智慧優化):** ✅ 100% 已完成
+- **Sprint 3 (平台與安全):** 🔄 執行中 (Auth/Dashboard/Navigation 已完成)
+
+---
+
+## ✅ 已完成事項 (Completed)
+
+### Epic 1: 需求輸入與分析
+- **US-101:** 客戶需求結構化輸入表單 (UI + Supabase)
+- **US-102:** 資訊缺口偵測與提問 (GapWizard + AI Analysis)
+
+### Epic 2: 行程規劃與編輯
+- **US-103:** 初步行程概念與路線預覽 (RouteFlow)
+- **US-103-2:** 互動式路線規劃編輯器 (Dnd-kit + Route Architect Agent)
+- **US-104:** 結構化行程生成 (itinerary-generator Skill)
+- **US-105:** 直覺式行程編輯與 Word 匯出 (ItineraryEditor + export-word)
+- **US-105-2:** 互動式行程細節規劃師 (Activity Planner Agent)
+
+### Epic 3: 交付物生成
+- **US-107:** 外部簡報工具 Prompt 生成
+
+### Epic 6: 系統優化與技術債
+- **US-603:** 核心產生器升級 (Structured Output + Unified API Key)
+
+### Epic 7: 平台化與運維
+- **US-701:** 導航流程優化 (跳轉與返回機制)
+- **US-702:** 行程管理列表 (Dashboard)
+- **US-703:** 使用者認證與授權 (Supabase Auth + RLS)
+
+---
+
+## ⏳ 待執行事項 (Pending)
+
+### 高優先級 (High Priority)
+- **US-801:** CI/CD Pipeline 建立 (自動化測試與部署)
+- **US-802:** 雲端部署環境配置 (Vercel/Railway + 環境變數)
+- **US-803:** 程式碼安全審計 (安全性漏洞掃描)
+- **US-804:** Prompt Injection 防護審計 (強化 System Prompt)
+
+### 中優先級 (Medium Priority)
+- **US-401:** 行程天數調整與排序功能
+- **US-402:** 剪下/複製/貼上與遠距離移動操作
+- **US-501:** Google Flights 航班資訊整合
+- **US-601:** 雙模型 AI 架構優化 (效能與成本平衡)
+- **US-604:** AI 請求錯誤處理與重試機制 (提升系統韌性)
+- **US-605:** AI 外部搜尋工具整合 (Google Places API 即時資訊)
+- **US-607:** 全站 UI/UX 細節打磨與載入動畫優化
+
+### 低優先級 (Low Priority)
+- **US-106:** AI 行程總結與最後優化建議
+- **US-602:** 節點描述 AI 智慧填寫
+- **US-606:** AI 回應內容在地化 (Localization)
+- **US-704:** 帳號管理 (個人資料修改、密碼變更)
+- **US-901:** Release Note 與使用者操作手冊產出
+
+---
+
+## 🐞 待修復與追蹤事項 (Bugs & Tracking)
+- *(目前尚無回報之重大 Bug，待後續記錄)*
+

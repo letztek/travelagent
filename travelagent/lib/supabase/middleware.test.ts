@@ -41,7 +41,7 @@ test('updateSession redirects to /login if no user on protected path', async () 
   }
   
   const response = await updateSession(request as any)
-  expect(response.url).toContain('/login')
+  expect(response.url.toString()).toContain('/login')
 })
 
 test('updateSession allows access if user exists', async () => {

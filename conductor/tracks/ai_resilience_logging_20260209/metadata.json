@@ -1,0 +1,8 @@
+{
+  "track_id": "ai_resilience_logging_20260209",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-09T17:45:00Z",
+  "updated_at": "2026-02-09T17:45:00Z",
+  "description": "US-604 AI 韌性與日誌系統整合：實作自動重試機制、手動重試介面與 AI 審計日誌。"
+}

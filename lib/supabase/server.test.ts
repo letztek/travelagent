@@ -34,7 +34,7 @@ test('createClient calls createServerClient with env vars', async () => {
   const cookieOptions = mockCreateServerClient.mock.calls[0][2].cookies
 
   cookieOptions.getAll()
-  cookieOptions.setAll([{ name: 'test', value: 'val', options: {} }])
+  cookieOptions.setAll?.([{ name: 'test', value: 'val', options: {} }])
 })
 
 test('createClient throws error if env vars are missing', async () => {

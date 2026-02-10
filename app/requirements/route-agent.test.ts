@@ -46,6 +46,7 @@ const mockConcept: RouteConcept = {
 }
 
 test('refineRouteWithAI returns structured suggestion', async () => {
+  vi.stubEnv('GEMINI_API_KEY', 'fake-key')
   const result = await refineRouteWithAI(mockConcept, 'Add Osaka before Kyoto')
   
   expect(result.success).toBe(true)

@@ -54,7 +54,8 @@ const mockItinerary = {
 test('ItineraryEditor renders in view mode initially', () => {
   render(<ItineraryEditor itinerary={mockItinerary as any} itineraryId="123" />)
   expect(screen.getByText('Activity 1')).toBeDefined()
-  expect(screen.queryByRole('textbox')).toBeNull()
+  // The chat input might be there, but there should be no activity editing inputs
+  expect(screen.queryByDisplayValue('Activity 1')).toBeNull()
 })
 
 test('ItineraryEditor switches to edit mode', () => {

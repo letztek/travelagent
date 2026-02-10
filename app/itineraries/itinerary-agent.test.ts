@@ -47,6 +47,7 @@ const mockItinerary: Itinerary = {
 }
 
 test('refineItineraryWithAI returns structured suggestion', async () => {
+  vi.stubEnv('GEMINI_API_KEY', 'fake-key')
   const result = await refineItineraryWithAI(
     mockItinerary, 
     { dayIndex: 0, type: 'meal', itemId: 'dinner' }, 

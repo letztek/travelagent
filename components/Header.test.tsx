@@ -1,4 +1,4 @@
-import { expect, test, vi, beforeEach } from 'vitest'
+import { expect, test, vi, beforeEach, describe } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import Header from './Header'
 import { createClient } from '@/lib/supabase/server'

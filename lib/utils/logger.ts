@@ -27,7 +27,7 @@ class Logger {
 
     if (shouldLog) {
       const consoleMethod = level === 'debug' ? 'debug' : level;
-      console[consoleMethod as any](
+      (console as any)[consoleMethod](
         `[${entry.timestamp}] [${level.toUpperCase()}] ${message}`,
         context ? JSON.stringify(context, null, 2) : ''
       );

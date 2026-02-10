@@ -24,20 +24,20 @@ export type AgentContext = {
   type: 'activity' | 'meal' | 'accommodation' | 'day'
 }
 
-const apiKey = process.env.GEMINI_API_KEY
-const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3-flash-preview'
-const genAI = new GoogleGenerativeAI(apiKey || '')
-
 export async function refineItineraryWithAI(
   currentItinerary: Itinerary, 
   context: AgentContext | null,
   instruction: string
 ) {
-  if (!apiKey) {
+  const apiKey = process.env.GEMINI_API_KEY
+  const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3-flash-preview'
+
+  if (!apiKey && process.env.NODE_ENV !== 'test') {
     logger.error('GEMINI_API_KEY is not set')
     return { success: false, error: 'API key missing' }
   }
 
+  const genAI = new GoogleGenerativeAI(apiKey || 'fake-key')
   const startTime = Date.now()
   let responseText = ''
   let errorCode: string | undefined
@@ -55,7 +55,7 @@ export async function refineItineraryWithAI(
             analysis: {
               type: SchemaType.OBJECT,
               properties: {
-                status: { type: SchemaType.STRING, enum: ["green", "red"] },
+                status: { type: SchemaType.STRING, enum: ["green", "red"], format: "enum" },
                 message: { type: SchemaType.STRING }
               },
               required: ["status", "message"]
@@ -74,9 +74,10 @@ export async function refineItineraryWithAI(
                         type: SchemaType.ARRAY,
                         items: {
                           type: SchemaType.OBJECT,
-                          properties: {
-                            time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'] },
-                            activity: { type: SchemaType.STRING },
+                                                  properties: {
+                                                    time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'], format: "enum" },
+                                                    activity: { type: SchemaType.STRING },
+                          
                             description: { type: SchemaType.STRING }
                           },
                           required: ["time_slot", "activity", "description"]

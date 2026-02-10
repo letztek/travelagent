@@ -37,9 +37,9 @@ export async function generateItineraryDoc(itinerary: Itinerary): Promise<Blob> 
                 new TableRow({
                   tableHeader: true,
                   children: [
-                    new TableCell({ children: [new Paragraph({ text: "時段", bold: true })], width: { size: 15, type: WidthType.PERCENTAGE } }),
-                    new TableCell({ children: [new Paragraph({ text: "活動", bold: true })], width: { size: 25, type: WidthType.PERCENTAGE } }),
-                    new TableCell({ children: [new Paragraph({ text: "描述", bold: true })], width: { size: 60, type: WidthType.PERCENTAGE } }),
+                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "時段", bold: true })] })], width: { size: 15, type: WidthType.PERCENTAGE } }),
+                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "活動", bold: true })] })], width: { size: 25, type: WidthType.PERCENTAGE } }),
+                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "描述", bold: true })] })], width: { size: 60, type: WidthType.PERCENTAGE } }),
                   ],
                 }),
                 ...day.activities.map(act => 

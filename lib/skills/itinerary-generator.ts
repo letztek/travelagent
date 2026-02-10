@@ -36,7 +36,7 @@ export async function runItinerarySkill(requirement: Requirement, routeConcept?:
                   items: {
                     type: SchemaType.OBJECT,
                     properties: {
-                      time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'] },
+                      time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'], format: "enum" },
                       activity: { type: SchemaType.STRING },
                       description: { type: SchemaType.STRING }
                     },

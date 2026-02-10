@@ -13,12 +13,15 @@ async function testEndToEnd() {
   try {
     // 1. Get or Create a Requirement
     console.log('🔍 Fetching latest requirement...')
-    let { data: req, error } = await supabase
+    const fetchResult = await supabase
       .from('requirements')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
+    
+    let req = fetchResult.data
+    const error = fetchResult.error
 
     if (!req) {
       console.log('⚠️ No requirements found. Creating a test requirement...')
@@ -47,6 +50,7 @@ async function testEndToEnd() {
     console.log('🤖 Generating itinerary with AI (Gemini 3 Pro Preview)...')
     // Construct requirement object matching the Schema
     const requirementPayload = {
+      destinations: req.destinations || [],
       travel_dates: req.travel_dates,
       travelers: req.travelers,
       budget_range: req.budget_range,

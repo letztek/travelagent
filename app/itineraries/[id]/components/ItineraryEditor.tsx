@@ -108,7 +108,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     ...itinerary,
     days: itinerary.days.map((day, dIdx) => ({
       ...day,
-      activities: day.activities.map((act, aIdx) => ({
+      activities: day.activities.map((act: any, aIdx) => ({
         ...act,
         id: act.id || `act-${dIdx}-${aIdx}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
       }))
@@ -141,7 +141,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const findContainer = (id: string) => {
     if (id.startsWith('day-')) return id
     for (let d = 0; d < currentData.days.length; d++) {
-      const activity = currentData.days[d].activities.find(a => a.id === id)
+      const activity = currentData.days[d].activities.find((a: any) => a.id === id)
       if (activity) {
         return `day-${d}-${activity.time_slot}`
       }
@@ -175,8 +175,8 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     const activeItems = currentData.days[activeDayIndex].activities
     const overItems = currentData.days[overDayIndex].activities
 
-    const activeIndex = activeItems.findIndex(i => i.id === activeId)
-    const overIndex = overItems.findIndex(i => i.id === overId)
+    const activeIndex = activeItems.findIndex((i: any) => i.id === activeId)
+    const overIndex = overItems.findIndex((i: any) => i.id === overId)
 
     let newIndex: number
     if (overId.startsWith('day-')) {
@@ -199,7 +199,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     if (proposal) return
     const { active, over } = event
     const activeId = active.id as string
-    const overId = over.id as string
+    const overId = over?.id as string
 
     if (!over) {
       setActiveId(null)

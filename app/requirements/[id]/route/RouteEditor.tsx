@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { RouteConcept, RouteNode } from '@/schemas/route'
 import { Requirement } from '@/schemas/requirement'
 import { ConfirmRouteButton } from './ConfirmRouteButton'
@@ -66,22 +66,11 @@ export function RouteEditor({ initialConcept, requirement, requirementId }: Rout
     canRedo 
   } = useHistory(initialItems)
   
-  const [concept, setConcept] = useState<RouteConcept>(initialConcept)
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [newNodeData, setNewNodeData] = useState({ location: '', description: '', transport: '' })
-  
   // AI Proposal State
   const [proposal, setProposal] = useState<{ items: RouteNodeWithId[], rationale: string } | null>(null)
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
-
   // Sync items (either current or proposed) to concept for display/submission
-  useEffect(() => {
+  const concept = useMemo(() => {
     const activeItems = proposal ? proposal.items : items
     const updatedNodes = activeItems.map((item, index) => ({
       day: index + 1,
@@ -90,13 +79,16 @@ export function RouteEditor({ initialConcept, requirement, requirementId }: Rout
       transport: item.transport,
     }))
     
-    setConcept(prev => ({
-      ...prev,
+    return {
+      ...initialConcept,
       nodes: updatedNodes,
-      rationale: proposal ? proposal.rationale : prev.rationale,
+      rationale: proposal ? proposal.rationale : initialConcept.rationale,
       total_days: updatedNodes.length
-    }))
-  }, [items, proposal])
+    }
+  }, [items, proposal, initialConcept])
+
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [newNodeData, setNewNodeData] = useState({ location: '', description: '', transport: '' })
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
@@ -153,6 +145,13 @@ export function RouteEditor({ initialConcept, requirement, requirementId }: Rout
   }
 
   const displayItems = proposal ? proposal.items : items
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   return (
     <div className="container mx-auto py-10 max-w-6xl">

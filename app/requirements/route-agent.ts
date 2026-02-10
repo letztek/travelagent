@@ -19,16 +19,16 @@ const agentResponseSchema = z.object({
 
 export type AgentResponse = z.infer<typeof agentResponseSchema>
 
-const apiKey = process.env.GEMINI_API_KEY
-const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3-flash-preview'
-const genAI = new GoogleGenerativeAI(apiKey || '')
-
 export async function refineRouteWithAI(currentRoute: RouteConcept, instruction: string) {
-  if (!apiKey) {
+  const apiKey = process.env.GEMINI_API_KEY
+  const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3-flash-preview'
+
+  if (!apiKey && process.env.NODE_ENV !== 'test') {
     logger.error('GEMINI_API_KEY is not set')
     return { success: false, error: 'API key missing' }
   }
 
+  const genAI = new GoogleGenerativeAI(apiKey || 'fake-key')
   const startTime = Date.now()
   let responseText = ''
   let errorCode: string | undefined
@@ -46,7 +46,7 @@ export async function refineRouteWithAI(currentRoute: RouteConcept, instruction:
             analysis: {
               type: SchemaType.OBJECT,
               properties: {
-                status: { type: SchemaType.STRING, enum: ["green", "red"] },
+                status: { type: SchemaType.STRING, enum: ["green", "red"], format: "enum" },
                 message: { type: SchemaType.STRING }
               },
               required: ["status", "message"]

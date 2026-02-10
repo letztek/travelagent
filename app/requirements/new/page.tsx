@@ -90,7 +90,7 @@ export default function RequirementFormPage() {
   // Local state for destinations input
   const [destInput, setDestInput] = useState('')
 
-  const form = useForm<Requirement>({
+  const form = useForm<any>({
     resolver: zodResolver(requirementSchema),
     defaultValues: {
       origin: '',
@@ -179,7 +179,7 @@ export default function RequirementFormPage() {
 
   const removeDestination = (index: number) => {
     const current = form.getValues('destinations')
-    form.setValue('destinations', current.filter((_, i) => i !== index))
+    form.setValue('destinations', current.filter((_: any, i: number) => i !== index))
   }
 
   return (
@@ -223,7 +223,7 @@ export default function RequirementFormPage() {
                       />
                     </FormControl>
                     <div className="flex flex-wrap gap-2">
-                      {field.value?.map((dest, idx) => (
+                      {field.value?.map((dest: string, idx: number) => (
                         <Badge key={idx} variant="secondary" className="pl-2 pr-1 py-1">
                           {dest}
                           <button 
@@ -372,7 +372,7 @@ export default function RequirementFormPage() {
                                 ? field.onChange([...field.value, item.id])
                                 : field.onChange(
                                     field.value?.filter(
-                                      (value) => value !== item.id
+                                      (value: string) => value !== item.id
                                     )
                                   )
                             }}
@@ -411,7 +411,7 @@ export default function RequirementFormPage() {
                                 ? field.onChange([...field.value, item.id])
                                 : field.onChange(
                                     field.value?.filter(
-                                      (value) => value !== item.id
+                                      (value: string) => value !== item.id
                                     )
                                   )
                             }}

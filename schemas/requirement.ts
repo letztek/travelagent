@@ -22,7 +22,7 @@ export const requirementSchema = z.object({
   preferences: z.object({
     dietary: z.array(z.string()).default([]),
     accommodation: z.array(z.string()).default([]),
-  }).default({}),
+  }).default({ dietary: [], accommodation: [] }),
   notes: z.string().optional(),
 })
 

@@ -1,9 +1,9 @@
 import { expect, test, vi } from 'vitest'
 import { updateItinerary } from './actions'
 
-// Mock Supabase (Reuse existing mock structure or enhance it)
-vi.mock('@/lib/supabase', () => ({
-  getSupabase: vi.fn(() => ({
+// Mock Supabase Server Client
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(() => Promise.resolve({
     from: vi.fn(() => ({
       update: vi.fn(() => ({
         eq: vi.fn(() => ({

@@ -2,12 +2,16 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { gapAnalysisSchema, type GapAnalysis } from '@/schemas/gap-analysis'
 import { type Requirement } from '@/schemas/requirement'
 import { getSkillSchema } from './reader'
+import { withRetry } from '../utils/ai-retry'
+import { logAiAudit } from '../supabase/audit'
+import { logger } from '../utils/logger'
 
 export async function runGapAnalyzerSkill(requirement: Requirement): Promise<GapAnalysis> {
   const apiKey = process.env.GEMINI_API_KEY
   const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3-pro-preview'
 
   if (!apiKey) {
+    logger.error('GEMINI_API_KEY is not defined')
     throw new Error('GEMINI_API_KEY is not defined')
   }
 
@@ -46,11 +50,29 @@ export async function runGapAnalyzerSkill(requirement: Requirement): Promise<Gap
     Constraint: No Markdown blocks, no preamble, no postamble. Just pure JSON.
   `
 
-  const result = await model.generateContent(systemPrompt)
-  const response = await result.response
-  const text = response.text().trim()
+  const startTime = Date.now()
+  let responseText = ''
+  let errorCode: string | undefined
 
-  const cleanJson = text.replace(/^```json/, '').replace(/```$/, '').trim()
+  try {
+    const result = await withRetry(() => model.generateContent(systemPrompt))
+    const response = await result.response
+    responseText = response.text().trim()
+  } catch (err: any) {
+    errorCode = err.status?.toString() || err.message
+    throw err
+  } finally {
+    const duration = Date.now() - startTime
+    logAiAudit({
+      prompt: systemPrompt,
+      response: responseText,
+      model: modelName,
+      duration_ms: duration,
+      error_code: errorCode
+    })
+  }
+
+  const cleanJson = responseText.replace(/^```json/, '').replace(/```$/, '').trim()
   const parsedData = JSON.parse(cleanJson)
   
   return gapAnalysisSchema.parse(parsedData)

@@ -1,12 +1,16 @@
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
 import { routeConceptSchema, type RouteConcept } from '@/schemas/route'
 import { type Requirement } from '@/schemas/requirement'
+import { withRetry } from '../utils/ai-retry'
+import { logAiAudit } from '../supabase/audit'
+import { logger } from '../utils/logger'
 
 export async function runRoutePlannerSkill(requirement: Requirement): Promise<RouteConcept> {
   const apiKey = process.env.GEMINI_API_KEY
   const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3-pro-preview'
 
   if (!apiKey) {
+    logger.error('GEMINI_API_KEY is not defined')
     throw new Error('GEMINI_API_KEY is not defined')
   }
 
@@ -61,11 +65,29 @@ export async function runRoutePlannerSkill(requirement: Requirement): Promise<Ro
     The response (locations and rationale) MUST be in Traditional Chinese (繁體中文).
   `
 
-  const result = await model.generateContent(systemPrompt)
-  const response = await result.response
-  const text = response.text()
+  const startTime = Date.now()
+  let responseText = ''
+  let errorCode: string | undefined
 
-  const parsedData = JSON.parse(text)
+  try {
+    const result = await withRetry(() => model.generateContent(systemPrompt))
+    const response = await result.response
+    responseText = response.text()
+  } catch (err: any) {
+    errorCode = err.status?.toString() || err.message
+    throw err
+  } finally {
+    const duration = Date.now() - startTime
+    logAiAudit({
+      prompt: systemPrompt,
+      response: responseText,
+      model: modelName,
+      duration_ms: duration,
+      error_code: errorCode
+    })
+  }
+
+  const parsedData = JSON.parse(responseText)
   
   return routeConceptSchema.parse(parsedData)
 }

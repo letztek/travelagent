@@ -4,12 +4,13 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { updateItinerary } from '../../actions'
+import { updateItinerary, regenerateItinerary } from '../../actions'
 import { Itinerary, ItineraryDay } from '@/schemas/itinerary'
-import { Loader2, Pencil, Save, X, FileDown, Undo2, Redo2, Check, Sparkles, ArrowLeft } from 'lucide-react'
+import { Loader2, Pencil, Save, X, FileDown, Undo2, Redo2, Check, Sparkles, ArrowLeft, RefreshCw } from 'lucide-react'
 import { saveAs } from 'file-saver'
 import { generateItineraryDoc } from '@/lib/utils/export-word'
 import { useHistory } from '@/lib/hooks/use-history'
+import { AIErrorFallback } from '@/components/ui/ai-error-fallback'
 import Link from 'next/link'
 import {
   DndContext, 
@@ -66,9 +67,35 @@ type SelectedContext = AgentContext | null
 export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEditorProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [isRegenerating, setIsRegenerating] = useState(false)
+  const [regenerationError, setRegenerationError] = useState<string | null>(null)
   const [selectedContext, setSelectedContext] = useState<SelectedContext>(null)
   const router = useRouter()
   const [activeId, setActiveId] = useState<string | null>(null)
+
+  const handleRegenerate = async () => {
+    if (!confirm('確定要捨棄目前所有手動編輯並讓 AI 重新產生一份全新的行程嗎？')) return
+    
+    setIsRegenerating(true)
+    setRegenerationError(null)
+    
+    try {
+      const result = await regenerateItinerary(itineraryId)
+      if (result.success) {
+        // Since we got new content from DB, we should refresh the page or update state
+        router.refresh()
+        // Force state update if necessary (though refresh might be cleaner)
+        setData(result.data.content)
+        setIsEditing(false)
+      } else {
+        setRegenerationError(result.error || '重新產生失敗')
+      }
+    } catch (e: any) {
+      setRegenerationError(e.message || '發生未知錯誤')
+    } finally {
+      setIsRegenerating(false)
+    }
+  }
 
   // Presentation Prompt State with Cache
   const [presentationPrompts, setPresentationPrompts] = useState<{ zh: string | null; en: string | null }>({ zh: null, en: null })
@@ -393,6 +420,19 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
               </div>
             ) : (
               <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleRegenerate} 
+                  disabled={isRegenerating}
+                  className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                >
+                  {isRegenerating ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                  )}
+                  重新產生
+                </Button>
                 <Button variant="outline" onClick={() => handleGeneratePresentationPrompt()} disabled={isGeneratingPrompt}>
                   <Sparkles className="mr-2 h-4 w-4" /> 簡報 Prompt
                 </Button>
@@ -406,6 +446,16 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
             )}
           </div>
         </div>
+
+        {regenerationError && (
+          <div className="mb-8">
+            <AIErrorFallback 
+              error={regenerationError} 
+              onRetry={handleRegenerate} 
+              title="重新規劃失敗"
+            />
+          </div>
+        )}
 
         <div className="flex gap-6 items-start">
           <div className="flex-1 space-y-8 min-w-0">

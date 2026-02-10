@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { GapWizard } from './components/GapWizard'
+import { AIErrorFallback } from '@/components/ui/ai-error-fallback'
 import { Loader2, Sparkles, PlaneTakeoff, MapPin, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
@@ -66,8 +67,25 @@ export default function RequirementFormPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [analysis, setAnalysis] = useState<GapAnalysis | null>(null)
+  const [analysisError, setAnalysisError] = useState<string | null>(null)
   const [showAnalysis, setShowAnalysis] = useState(false)
   const [pendingValues, setPendingValues] = useState<Requirement | null>(null)
+
+  const handleRetryAnalysis = async () => {
+    const values = form.getValues()
+    setAnalysisError(null)
+    setIsAnalyzing(true)
+    const result = await analyzeGaps(values)
+    setIsAnalyzing(false)
+
+    if (result.success && result.data) {
+      setAnalysis(result.data)
+      setShowAnalysis(true)
+    } else {
+      setAnalysisError(result.error || '分析失敗')
+      setShowAnalysis(true) // Keep dialog open to show error
+    }
+  }
   
   // Local state for destinations input
   const [destInput, setDestInput] = useState('')
@@ -109,6 +127,7 @@ export default function RequirementFormPage() {
   }
 
   async function onSubmit(values: Requirement) {
+    setAnalysisError(null)
     setIsAnalyzing(true)
     const result = await analyzeGaps(values)
     setIsAnalyzing(false)
@@ -122,7 +141,10 @@ export default function RequirementFormPage() {
         setShowAnalysis(true)
       }
     } else {
-      handleFinalSubmit(values)
+      // If AI fails, we show the error with a retry option in the dialog
+      setAnalysisError(result.error || 'AI 診斷暫時不可用')
+      setPendingValues(values)
+      setShowAnalysis(true)
     }
   }
 
@@ -445,13 +467,31 @@ export default function RequirementFormPage() {
           <VisuallyHidden>
             <DialogTitle>AI 診斷精靈</DialogTitle>
           </VisuallyHidden>
-          {/* Wizard handles its own header/content/footer */}
-          {analysis && (
+          
+          {analysisError ? (
+            <div className="space-y-6 py-4">
+              <AIErrorFallback 
+                error={analysisError} 
+                onRetry={handleRetryAnalysis} 
+                title="AI 診斷暫時發生問題"
+              />
+              <div className="flex justify-center border-t pt-4">
+                <Button variant="ghost" onClick={() => handleFinalSubmit(pendingValues!)}>
+                  跳過 AI 診斷並直接儲存
+                </Button>
+              </div>
+            </div>
+          ) : analysis ? (
             <GapWizard 
               analysis={analysis} 
               onComplete={handleWizardComplete}
               onCancel={() => setShowAnalysis(false)}
             />
+          ) : (
+            <div className="flex flex-col items-center justify-center p-12 space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p>正在重新嘗試診斷...</p>
+            </div>
           )}
         </DialogContent>
       </Dialog>

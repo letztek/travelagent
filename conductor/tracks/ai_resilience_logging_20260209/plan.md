@@ -18,12 +18,12 @@
 ## Phase 2: AI 韌性核心 (Resilience Core)
 本階段實作自動重試邏輯。
 
-- [ ] Task: 建立 `withRetry` 高階函數
-    - [ ] 建立 `travelagent/lib/utils/ai-retry.ts`
-    - [ ] 實作指數退避 (Exponential Backoff) 邏輯
-    - [ ] 針對 503, 429 等特定錯誤代碼進行重試判斷
-- [ ] Task: 撰寫 `withRetry` 單元測試
-    - [ ] 模擬 API 失敗與成功場景，驗證重試次數與延遲時間
+- [x] Task: 建立 `withRetry` 高階函數 5f118b2
+    - [x] 建立 `travelagent/lib/utils/ai-retry.ts`
+    - [x] 實作指數退避 (Exponential Backoff) 邏輯
+    - [x] 針對 503, 429 等特定錯誤代碼進行重試判斷
+- [x] Task: 撰寫 `withRetry` 單元測試 5f118b2
+    - [x] 模擬 API 失敗與成功場景，驗證重試次數與延遲時間
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: AI 韌性核心' (Protocol in workflow.md)
 
 ## Phase 3: 系統整合 (Integration)

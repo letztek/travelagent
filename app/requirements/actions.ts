@@ -12,9 +12,21 @@ export async function createRequirement(data: Requirement) {
 
   // 2. Insert into Supabase
   const supabase = await createClient()
+  
+  // Get current user session
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'User not authenticated' }
+  }
+
   const { data: insertedData, error } = await supabase
     .from('requirements')
-    .insert([validated.data])
+    .insert([
+      {
+        ...validated.data,
+        user_id: user.id
+      }
+    ])
     .select()
     .single()
 

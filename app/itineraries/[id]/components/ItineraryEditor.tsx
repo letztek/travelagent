@@ -13,6 +13,7 @@ import { useHistory } from '@/lib/hooks/use-history'
 import { AIErrorFallback } from '@/components/ui/ai-error-fallback'
 import { syncItineraryDates, reorderArray } from '@/lib/utils/itinerary-utils'
 import { MoveDayDialog } from './MoveDayDialog'
+import { DaySidebar } from './DaySidebar'
 import Link from 'next/link'
 import {
   DndContext, 
@@ -507,6 +508,8 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
         )}
 
         <div className="flex gap-6 items-start">
+          <DaySidebar days={currentData.days.map(d => ({ day: d.day, date: d.date }))} />
+          
           <div className="flex-1 space-y-8 min-w-0">
             {proposal && (
               <div className="sticky top-4 z-20 bg-primary/10 backdrop-blur border-2 border-primary p-4 rounded-lg shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2 mb-6">
@@ -541,7 +544,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
               )}
 
               {currentData.days.map((day, dayIndex) => (
-                <div key={day.day} className="space-y-8">
+                <div key={day.day} id={`day-card-${day.day}`} className="space-y-8">
                   <Card className={`overflow-hidden transition-all ${proposal ? 'border-primary/30' : ''}`}>
                     <CardHeader className="bg-muted/30 pb-4">
                       <CardTitle className="flex justify-between items-center mb-2">

@@ -465,7 +465,12 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
                 <Button variant="ghost" size="sm" onClick={handleCancel} disabled={loading} className="h-8 text-xs">
                   取消
                 </Button>
-                <Button size="sm" onClick={handleSave} disabled={loading || !!proposal} className="h-8 text-xs">
+                <Button 
+                  size="sm" 
+                  onClick={handleSave} 
+                  disabled={loading || !!proposal} 
+                  className="h-8 text-xs bg-sky-500 hover:bg-sky-600 text-white border-0"
+                >
                   {loading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <Save className="mr-2 h-3 w-3" />}
                   儲存
                 </Button>
@@ -488,7 +493,11 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
                 <Button variant="outline" size="sm" onClick={handleExport} className="h-8 text-xs">
                   <FileDown className="mr-2 h-3 w-3" /> 匯出
                 </Button>
-                <Button size="sm" onClick={() => setIsEditing(true)} className="h-8 text-xs">
+                <Button 
+                  size="sm" 
+                  onClick={() => setIsEditing(true)} 
+                  className="h-8 text-xs bg-orange-500 hover:bg-orange-600 text-white border-0"
+                >
                   <Pencil className="mr-2 h-3 w-3" /> 編輯
                 </Button>
               </>
@@ -588,7 +597,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
                       />
                     </CardHeader>
                     <CardContent className="pt-6">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                         {(['Morning', 'Afternoon', 'Evening'] as const).map(slot => (
                           <TimeSlotColumn
                             key={slot}

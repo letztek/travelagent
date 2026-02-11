@@ -3,6 +3,9 @@ import { createRequirement } from './actions'
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => Promise.resolve({
+    auth: {
+      getUser: vi.fn(() => Promise.resolve({ data: { user: { id: 'user-123' } } })),
+    },
     from: vi.fn(() => ({
       insert: vi.fn(() => ({
         select: vi.fn(() => ({

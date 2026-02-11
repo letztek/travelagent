@@ -2,29 +2,28 @@ import fs from 'fs'
 import path from 'path'
 
 export function getSkillSchema(skillName: string, schemaName: string): string {
-  // In a real deployed environment (e.g. Vercel), accessing local files outside the project root might be tricky.
-  // However, for this project structure and MVP, we can assume the skills folder is accessible or copied.
-  // We will look for .gemini/skills relative to the project root.
-  
   const projectRoot = process.cwd()
-  // Adjust path to point to where .gemini folder is located relative to where nextjs is running
-  // Assuming nextjs is running in 'travelagent' directory, and .gemini is in the parent.
   
-  // STRATEGY: For now, to make it work in dev (and consistent with "Skill Driven"), 
-  // we will try to read from the parent directory.
+  // 1. Try internal path (for production and tests)
+  const internalPath = path.resolve(projectRoot, 'lib/skills/schemas', skillName, schemaName)
   
-  const schemaPath = path.resolve(projectRoot, '../.gemini/skills', skillName, 'references', schemaName)
+  // 2. Try parent .gemini path (for backward compatibility in local dev)
+  const geminiPath = path.resolve(projectRoot, '../.gemini/skills', skillName, 'references', schemaName)
   
-  try {
-    return fs.readFileSync(schemaPath, 'utf-8')
-  } catch (error) {
-    console.error(`Failed to read skill schema at ${schemaPath}`, error)
-    // Fallback for when running tests inside 'travelagent' directory where cwd is 'travelagent'
-    const fallbackPath = path.resolve(projectRoot, '.gemini/skills', skillName, 'references', schemaName)
+  // 3. Try local .gemini path (alternative local structure)
+  const localGeminiPath = path.resolve(projectRoot, '.gemini/skills', skillName, 'references', schemaName)
+
+  const pathsToTry = [internalPath, geminiPath, localGeminiPath]
+
+  for (const p of pathsToTry) {
     try {
-        return fs.readFileSync(fallbackPath, 'utf-8')
+      if (fs.existsSync(p)) {
+        return fs.readFileSync(p, 'utf-8')
+      }
     } catch (e) {
-        throw new Error(`Skill schema not found: ${skillName}/${schemaName}`)
+      // Continue to next path
     }
   }
+
+  throw new Error(`Skill schema not found: ${skillName}/${schemaName}. Checked: ${pathsToTry.join(', ')}`)
 }

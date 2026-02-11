@@ -16,9 +16,7 @@ export default async function ItineraryPage({ params }: ItineraryPageProps) {
   const itinerary = result.data.content
 
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-6">旅遊行程詳情</h1>
-      
+    <div className="w-full">
       <ItineraryEditor itinerary={itinerary} itineraryId={id} />
     </div>
   )

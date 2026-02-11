@@ -122,7 +122,7 @@ export function ItineraryAgentChat({
   return (
     <div 
       className={cn(
-        "h-[calc(100vh-3.5rem)] sticky top-14 flex flex-col border-l bg-background/50 backdrop-blur-sm transition-all duration-300 ease-in-out shrink-0",
+        "h-[calc(100vh-7.5rem)] sticky top-[7.5rem] flex flex-col border-l bg-background/50 backdrop-blur-sm transition-all duration-300 ease-in-out shrink-0",
         isCollapsed ? "w-12" : "w-80"
       )}
     >

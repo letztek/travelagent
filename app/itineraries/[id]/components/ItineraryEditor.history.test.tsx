@@ -48,7 +48,7 @@ test('ItineraryEditor shows undo/redo buttons in edit mode', () => {
   render(<ItineraryEditor itinerary={mockItinerary} itineraryId="123" />)
   
   // Enter edit mode
-  fireEvent.click(screen.getByText(/編輯行程/i))
+  fireEvent.click(screen.getByRole('button', { name: /編輯/i }))
   
   // These should fail currently
   expect(screen.getByRole('button', { name: /Undo/i })).toBeDefined()

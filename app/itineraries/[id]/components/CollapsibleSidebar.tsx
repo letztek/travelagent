@@ -16,7 +16,7 @@ export function CollapsibleSidebar({ days }: CollapsibleSidebarProps) {
   const scrollToDay = (dayNumber: number) => {
     const element = document.getElementById(`day-card-${dayNumber}`)
     if (element) {
-      const yOffset = -100
+      const yOffset = -130 // Header (64px) + Toolbar (56px) + buffer (10px)
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset
       window.scrollTo({ top: y, behavior: 'smooth' })
     }
@@ -25,7 +25,7 @@ export function CollapsibleSidebar({ days }: CollapsibleSidebarProps) {
   return (
     <div 
       className={cn(
-        "sticky top-20 h-[calc(100vh-6rem)] flex flex-col border-r bg-background/50 backdrop-blur-sm transition-all duration-300 ease-in-out z-10",
+        "sticky top-[7.5rem] h-[calc(100vh-7.5rem)] flex flex-col border-r bg-background/50 backdrop-blur-sm transition-all duration-300 ease-in-out z-10",
         isExpanded ? "w-48" : "w-14"
       )}
       onMouseEnter={() => setIsExpanded(true)}

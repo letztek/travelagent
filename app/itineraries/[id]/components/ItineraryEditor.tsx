@@ -440,8 +440,8 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-50 w-full backdrop-blur-md bg-background/80 border-b transition-all">
+      {/* Sticky Header - Offset by main Header height (h-16) */}
+      <div className="sticky top-16 z-50 w-full backdrop-blur-md bg-background/80 border-b transition-all">
         <div className="container mx-auto max-w-7xl h-14 flex items-center justify-between px-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" asChild className="rounded-full h-8 w-8">
@@ -455,10 +455,10 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
           <div className="flex items-center gap-2">
             {isEditing ? (
               <>
-                <Button variant="ghost" size="sm" onClick={undo} disabled={!canUndo || !!proposal} className="h-8 px-2">
+                <Button variant="ghost" size="sm" onClick={undo} disabled={!canUndo || !!proposal} className="h-8 px-2" aria-label="Undo">
                   <Undo2 className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={redo} disabled={!canRedo || !!proposal} className="h-8 px-2">
+                <Button variant="ghost" size="sm" onClick={redo} disabled={!canRedo || !!proposal} className="h-8 px-2" aria-label="Redo">
                   <Redo2 className="h-4 w-4" />
                 </Button>
                 <div className="w-px h-4 bg-border mx-1" />
@@ -542,115 +542,116 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
 
           <div className="flex gap-6 items-start">
             <div className="flex-1 space-y-8 min-w-0">
-            <div className={`space-y-8 ${proposal ? 'opacity-80' : ''}`}>
-              {isEditing && (
-                <div className="flex justify-center -mb-4 relative z-10">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="rounded-full h-8 w-8 p-0 border-dashed"
-                    onClick={() => handleAddDay(0)}
-                    title="在第一天前插入一天"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+              <div className={`space-y-8 ${proposal ? 'opacity-80' : ''}`}>
+                {isEditing && (
+                  <div className="flex justify-center -mb-4 relative z-10">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="rounded-full h-8 w-8 p-0 border-dashed"
+                      onClick={() => handleAddDay(0)}
+                      title="在第一天前插入一天"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
 
-              {currentData.days.map((day, dayIndex) => (
-                <div key={day.day} id={`day-card-${day.day}`} className="space-y-8">
-                  <Card className={`overflow-hidden transition-all ${proposal ? 'border-primary/30' : ''}`}>
-                    <CardHeader className="bg-muted/30 pb-4">
-                      <CardTitle className="flex justify-between items-center mb-2">
-                        <span>Day {day.day} - {day.date}</span>
-                        {isEditing && !proposal && (
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 px-2 text-xs text-muted-foreground hover:text-primary"
-                              onClick={() => setMoveDialog({ open: true, dayIndex: dayIndex })}
-                              title="移動此天位置"
-                            >
-                              <Undo2 className="h-3 w-3 rotate-90 mr-1" />
-                              移動
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
-                              onClick={() => handleDeleteDay(dayIndex)}
-                              title="刪除此天行程"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </CardTitle>
-                      <AccommodationEdit 
-                        value={day.accommodation} 
-                        isEditing={isEditing} 
-                        onChange={(val) => handleUpdateAccommodation(dayIndex, val)} 
-                        dayIndex={dayIndex}
-                        selectedContext={selectedContext}
-                        onSelectContext={handleSelectContext}
-                      />
-                    </CardHeader>
-                    <CardContent className="pt-6">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {(['Morning', 'Afternoon', 'Evening'] as const).map(slot => (
-                          <TimeSlotColumn
-                            key={slot}
-                            id={`day-${dayIndex}-${slot}`}
-                            title={slot}
-                            activities={day.activities.filter(a => a.time_slot === slot)}
-                            isEditing={isEditing && !proposal}
-                            onActivityUpdate={(actId, f, v) => handleUpdateActivity(dayIndex, actId, f, v)}
-                            onActivityDelete={(actId) => handleDeleteActivity(dayIndex, actId)}
-                            onAddActivity={() => handleAddActivity(dayIndex, slot)}
-                            dayIndex={dayIndex}
-                            selectedContext={selectedContext}
-                            onSelectContext={handleSelectContext}
-                          />
-                        ))}
+                {currentData.days.map((day, dayIndex) => (
+                  <div key={day.day} id={`day-card-${day.day}`} className="space-y-8">
+                    <Card className={`overflow-hidden transition-all ${proposal ? 'border-primary/30' : ''}`}>
+                      <CardHeader className="bg-muted/30 pb-4">
+                        <CardTitle className="flex justify-between items-center mb-2">
+                          <span>Day {day.day} - {day.date}</span>
+                          {isEditing && !proposal && (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-2 text-xs text-muted-foreground hover:text-primary"
+                                onClick={() => setMoveDialog({ open: true, dayIndex: dayIndex })}
+                                title="移動此天位置"
+                              >
+                                <Undo2 className="h-3 w-3 rotate-90 mr-1" />
+                                移動
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                                onClick={() => handleDeleteDay(dayIndex)}
+                                title="刪除此天行程"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </CardTitle>
+                        <AccommodationEdit 
+                          value={day.accommodation} 
+                          isEditing={isEditing} 
+                          onChange={(val) => handleUpdateAccommodation(dayIndex, val)} 
+                          dayIndex={dayIndex}
+                          selectedContext={selectedContext}
+                          onSelectContext={handleSelectContext}
+                        />
+                      </CardHeader>
+                      <CardContent className="pt-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                          {(['Morning', 'Afternoon', 'Evening'] as const).map(slot => (
+                            <TimeSlotColumn
+                              key={slot}
+                              id={`day-${dayIndex}-${slot}`}
+                              title={slot}
+                              activities={day.activities.filter(a => a.time_slot === slot)}
+                              isEditing={isEditing && !proposal}
+                              onActivityUpdate={(actId, f, v) => handleUpdateActivity(dayIndex, actId, f, v)}
+                              onActivityDelete={(actId) => handleDeleteActivity(dayIndex, actId)}
+                              onAddActivity={() => handleAddActivity(dayIndex, slot)}
+                              dayIndex={dayIndex}
+                              selectedContext={selectedContext}
+                              onSelectContext={handleSelectContext}
+                            />
+                          ))}
+                        </div>
+                        <MealsEdit 
+                          meals={day.meals} 
+                          isEditing={isEditing} 
+                          onChange={(type, val) => handleUpdateMeals(dayIndex, type, val)}
+                          dayIndex={dayIndex}
+                          selectedContext={selectedContext}
+                          onSelectContext={handleSelectContext}
+                        />
+                      </CardContent>
+                    </Card>
+                    
+                    {isEditing && !proposal && (
+                      <div className="flex justify-center -my-4 relative z-10">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="rounded-full h-8 w-8 p-0 border-dashed"
+                          onClick={() => handleAddDay(dayIndex + 1)}
+                          title={`在 Day ${day.day} 後插入一天`}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <MealsEdit 
-                        meals={day.meals} 
-                        isEditing={isEditing} 
-                        onChange={(type, val) => handleUpdateMeals(dayIndex, type, val)}
-                        dayIndex={dayIndex}
-                        selectedContext={selectedContext}
-                        onSelectContext={handleSelectContext}
-                      />
-                    </CardContent>
-                  </Card>
-                  
-                  {isEditing && !proposal && (
-                    <div className="flex justify-center -my-4 relative z-10">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="rounded-full h-8 w-8 p-0 border-dashed"
-                        onClick={() => handleAddDay(dayIndex + 1)}
-                        title={`在 Day ${day.day} 後插入一天`}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <ItineraryAgentChat 
-            currentItinerary={data}
-            focusedContext={selectedContext}
-            onProposal={handleAIProposal}
-            onAcceptProposal={acceptProposal}
-            onRejectProposal={rejectProposal}
-            isProposalMode={!!proposal}
-          />
+            <ItineraryAgentChat 
+              currentItinerary={data}
+              focusedContext={selectedContext}
+              onProposal={handleAIProposal}
+              onAcceptProposal={acceptProposal}
+              onRejectProposal={rejectProposal}
+              isProposalMode={!!proposal}
+            />
+          </div>
         </div>
       </div>
 
@@ -674,17 +675,16 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
         prompt={presentationPrompts[promptLanguage]} 
         isLoading={isGeneratingPrompt} 
         language={promptLanguage}
-                onLanguageChange={handleGeneratePresentationPrompt}
-              />
-        
-              <MoveDayDialog 
-                open={moveDialog.open}
-                onOpenChange={(open) => setMoveDialog(prev => ({ ...prev, open }))}
-                currentDay={moveDialog.dayIndex + 1}
-                totalDays={data.days.length}
-                onMove={handleMoveDay}
-              />
-            </DndContext>
-          )
-        }
-        
+        onLanguageChange={handleGeneratePresentationPrompt}
+      />
+
+      <MoveDayDialog 
+        open={moveDialog.open}
+        onOpenChange={(open) => setMoveDialog(prev => ({ ...prev, open }))}
+        currentDay={moveDialog.dayIndex + 1}
+        totalDays={data.days.length}
+        onMove={handleMoveDay}
+      />
+    </DndContext>
+  )
+}

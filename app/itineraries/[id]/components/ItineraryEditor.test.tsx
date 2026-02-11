@@ -60,8 +60,8 @@ test('ItineraryEditor renders in view mode initially', () => {
 
 test('ItineraryEditor switches to edit mode', () => {
   render(<ItineraryEditor itinerary={mockItinerary as any} itineraryId="123" />)
-  fireEvent.click(screen.getByText('編輯行程'))
-  expect(screen.getByText('儲存變更')).toBeDefined()
+  fireEvent.click(screen.getByRole('button', { name: /編輯/i }))
+  expect(screen.getByText('儲存')).toBeDefined()
   // Should see inputs now (simplified check)
   expect(screen.getAllByDisplayValue('Activity 1')).toBeDefined()
 })

@@ -13,7 +13,7 @@ import { useHistory } from '@/lib/hooks/use-history'
 import { AIErrorFallback } from '@/components/ui/ai-error-fallback'
 import { syncItineraryDates, reorderArray } from '@/lib/utils/itinerary-utils'
 import { MoveDayDialog } from './MoveDayDialog'
-import { DaySidebar } from './DaySidebar'
+import { CollapsibleSidebar } from './CollapsibleSidebar'
 import Link from 'next/link'
 import {
   DndContext, 
@@ -517,21 +517,22 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
         )}
       </div>
 
-      <div className="container mx-auto py-6 max-w-7xl">
-        {regenerationError && (
-          <div className="mb-6">
-            <AIErrorFallback 
-              error={regenerationError} 
-              onRetry={handleRegenerate} 
-              title="重新規劃失敗"
-            />
-          </div>
-        )}
+      <div className="flex min-h-[calc(100vh-3.5rem)]">
+        <CollapsibleSidebar days={currentData.days.map(d => ({ day: d.day, date: d.date }))} />
+        
+        <div className="flex-1 min-w-0 p-6">
+          {regenerationError && (
+            <div className="mb-6">
+              <AIErrorFallback 
+                error={regenerationError} 
+                onRetry={handleRegenerate} 
+                title="重新規劃失敗"
+              />
+            </div>
+          )}
 
-        <div className="flex gap-6 items-start">
-          <DaySidebar days={currentData.days.map(d => ({ day: d.day, date: d.date }))} />
-          
-          <div className="flex-1 space-y-8 min-w-0">
+          <div className="flex gap-6 items-start">
+            <div className="flex-1 space-y-8 min-w-0">
             <div className={`space-y-8 ${proposal ? 'opacity-80' : ''}`}>
               {isEditing && (
                 <div className="flex justify-center -mb-4 relative z-10">

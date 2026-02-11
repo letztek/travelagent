@@ -11,7 +11,8 @@ import { saveAs } from 'file-saver'
 import { generateItineraryDoc } from '@/lib/utils/export-word'
 import { useHistory } from '@/lib/hooks/use-history'
 import { AIErrorFallback } from '@/components/ui/ai-error-fallback'
-import { syncItineraryDates } from '@/lib/utils/itinerary-utils'
+import { syncItineraryDates, reorderArray } from '@/lib/utils/itinerary-utils'
+import { MoveDayDialog } from './MoveDayDialog'
 import Link from 'next/link'
 import {
   DndContext, 
@@ -70,9 +71,22 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const [loading, setLoading] = useState(false)
   const [isRegenerating, setIsRegenerating] = useState(false)
   const [regenerationError, setRegenerationError] = useState<string | null>(null)
+  const [moveDialog, setMoveDialog] = useState<{ open: boolean, dayIndex: number }>({ open: false, dayIndex: 0 })
   const [selectedContext, setSelectedContext] = useState<SelectedContext>(null)
   const router = useRouter()
   const [activeId, setActiveId] = useState<string | null>(null)
+
+  const handleMoveDay = (targetIndex: number) => {
+    const startIndex = moveDialog.dayIndex
+    if (startIndex === targetIndex) return
+    
+    const startDate = data.days[0].date
+    const reorderedDays = reorderArray(data.days, startIndex, targetIndex)
+    
+    // Auto sync all dates and day numbers
+    const syncedDays = syncItineraryDates(reorderedDays, startDate)
+    setData({ ...data, days: syncedDays as any })
+  }
 
   const handleRegenerate = async () => {
     if (!confirm('確定要捨棄目前所有手動編輯並讓 AI 重新產生一份全新的行程嗎？')) return
@@ -537,6 +551,16 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
                             <Button
                               variant="ghost"
                               size="sm"
+                              className="h-8 px-2 text-xs text-muted-foreground hover:text-primary"
+                              onClick={() => setMoveDialog({ open: true, dayIndex: dayIndex })}
+                              title="移動此天位置"
+                            >
+                              <Undo2 className="h-3 w-3 rotate-90 mr-1" />
+                              移動
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
                               onClick={() => handleDeleteDay(dayIndex)}
                               title="刪除此天行程"
@@ -633,8 +657,17 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
         prompt={presentationPrompts[promptLanguage]} 
         isLoading={isGeneratingPrompt} 
         language={promptLanguage}
-        onLanguageChange={handleGeneratePresentationPrompt}
-      />
-    </DndContext>
-  )
-}
+                onLanguageChange={handleGeneratePresentationPrompt}
+              />
+        
+              <MoveDayDialog 
+                open={moveDialog.open}
+                onOpenChange={(open) => setMoveDialog(prev => ({ ...prev, open }))}
+                currentDay={moveDialog.dayIndex + 1}
+                totalDays={data.days.length}
+                onMove={handleMoveDay}
+              />
+            </DndContext>
+          )
+        }
+        

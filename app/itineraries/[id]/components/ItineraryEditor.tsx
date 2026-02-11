@@ -440,65 +440,86 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="container mx-auto py-10 max-w-7xl">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild className="rounded-full">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-50 w-full backdrop-blur-md bg-background/80 border-b transition-all">
+        <div className="container mx-auto max-w-7xl h-14 flex items-center justify-between px-4">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" asChild className="rounded-full h-8 w-8">
               <Link href="/itineraries">
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
-            <h1 className="text-2xl font-bold">行程詳情編輯器</h1>
+            <h1 className="text-lg font-semibold truncate">行程詳情編輯器</h1>
           </div>
-          <div className="flex gap-2">
+          
+          <div className="flex items-center gap-2">
             {isEditing ? (
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={undo} disabled={!canUndo || !!proposal} aria-label="Undo">
+              <>
+                <Button variant="ghost" size="sm" onClick={undo} disabled={!canUndo || !!proposal} className="h-8 px-2">
                   <Undo2 className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon" onClick={redo} disabled={!canRedo || !!proposal} aria-label="Redo">
+                <Button variant="ghost" size="sm" onClick={redo} disabled={!canRedo || !!proposal} className="h-8 px-2">
                   <Redo2 className="h-4 w-4" />
                 </Button>
-                <div className="w-px h-6 bg-border mx-2" />
-                <Button variant="ghost" onClick={handleCancel} disabled={loading}>
-                  <X className="mr-2 h-4 w-4" /> 取消
+                <div className="w-px h-4 bg-border mx-1" />
+                <Button variant="ghost" size="sm" onClick={handleCancel} disabled={loading} className="h-8 text-xs">
+                  取消
                 </Button>
-                <Button onClick={handleSave} disabled={loading || !!proposal}>
-                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  儲存變更
+                <Button size="sm" onClick={handleSave} disabled={loading || !!proposal} className="h-8 text-xs">
+                  {loading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <Save className="mr-2 h-3 w-3" />}
+                  儲存
                 </Button>
-              </div>
+              </>
             ) : (
-              <div className="flex gap-2">
+              <>
                 <Button 
                   variant="outline" 
+                  size="sm"
                   onClick={handleRegenerate} 
                   disabled={isRegenerating}
-                  className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                  className="h-8 text-xs text-amber-600 border-amber-200 hover:bg-amber-50"
                 >
-                  {isRegenerating ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                  )}
-                  重新產生
+                  {isRegenerating ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <RefreshCw className="mr-2 h-3 w-3" />}
+                  重產
                 </Button>
-                <Button variant="outline" onClick={() => handleGeneratePresentationPrompt()} disabled={isGeneratingPrompt}>
-                  <Sparkles className="mr-2 h-4 w-4" /> 簡報 Prompt
+                <Button variant="outline" size="sm" onClick={() => handleGeneratePresentationPrompt()} disabled={isGeneratingPrompt} className="h-8 text-xs">
+                  <Sparkles className="mr-2 h-3 w-3" /> 簡報
                 </Button>
-                <Button variant="outline" onClick={handleExport}>
-                  <FileDown className="mr-2 h-4 w-4" /> 匯出 Word
+                <Button variant="outline" size="sm" onClick={handleExport} className="h-8 text-xs">
+                  <FileDown className="mr-2 h-3 w-3" /> 匯出
                 </Button>
-                <Button onClick={() => setIsEditing(true)}>
-                  <Pencil className="mr-2 h-4 w-4" /> 編輯行程
+                <Button size="sm" onClick={() => setIsEditing(true)} className="h-8 text-xs">
+                  <Pencil className="mr-2 h-3 w-3" /> 編輯
                 </Button>
-              </div>
+              </>
             )}
           </div>
         </div>
 
+        {/* Secondary AI Proposal Bar */}
+        {proposal && (
+          <div className="bg-primary/10 border-b border-primary/20 animate-in slide-in-from-top-2">
+            <div className="container mx-auto max-w-7xl h-10 flex items-center justify-between px-4">
+              <div className="flex items-center gap-2 text-xs font-medium text-primary">
+                <Sparkles className="h-3 w-3" />
+                <span>AI 建議了一份新的細節規劃</span>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="ghost" onClick={rejectProposal} className="h-7 text-xs hover:text-destructive">
+                  捨棄
+                </Button>
+                <Button size="sm" onClick={acceptProposal} className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white border-0">
+                  <Check className="mr-1 h-3 w-3" /> 套用
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="container mx-auto py-6 max-w-7xl">
         {regenerationError && (
-          <div className="mb-8">
+          <div className="mb-6">
             <AIErrorFallback 
               error={regenerationError} 
               onRetry={handleRegenerate} 
@@ -511,23 +532,6 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
           <DaySidebar days={currentData.days.map(d => ({ day: d.day, date: d.date }))} />
           
           <div className="flex-1 space-y-8 min-w-0">
-            {proposal && (
-              <div className="sticky top-4 z-20 bg-primary/10 backdrop-blur border-2 border-primary p-4 rounded-lg shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2 mb-6">
-                <div className="flex items-center gap-2 font-semibold text-primary">
-                  <Sparkles className="h-5 w-5" />
-                  <span>AI 建議了一份新的細節規劃</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="ghost" onClick={rejectProposal}>
-                    <X className="mr-2 h-4 w-4" /> 捨棄
-                  </Button>
-                  <Button size="sm" onClick={acceptProposal} className="bg-green-600 hover:bg-green-700 text-white">
-                    <Check className="mr-2 h-4 w-4" /> 套用建議
-                  </Button>
-                </div>
-              </div>
-            )}
-
             <div className={`space-y-8 ${proposal ? 'opacity-80' : ''}`}>
               {isEditing && (
                 <div className="flex justify-center -mb-4 relative z-10">

@@ -12,12 +12,20 @@ export async function generateItinerary(requirement: Requirement, requirementId:
     
     // Save to Supabase
     const supabase = await createClient()
+    
+    // Get current user session
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: 'User not authenticated' }
+    }
+
     const { data, error } = await supabase
       .from('itineraries')
       .insert([
         {
           requirement_id: requirementId,
-          content: itineraryData
+          content: itineraryData,
+          user_id: user.id
         }
       ])
       .select()

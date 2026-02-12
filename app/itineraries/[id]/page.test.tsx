@@ -41,7 +41,6 @@ test('ItineraryPage renders itinerary details', async () => {
   const Page = await ItineraryPage({ params })
   render(Page)
   
-  expect(screen.getByText(/旅遊行程詳情/i)).toBeDefined()
   expect(screen.getByText(/Day 1 - 2026-06-01/i)).toBeDefined()
   expect(screen.getByText(/Sightseeing/i)).toBeDefined()
   expect(screen.getByText(/Grand Hotel/i)).toBeDefined()

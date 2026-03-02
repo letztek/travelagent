@@ -27,6 +27,7 @@ export default function RootLayout({
     <html lang="zh-TW">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans bg-slate-50/50`}
+        suppressHydrationWarning
       >
         <Header />
         {children}

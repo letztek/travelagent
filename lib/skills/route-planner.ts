@@ -7,7 +7,7 @@ import { logger } from '../utils/logger'
 
 export async function runRoutePlannerSkill(requirement: Requirement): Promise<RouteConcept> {
   const apiKey = process.env.GEMINI_API_KEY
-  const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3-pro-preview'
+  const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3.1-pro-preview'
 
   if (!apiKey) {
     logger.error('GEMINI_API_KEY is not defined')

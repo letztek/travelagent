@@ -17,7 +17,7 @@ async function testGemini3Connection() {
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.1-pro-preview' })
 
     const result = await model.generateContent('Say "Gemini 3 Pro is active!" if you can hear me.')
     const response = await result.response

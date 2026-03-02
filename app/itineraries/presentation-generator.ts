@@ -12,7 +12,7 @@ const genAI = new GoogleGenerativeAI(apiKey || '')
 export async function generatePresentationPrompt(itinerary: Itinerary, language: 'zh' | 'en' = 'zh') {
   try {
     // Use Pro model for creative writing
-    const model = genAI.getGenerativeModel({ model: "gemini-3-pro-preview" })
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" })
 
     const langInstruction = language === 'zh' 
       ? "The response content (Slide Titles, Bullet points, Descriptions) MUST be in Traditional Chinese (繁體中文)."

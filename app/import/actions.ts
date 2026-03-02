@@ -2,6 +2,8 @@
 
 import { runImportParserSkill, FileData } from '@/lib/skills/import-parser'
 import { createClient } from '@/lib/supabase/server'
+import { type Requirement } from '@/schemas/requirement'
+import { type Itinerary } from '@/schemas/itinerary'
 
 /**
  * Parses import data by invoking the Gemini multi-modal skill.
@@ -35,3 +37,54 @@ export async function parseImportData(textInput: string, filesDataUrls: string[]
 
   return result
 }
+
+/**
+ * Finalizes the import by saving the requirement and itinerary to the database.
+ */
+export async function finalizeImport(metadata: Requirement, itineraryDraft: Itinerary) {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  // 1. Insert Requirement
+  const { data: reqData, error: reqError } = await supabase
+    .from('requirements')
+    .insert([
+      {
+        ...metadata,
+        user_id: user.id
+      }
+    ])
+    .select()
+    .single()
+
+  if (reqError) {
+    console.error('Failed to create requirement:', reqError)
+    return { success: false, error: reqError.message }
+  }
+
+  // 2. Insert Itinerary Draft
+  const { data: itinData, error: itinError } = await supabase
+    .from('itineraries')
+    .insert([
+      {
+        requirement_id: reqData.id,
+        content: itineraryDraft,
+        user_id: user.id
+      }
+    ])
+    .select()
+    .single()
+
+  if (itinError) {
+    console.error('Failed to create itinerary:', itinError)
+    // Could optionally rollback requirement here, but ignoring for simplicity
+    return { success: false, error: itinError.message }
+  }
+
+  return { success: true, itineraryId: itinData.id }
+}
+

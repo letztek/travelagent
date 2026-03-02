@@ -2,6 +2,12 @@ import { expect, test, describe, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ImportWizard } from './ImportWizard'
 
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+  }))
+}))
+
 describe('ImportWizard', () => {
   beforeEach(() => {
     vi.clearAllMocks()

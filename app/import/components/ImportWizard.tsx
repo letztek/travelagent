@@ -12,7 +12,7 @@ import { ImportReview } from './ImportReview'
 import { ImportParserResult } from '@/lib/skills/import-parser'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-const ALLOWED_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'image/jpeg']
+const ALLOWED_TYPES = ['application/pdf', 'image/png', 'image/jpeg']
 
 export function ImportWizard() {
   const router = useRouter()
@@ -55,7 +55,7 @@ export function ImportWizard() {
   const validateAndAddFiles = (newFiles: File[]) => {
     const validFiles = newFiles.filter(file => {
       if (!ALLOWED_TYPES.includes(file.type)) {
-        setError(`不支援的檔案格式：${file.name}。請上傳 PDF, Word 或圖片檔。`)
+        setError(`不支援的檔案格式：${file.name}。請上傳 PDF 或圖片檔。`)
         return false
       }
       if (file.size > MAX_FILE_SIZE) {
@@ -86,9 +86,14 @@ export function ImportWizard() {
     try {
       const base64Files = await Promise.all(files.map(fileToBase64))
       const result = await parseImportData(textInput, base64Files)
-      setParsedData(result)
+      
+      if (result.success && result.data) {
+        setParsedData(result.data)
+      } else {
+        setError(result.error || '解析失敗，請稍後再試。')
+      }
     } catch (err: any) {
-      setError(err.message || '解析失敗，請稍後再試。')
+      setError(err.message || '系統發生預期外的錯誤。')
     } finally {
       setIsProcessing(false)
     }
@@ -172,7 +177,7 @@ export function ImportWizard() {
       <Card>
         <CardHeader>
           <CardTitle>上傳檔案</CardTitle>
-          <CardDescription>支援 PDF, Word (.docx), JPG, PNG，單檔最大 10MB。</CardDescription>
+          <CardDescription>支援 PDF, JPG, PNG，單檔最大 10MB。</CardDescription>
         </CardHeader>
         <CardContent>
           <div
@@ -192,7 +197,7 @@ export function ImportWizard() {
             <input
               type="file"
               multiple
-              accept=".pdf,.docx,image/jpeg,image/png"
+              accept=".pdf,image/jpeg,image/png"
               className="hidden"
               id="file-upload"
               onChange={handleFileInput}

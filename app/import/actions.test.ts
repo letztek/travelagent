@@ -59,7 +59,18 @@ describe('import actions', () => {
       const filesDataUrls = ['data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==']
 
       const result = await parseImportData(textInput, filesDataUrls)
-      expect(result.itinerary.title).toBe('東京五日遊')
+      expect(result.success).toBe(true)
+      expect(result.data?.itinerary.title).toBe('東京五日遊')
+    })
+
+    test('returns error if user is not authenticated', async () => {
+      vi.mocked(createClient).mockResolvedValueOnce({
+        auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: new Error('Not auth') }) },
+      } as any)
+
+      const result = await parseImportData('', [])
+      expect(result.success).toBe(false)
+      expect(result.error).toBe('Unauthorized')
     })
   })
 

@@ -11,31 +11,34 @@ import { type Itinerary } from '@/schemas/itinerary'
  * @param filesDataUrls Array of data URLs (e.g. "data:image/png;base64,iVBO...")
  */
 export async function parseImportData(textInput: string, filesDataUrls: string[]) {
-  const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-  if (authError || !user) {
-    throw new Error('Unauthorized')
+    if (authError || !user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    const files: FileData[] = filesDataUrls.map(dataUrl => {
+      const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/)
+      if (!matches || matches.length !== 3) {
+        throw new Error('Invalid file format: must be a base64 encoded data URL')
+      }
+
+      return {
+        mimeType: matches[1],
+        base64Data: matches[2]
+      }
+    })
+
+    // Call the AI skill
+    const result = await runImportParserSkill(textInput, files)
+
+    return { success: true, data: result }
+  } catch (error: any) {
+    console.error('Parse Import Data Error:', error)
+    return { success: false, error: error.message || 'Failed to parse import data' }
   }
-
-  const files: FileData[] = filesDataUrls.map(dataUrl => {
-    // A data URL looks like: data:[<mediatype>][;base64],<data>
-    // Example: data:image/png;base64,iVBOR...
-    const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/)
-    if (!matches || matches.length !== 3) {
-      throw new Error('Invalid file format: must be a base64 encoded data URL')
-    }
-
-    return {
-      mimeType: matches[1],
-      base64Data: matches[2]
-    }
-  })
-
-  // Call the AI skill
-  const result = await runImportParserSkill(textInput, files)
-
-  return result
 }
 
 /**

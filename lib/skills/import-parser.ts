@@ -25,7 +25,8 @@ export async function runImportParserSkill(
   files: FileData[]
 ): Promise<ImportParserResult> {
   const apiKey = process.env.GEMINI_API_KEY
-  const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3.1-pro-preview'
+  const primaryModelName = process.env.GEMINI_MODEL_NAME || 'gemini-3.1-pro-preview'
+  const fallbackModelName = 'gemini-3-flash-preview' // Used on retry if 503/429 occurs
 
   if (!apiKey) {
     logger.error('GEMINI_API_KEY is not defined')
@@ -33,85 +34,82 @@ export async function runImportParserSkill(
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    generationConfig: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: SchemaType.OBJECT,
-        properties: {
-          extracted_metadata: {
-            type: SchemaType.OBJECT,
-            properties: {
-              destinations: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-              origin: { type: SchemaType.STRING },
-              travel_dates: {
-                type: SchemaType.OBJECT,
-                properties: {
-                  start: { type: SchemaType.STRING },
-                  end: { type: SchemaType.STRING }
-                },
-                required: ["start", "end"]
+  const generationConfig = {
+    responseMimeType: "application/json",
+    responseSchema: {
+      type: SchemaType.OBJECT,
+      properties: {
+        extracted_metadata: {
+          type: SchemaType.OBJECT,
+          properties: {
+            destinations: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+            origin: { type: SchemaType.STRING },
+            travel_dates: {
+              type: SchemaType.OBJECT,
+              properties: {
+                start: { type: SchemaType.STRING },
+                end: { type: SchemaType.STRING }
               },
-              travelers: {
-                type: SchemaType.OBJECT,
-                properties: {
-                  adult: { type: SchemaType.INTEGER },
-                  child: { type: SchemaType.INTEGER },
-                  infant: { type: SchemaType.INTEGER },
-                  senior: { type: SchemaType.INTEGER }
-                },
-                required: ["adult", "child", "infant", "senior"]
-              },
-              budget_range: { type: SchemaType.STRING }
+              required: ["start", "end"]
             },
-            required: ["destinations", "origin", "travel_dates", "travelers", "budget_range"]
+            travelers: {
+              type: SchemaType.OBJECT,
+              properties: {
+                adult: { type: SchemaType.INTEGER },
+                child: { type: SchemaType.INTEGER },
+                infant: { type: SchemaType.INTEGER },
+                senior: { type: SchemaType.INTEGER }
+              },
+              required: ["adult", "child", "infant", "senior"]
+            },
+            budget_range: { type: SchemaType.STRING }
           },
-          itinerary: {
-            type: SchemaType.OBJECT,
-            properties: {
-              title: { type: SchemaType.STRING },
-              days: {
-                type: SchemaType.ARRAY,
-                items: {
-                  type: SchemaType.OBJECT,
-                  properties: {
-                    day: { type: SchemaType.INTEGER },
-                    date: { type: SchemaType.STRING },
-                    activities: {
-                      type: SchemaType.ARRAY,
-                      items: {
-                        type: SchemaType.OBJECT,
-                        properties: {
-                          time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'], format: "enum" },
-                          activity: { type: SchemaType.STRING },
-                          description: { type: SchemaType.STRING }
-                        },
-                        required: ["time_slot", "activity", "description"]
-                      }
-                    },
-                    meals: {
+          required: ["destinations", "origin", "travel_dates", "travelers", "budget_range"]
+        },
+        itinerary: {
+          type: SchemaType.OBJECT,
+          properties: {
+            title: { type: SchemaType.STRING },
+            days: {
+              type: SchemaType.ARRAY,
+              items: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  day: { type: SchemaType.INTEGER },
+                  date: { type: SchemaType.STRING },
+                  activities: {
+                    type: SchemaType.ARRAY,
+                    items: {
                       type: SchemaType.OBJECT,
                       properties: {
-                        breakfast: { type: SchemaType.STRING },
-                        lunch: { type: SchemaType.STRING },
-                        dinner: { type: SchemaType.STRING }
+                        time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'], format: "enum" },
+                        activity: { type: SchemaType.STRING },
+                        description: { type: SchemaType.STRING }
                       },
-                      required: ["breakfast", "lunch", "dinner"]
-                    },
-                    accommodation: { type: SchemaType.STRING }
+                      required: ["time_slot", "activity", "description"]
+                    }
                   },
-                  required: ["day", "date", "activities", "meals", "accommodation"]
-                }
+                  meals: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                      breakfast: { type: SchemaType.STRING },
+                      lunch: { type: SchemaType.STRING },
+                      dinner: { type: SchemaType.STRING }
+                    },
+                    required: ["breakfast", "lunch", "dinner"]
+                  },
+                  accommodation: { type: SchemaType.STRING }
+                },
+                required: ["day", "date", "activities", "meals", "accommodation"]
               }
-            },
-            required: ["title", "days"]
-          }
-        },
-        required: ["extracted_metadata", "itinerary"]
-      }
+            }
+          },
+          required: ["title", "days"]
+        }
+      },
+      required: ["extracted_metadata", "itinerary"]
     }
-  })
+  }
 
   const systemPrompt = `
     你是一位專業的旅遊資料解析助理。你的任務是從使用者提供的文字或圖片、文件（行程表、報價單、對話截圖等）中，盡可能完整地萃取出旅遊行程相關資訊，並將其轉換為結構化的 JSON 格式。
@@ -140,9 +138,17 @@ export async function runImportParserSkill(
   const startTime = Date.now()
   let responseText = ''
   let errorCode: string | undefined
+  let finalModelUsed = primaryModelName
 
   try {
-    const result = await withRetry(() => model.generateContent(parts))
+    const result = await withRetry(async (attempt) => {
+      finalModelUsed = attempt > 0 ? fallbackModelName : primaryModelName;
+      if (attempt > 0) {
+        logger.info(`Fallback triggered: Switching model to ${finalModelUsed} for attempt ${attempt + 1}`)
+      }
+      const model = genAI.getGenerativeModel({ model: finalModelUsed, generationConfig })
+      return model.generateContent(parts)
+    })
     const response = await result.response
     responseText = response.text()
   } catch (err: any) {
@@ -153,7 +159,7 @@ export async function runImportParserSkill(
     logAiAudit({
       prompt: systemPrompt,
       response: responseText,
-      model: modelName,
+      model: finalModelUsed,
       duration_ms: duration,
       error_code: errorCode
     })

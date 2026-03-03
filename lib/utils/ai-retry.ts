@@ -12,7 +12,7 @@ interface RetryOptions {
  * Implements exponential backoff.
  */
 export async function withRetry<T>(
-  fn: () => Promise<T>,
+  fn: (attempt: number) => Promise<T>,
   options: RetryOptions = {}
 ): Promise<T> {
   const {
@@ -42,7 +42,7 @@ export async function withRetry<T>(
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await fn();
+      return await fn(attempt);
     } catch (error: any) {
       lastError = error;
       

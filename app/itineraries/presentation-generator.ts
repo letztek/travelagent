@@ -2,6 +2,8 @@
 
 import { Itinerary } from '@/schemas/itinerary'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { withRetry } from '@/lib/utils/ai-retry'
+import { logger } from '@/lib/utils/logger'
 
 const apiKey = process.env.GEMINI_API_KEY
 if (!apiKey) {
@@ -11,8 +13,8 @@ const genAI = new GoogleGenerativeAI(apiKey || '')
 
 export async function generatePresentationPrompt(itinerary: Itinerary, language: 'zh' | 'en' = 'zh') {
   try {
-    // Use Pro model for creative writing
-    const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" })
+    const primaryModelName = process.env.GEMINI_MODEL_NAME || 'gemini-3.1-pro-preview'
+    const fallbackModelName = 'gemini-2.5-pro'
 
     const langInstruction = language === 'zh' 
       ? "The response content (Slide Titles, Bullet points, Descriptions) MUST be in Traditional Chinese (繁體中文)."
@@ -68,8 +70,19 @@ export async function generatePresentationPrompt(itinerary: Itinerary, language:
       - Output ONLY the Markdown text. No conversational filler.
     `
 
-    const result = await model.generateContent(prompt)
-    const responseText = result.response.text()
+    let responseText = ''
+    let finalModelUsed = primaryModelName
+
+    const result = await withRetry(async (attempt) => {
+      finalModelUsed = attempt > 0 ? fallbackModelName : primaryModelName
+      if (attempt > 0) {
+        logger.info(`Fallback triggered: Switching model to ${finalModelUsed} for attempt ${attempt + 1}`)
+      }
+      const model = genAI.getGenerativeModel({ model: finalModelUsed })
+      return model.generateContent(prompt)
+    })
+    
+    responseText = result.response.text()
     
     return { success: true, data: responseText }
 

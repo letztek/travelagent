@@ -21,7 +21,7 @@ describe('ImportWizard', () => {
 
   test('accepts text input', () => {
     render(<ImportWizard />)
-    const textarea = screen.getByPlaceholderText(/貼上行程表文字/)
+    const textarea = screen.getByPlaceholderText(/貼上行程表文字/) as HTMLTextAreaElement
     fireEvent.change(textarea, { target: { value: 'Day 1: Arrive in Tokyo' } })
     expect(textarea.value).toBe('Day 1: Arrive in Tokyo')
   })
@@ -29,7 +29,7 @@ describe('ImportWizard', () => {
   test('validates file type', async () => {
     render(<ImportWizard />)
     const file = new File(['hello'], 'hello.txt', { type: 'text/plain' })
-    const input = screen.getByLabelText('瀏覽檔案')
+    const input = screen.getByLabelText('瀏覽檔案') as HTMLInputElement
     
     // Using Object.defineProperty to set files because fireEvent.change doesn't set files property correctly for input type="file"
     Object.defineProperty(input, 'files', {

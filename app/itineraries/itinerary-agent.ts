@@ -27,16 +27,16 @@ export interface ItineraryAgentResult {
   error?: string
 }
 
-const apiKey = process.env.GEMINI_API_KEY
-const primaryModelName = process.env.GEMINI_PRIMARY_MODEL || 'gemini-3-flash-preview'
-const fallbackModelName = 'gemini-2.5-flash'
-const genAI = new GoogleGenerativeAI(apiKey || '')
-
 export async function refineItineraryWithAI(
   currentItinerary: Itinerary, 
   context: AgentContext | null,
   instruction: string
 ): Promise<ItineraryAgentResult> {
+  const apiKey = process.env.GEMINI_API_KEY
+  const primaryModelName = process.env.GEMINI_PRIMARY_MODEL || 'gemini-3-flash-preview'
+  const fallbackModelName = 'gemini-2.5-flash'
+  const genAI = new GoogleGenerativeAI(apiKey || '')
+
   if (!apiKey) {
     logger.error('GEMINI_API_KEY is not set')
     return { success: false, error: 'API key missing' }

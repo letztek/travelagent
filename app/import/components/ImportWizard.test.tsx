@@ -13,10 +13,10 @@ describe('ImportWizard', () => {
     vi.clearAllMocks()
   })
 
-  test('renders correctly with title and description', () => {
+  test('renders correctly with card title', () => {
     render(<ImportWizard />)
-    expect(screen.getByText('AI 智慧匯入精靈')).toBeDefined()
-    expect(screen.getByText(/上傳客戶提供的舊行程/)).toBeDefined()
+    expect(screen.getByText('上傳檔案')).toBeDefined()
+    expect(screen.getByText(/支援 PDF, JPG, PNG/)).toBeDefined()
   })
 
   test('accepts text input', () => {

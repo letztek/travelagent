@@ -168,12 +168,7 @@ export function ImportWizard() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">AI 智慧匯入精靈</h1>
-        <p className="text-muted-foreground">上傳客戶提供的舊行程、競品 PDF 或截圖，AI 將自動為您解析為可編輯的結構化行程。</p>
-      </div>
-
+    <div className="max-w-2xl mx-auto space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>上傳檔案</CardTitle>

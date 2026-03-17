@@ -25,8 +25,8 @@ export async function runImportParserSkill(
   files: FileData[]
 ): Promise<ImportParserResult> {
   const apiKey = process.env.GEMINI_API_KEY
-  const primaryModelName = process.env.GEMINI_MODEL_NAME || 'gemini-3.1-pro-preview'
-  const fallbackModelName = 'gemini-2.5-pro' // Used on retry if 503/429 occurs
+  const primaryModelName = process.env.GEMINI_PRIMARY_MODEL || 'gemini-3-flash-preview'
+  const fallbackModelName = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash'
 
   if (!apiKey) {
     logger.error('GEMINI_API_KEY is not defined')
@@ -108,7 +108,7 @@ export async function runImportParserSkill(
         }
       },
       required: ["extracted_metadata", "itinerary"]
-    }
+    } as any
   }
 
   const systemPrompt = `

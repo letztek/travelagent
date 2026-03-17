@@ -8,7 +8,8 @@ import { logger } from '../utils/logger'
 
 export async function runGapAnalyzerSkill(requirement: Requirement): Promise<GapAnalysis> {
   const apiKey = process.env.GEMINI_API_KEY
-  const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3.1-pro-preview'
+  const primaryModelName = process.env.GEMINI_PRIMARY_MODEL || 'gemini-3-flash-preview'
+  const fallbackModelName = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash'
 
   if (!apiKey) {
     logger.error('GEMINI_API_KEY is not defined')
@@ -16,8 +17,6 @@ export async function runGapAnalyzerSkill(requirement: Requirement): Promise<Gap
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: modelName })
-
   const schemaContent = getSkillSchema('gap-analyzer', 'gap-analysis-schema.md')
 
   const systemPrompt = `
@@ -53,9 +52,17 @@ export async function runGapAnalyzerSkill(requirement: Requirement): Promise<Gap
   const startTime = Date.now()
   let responseText = ''
   let errorCode: string | undefined
+  let finalModelUsed = primaryModelName
 
   try {
-    const result = await withRetry(() => model.generateContent(systemPrompt))
+    const result = await withRetry(async (attempt) => {
+      finalModelUsed = attempt > 0 ? fallbackModelName : primaryModelName;
+      if (attempt > 0) {
+        logger.info(`Fallback triggered: Switching model to ${finalModelUsed} for attempt ${attempt + 1}`)
+      }
+      const model = genAI.getGenerativeModel({ model: finalModelUsed })
+      return model.generateContent(systemPrompt)
+    })
     const response = await result.response
     responseText = response.text().trim()
   } catch (err: any) {
@@ -66,7 +73,7 @@ export async function runGapAnalyzerSkill(requirement: Requirement): Promise<Gap
     logAiAudit({
       prompt: systemPrompt,
       response: responseText,
-      model: modelName,
+      model: finalModelUsed,
       duration_ms: duration,
       error_code: errorCode
     })

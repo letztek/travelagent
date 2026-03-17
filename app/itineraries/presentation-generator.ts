@@ -13,8 +13,8 @@ const genAI = new GoogleGenerativeAI(apiKey || '')
 
 export async function generatePresentationPrompt(itinerary: Itinerary, language: 'zh' | 'en' = 'zh') {
   try {
-    const primaryModelName = process.env.GEMINI_MODEL_NAME || 'gemini-3.1-pro-preview'
-    const fallbackModelName = 'gemini-2.5-pro'
+    const primaryModelName = process.env.GEMINI_PRIMARY_MODEL || 'gemini-3-flash-preview'
+    const fallbackModelName = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash'
 
     const langInstruction = language === 'zh' 
       ? "The response content (Slide Titles, Bullet points, Descriptions) MUST be in Traditional Chinese (繁體中文)."

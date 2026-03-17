@@ -1,111 +1,52 @@
-'use server'
-
-import { Itinerary, itinerarySchema } from '@/schemas/itinerary'
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
-import { z } from 'zod'
+import { GoogleGenerativeAI, SchemaType, type GenerationConfig } from '@google/generative-ai'
+import { itinerarySchema, type Itinerary } from '@/schemas/itinerary'
 import { withRetry } from '@/lib/utils/ai-retry'
-import { logAiAudit } from '@/lib/supabase/audit'
 import { logger } from '@/lib/utils/logger'
 
-const itineraryAgentResponseSchema = z.object({
-  thought: z.string().describe('The agent\'s reasoning process.'),
-  analysis: z.object({
-    status: z.enum(['green', 'red']).describe('Green if the suggestion is logical, Red if there are issues.'),
-    message: z.string().describe('Explanation of the status.'),
-  }),
-  proposed_itinerary: itinerarySchema.describe('The modified itinerary based on user instruction.'),
-})
+// NOTE: We cannot use logAiAudit here if this file is imported by Client Components
+// because logAiAudit eventually depends on next/headers which is server-only.
 
-export type ItineraryAgentResponse = z.infer<typeof itineraryAgentResponseSchema>
-
-export type AgentContext = {
+export interface AgentContext {
   dayIndex: number
-  itemId?: string
   type: 'activity' | 'meal' | 'accommodation' | 'day'
+  itemId?: string
 }
+
+export interface ItineraryAgentResponse {
+  thought: string
+  analysis: {
+    status: 'green' | 'red'
+    message: string
+  }
+  proposed_itinerary: Itinerary
+}
+
+export interface ItineraryAgentResult {
+  success: boolean
+  data?: ItineraryAgentResponse
+  error?: string
+}
+
+const apiKey = process.env.GEMINI_API_KEY
+const primaryModelName = process.env.GEMINI_PRIMARY_MODEL || 'gemini-3-flash-preview'
+const fallbackModelName = 'gemini-2.5-flash'
+const genAI = new GoogleGenerativeAI(apiKey || '')
 
 export async function refineItineraryWithAI(
   currentItinerary: Itinerary, 
   context: AgentContext | null,
   instruction: string
-) {
-  const apiKey = process.env.GEMINI_API_KEY
-  const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3-flash-preview'
-
-  if (!apiKey && process.env.NODE_ENV !== 'test') {
+): Promise<ItineraryAgentResult> {
+  if (!apiKey) {
     logger.error('GEMINI_API_KEY is not set')
     return { success: false, error: 'API key missing' }
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey || 'fake-key')
   const startTime = Date.now()
   let responseText = ''
-  let errorCode: string | undefined
+  let finalModelUsed = primaryModelName
 
   try {
-    const model = genAI.getGenerativeModel({
-      model: modelName,
-      generationConfig: {
-        responseMimeType: "application/json",
-        // ... rest of config
-        responseSchema: {
-          type: SchemaType.OBJECT,
-          properties: {
-            thought: { type: SchemaType.STRING },
-            analysis: {
-              type: SchemaType.OBJECT,
-              properties: {
-                status: { type: SchemaType.STRING, enum: ["green", "red"], format: "enum" },
-                message: { type: SchemaType.STRING }
-              },
-              required: ["status", "message"]
-            },
-            proposed_itinerary: {
-              type: SchemaType.OBJECT,
-              properties: {
-                days: {
-                  type: SchemaType.ARRAY,
-                  items: {
-                    type: SchemaType.OBJECT,
-                    properties: {
-                      day: { type: SchemaType.INTEGER },
-                      date: { type: SchemaType.STRING },
-                      activities: {
-                        type: SchemaType.ARRAY,
-                        items: {
-                          type: SchemaType.OBJECT,
-                                                  properties: {
-                                                    time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'], format: "enum" },
-                                                    activity: { type: SchemaType.STRING },
-                          
-                            description: { type: SchemaType.STRING }
-                          },
-                          required: ["time_slot", "activity", "description"]
-                        }
-                      },
-                      meals: {
-                        type: SchemaType.OBJECT,
-                        properties: {
-                          breakfast: { type: SchemaType.STRING },
-                          lunch: { type: SchemaType.STRING },
-                          dinner: { type: SchemaType.STRING }
-                        },
-                        required: ["breakfast", "lunch", "dinner"]
-                      },
-                      accommodation: { type: SchemaType.STRING }
-                    },
-                    required: ["day", "date", "activities", "meals", "accommodation"]
-                  }
-                }
-              },
-              required: ["days"]
-            }
-          },
-          required: ["thought", "analysis", "proposed_itinerary"]
-        }
-      }
-    })
-
     const contextDesc = context 
       ? `Focus on Day ${context.dayIndex + 1}, Item Type: ${context.type}${context.itemId ? `, Item ID: ${context.itemId}` : ''}`
       : 'No specific context selected.'
@@ -135,38 +76,91 @@ export async function refineItineraryWithAI(
       - Ensure 'analysis' provides feedback on logic (e.g., if a restaurant is closed or far away -> Red light).
     `
 
-    try {
-      const result = await withRetry(() => model.generateContent(prompt))
-      responseText = result.response.text()
-    } catch (err: any) {
-      errorCode = err.status?.toString() || err.message
-      throw err
-    } finally {
-      const duration = Date.now() - startTime
-      logAiAudit({
-        prompt,
-        response: responseText,
-        model: modelName,
-        duration_ms: duration,
-        error_code: errorCode
+    const generationConfig: GenerationConfig = {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: SchemaType.OBJECT,
+        properties: {
+          thought: { type: SchemaType.STRING },
+          analysis: {
+            type: SchemaType.OBJECT,
+            properties: {
+              status: { type: SchemaType.STRING, enum: ["green", "red"] },
+              message: { type: SchemaType.STRING }
+            },
+            required: ["status", "message"]
+          },
+          proposed_itinerary: {
+            type: SchemaType.OBJECT,
+            properties: {
+              days: {
+                type: SchemaType.ARRAY,
+                items: {
+                  type: SchemaType.OBJECT,
+                  properties: {
+                    day: { type: SchemaType.INTEGER },
+                    date: { type: SchemaType.STRING },
+                    activities: {
+                      type: SchemaType.ARRAY,
+                      items: {
+                        type: SchemaType.OBJECT,
+                        properties: {
+                          time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'] },
+                          activity: { type: SchemaType.STRING },
+                          description: { type: SchemaType.STRING }
+                        },
+                        required: ["time_slot", "activity", "description"]
+                      }
+                    },
+                    meals: {
+                      type: SchemaType.OBJECT,
+                      properties: {
+                        breakfast: { type: SchemaType.STRING },
+                        lunch: { type: SchemaType.STRING },
+                        dinner: { type: SchemaType.STRING }
+                      },
+                      required: ["breakfast", "lunch", "dinner"]
+                    },
+                    accommodation: { type: SchemaType.STRING }
+                  },
+                  required: ["day", "date", "activities", "meals", "accommodation"]
+                }
+              }
+            },
+            required: ["days"]
+          }
+        },
+        required: ["thought", "analysis", "proposed_itinerary"]
+      } as any
+    }
+
+    const result = await withRetry(async (attempt) => {
+      finalModelUsed = attempt > 0 ? fallbackModelName : primaryModelName;
+      if (attempt > 0) {
+        logger.info(`Fallback triggered: Switching model to ${finalModelUsed} for attempt ${attempt + 1}`)
+      }
+      const model = genAI.getGenerativeModel({
+        model: finalModelUsed,
+        generationConfig
       })
-    }
-
-    // Clean markdown code blocks if present
-    const cleanJson = responseText.replace(/```json\n?|\n?```/g, '').trim()
+      return model.generateContent(prompt)
+    })
     
-    let data: ItineraryAgentResponse
-    try {
-        data = JSON.parse(cleanJson) as ItineraryAgentResponse
-    } catch (parseError) {
-        logger.error('JSON Parse Error', { raw: responseText })
-        throw new Error('Failed to parse AI response as JSON')
+    responseText = result.response.text()
+    const parsed = JSON.parse(responseText)
+    
+    // Validate proposed_itinerary with zod
+    itinerarySchema.parse(parsed.proposed_itinerary)
+
+    return { 
+      success: true, 
+      data: parsed as unknown as ItineraryAgentResponse
     }
-
-    return { success: true, data }
-
   } catch (error: any) {
-    logger.error('AI Refinement Error', { error: error.message })
+    logger.error('Itinerary refinement failed', { 
+      error: error.message,
+      stack: error.stack
+    })
     return { success: false, error: 'Failed to refine itinerary with AI' }
   }
 }

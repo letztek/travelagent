@@ -7,7 +7,8 @@ import { logger } from '../utils/logger'
 
 export async function runRoutePlannerSkill(requirement: Requirement): Promise<RouteConcept> {
   const apiKey = process.env.GEMINI_API_KEY
-  const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3.1-pro-preview'
+  const primaryModelName = process.env.GEMINI_PRIMARY_MODEL || 'gemini-3-flash-preview'
+  const fallbackModelName = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash'
 
   if (!apiKey) {
     logger.error('GEMINI_API_KEY is not defined')
@@ -15,33 +16,30 @@ export async function runRoutePlannerSkill(requirement: Requirement): Promise<Ro
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    generationConfig: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: SchemaType.OBJECT,
-        properties: {
-          nodes: {
-            type: SchemaType.ARRAY,
-            items: {
-              type: SchemaType.OBJECT,
-              properties: {
-                day: { type: SchemaType.INTEGER },
-                location: { type: SchemaType.STRING },
-                description: { type: SchemaType.STRING },
-                transport: { type: SchemaType.STRING }
-              },
-              required: ["day", "location"]
-            }
-          },
-          rationale: { type: SchemaType.STRING },
-          total_days: { type: SchemaType.INTEGER }
+  const generationConfig = {
+    responseMimeType: "application/json",
+    responseSchema: {
+      type: SchemaType.OBJECT,
+      properties: {
+        nodes: {
+          type: SchemaType.ARRAY,
+          items: {
+            type: SchemaType.OBJECT,
+            properties: {
+              day: { type: SchemaType.INTEGER },
+              location: { type: SchemaType.STRING },
+              description: { type: SchemaType.STRING },
+              transport: { type: SchemaType.STRING }
+            },
+            required: ["day", "location"]
+          }
         },
-        required: ["nodes", "rationale", "total_days"]
-      }
-    }
-  })
+        rationale: { type: SchemaType.STRING },
+        total_days: { type: SchemaType.INTEGER }
+      },
+      required: ["nodes", "rationale", "total_days"]
+    } as any
+  }
 
   const systemPrompt = `
     You are a strategic travel planner.
@@ -68,9 +66,20 @@ export async function runRoutePlannerSkill(requirement: Requirement): Promise<Ro
   const startTime = Date.now()
   let responseText = ''
   let errorCode: string | undefined
+  let finalModelUsed = primaryModelName
 
   try {
-    const result = await withRetry(() => model.generateContent(systemPrompt))
+    const result = await withRetry(async (attempt) => {
+      finalModelUsed = attempt > 0 ? fallbackModelName : primaryModelName;
+      if (attempt > 0) {
+        logger.info(`Fallback triggered: Switching model to ${finalModelUsed} for attempt ${attempt + 1}`)
+      }
+      const model = genAI.getGenerativeModel({
+        model: finalModelUsed,
+        generationConfig
+      })
+      return model.generateContent(systemPrompt)
+    })
     const response = await result.response
     responseText = response.text()
   } catch (err: any) {
@@ -81,7 +90,7 @@ export async function runRoutePlannerSkill(requirement: Requirement): Promise<Ro
     logAiAudit({
       prompt: systemPrompt,
       response: responseText,
-      model: modelName,
+      model: finalModelUsed,
       duration_ms: duration,
       error_code: errorCode
     })

@@ -8,7 +8,8 @@ import { logger } from '../utils/logger'
 
 export async function runItinerarySkill(requirement: Requirement, routeConcept?: RouteConcept): Promise<Itinerary> {
   const apiKey = process.env.GEMINI_API_KEY
-  const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3.1-pro-preview'
+  const primaryModelName = process.env.GEMINI_PRIMARY_MODEL || 'gemini-3-flash-preview'
+  const fallbackModelName = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash'
 
   if (!apiKey) {
     logger.error('GEMINI_API_KEY is not defined')
@@ -16,53 +17,49 @@ export async function runItinerarySkill(requirement: Requirement, routeConcept?:
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    generationConfig: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: SchemaType.OBJECT,
-        properties: {
-          title: { type: SchemaType.STRING },
-          days: {
-            type: SchemaType.ARRAY,
-            items: {
-              type: SchemaType.OBJECT,
-              properties: {
-                day: { type: SchemaType.INTEGER },
-                date: { type: SchemaType.STRING },
-                activities: {
-                  type: SchemaType.ARRAY,
-                  items: {
-                    type: SchemaType.OBJECT,
-                    properties: {
-                      time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'], format: "enum" },
-                      activity: { type: SchemaType.STRING },
-                      description: { type: SchemaType.STRING }
-                    },
-                    required: ["time_slot", "activity", "description"]
-                  }
-                },
-                meals: {
+  const generationConfig = {
+    responseMimeType: "application/json",
+    responseSchema: {
+      type: SchemaType.OBJECT,
+      properties: {
+        title: { type: SchemaType.STRING },
+        days: {
+          type: SchemaType.ARRAY,
+          items: {
+            type: SchemaType.OBJECT,
+            properties: {
+              day: { type: SchemaType.INTEGER },
+              date: { type: SchemaType.STRING },
+              activities: {
+                type: SchemaType.ARRAY,
+                items: {
                   type: SchemaType.OBJECT,
                   properties: {
-                    breakfast: { type: SchemaType.STRING },
-                    lunch: { type: SchemaType.STRING },
-                    dinner: { type: SchemaType.STRING }
+                    time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'], format: "enum" },
+                    activity: { type: SchemaType.STRING },
+                    description: { type: SchemaType.STRING }
                   },
-                  required: ["breakfast", "lunch", "dinner"]
-                },
-                accommodation: { type: SchemaType.STRING }
+                  required: ["time_slot", "activity", "description"]
+                }
               },
-              required: ["day", "date", "activities", "meals", "accommodation"]
-            }
+              meals: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  breakfast: { type: SchemaType.STRING },
+                  lunch: { type: SchemaType.STRING },
+                  dinner: { type: SchemaType.STRING }
+                },
+                required: ["breakfast", "lunch", "dinner"]
+              },
+              accommodation: { type: SchemaType.STRING }
+            },
+            required: ["day", "date", "activities", "meals", "accommodation"]
           }
-        },
-        required: ["days"]
-      }
-    }
-  })
-
+        }
+      },
+      required: ["days"]
+    } as any
+  }
   const systemPrompt = `
     你是一位專業的旅遊顧問助理。
     請根據客戶的需求，生成一份詳細且地理邏輯合理（不走回頭路、交通時間最佳化）的旅遊行程。
@@ -93,9 +90,20 @@ export async function runItinerarySkill(requirement: Requirement, routeConcept?:
   const startTime = Date.now()
   let responseText = ''
   let errorCode: string | undefined
+  let finalModelUsed = primaryModelName
 
   try {
-    const result = await withRetry(() => model.generateContent(systemPrompt))
+    const result = await withRetry(async (attempt) => {
+      finalModelUsed = attempt > 0 ? fallbackModelName : primaryModelName;
+      if (attempt > 0) {
+        logger.info(`Fallback triggered: Switching model to ${finalModelUsed} for attempt ${attempt + 1}`)
+      }
+      const model = genAI.getGenerativeModel({
+        model: finalModelUsed,
+        generationConfig
+      })
+      return model.generateContent(systemPrompt)
+    })
     const response = await result.response
     responseText = response.text()
   } catch (err: any) {
@@ -107,7 +115,7 @@ export async function runItinerarySkill(requirement: Requirement, routeConcept?:
     logAiAudit({
       prompt: systemPrompt,
       response: responseText,
-      model: modelName,
+      model: finalModelUsed,
       duration_ms: duration,
       error_code: errorCode
     })

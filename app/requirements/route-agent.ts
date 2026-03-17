@@ -1,86 +1,48 @@
-'use server'
-
-import { RouteConcept, routeConceptSchema } from '@/schemas/route'
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
-import { z } from 'zod'
+import { GoogleGenerativeAI, SchemaType, type GenerationConfig } from '@google/generative-ai'
+import { routeConceptSchema, type RouteConcept } from '@/schemas/route'
 import { withRetry } from '@/lib/utils/ai-retry'
-import { logAiAudit } from '@/lib/supabase/audit'
 import { logger } from '@/lib/utils/logger'
 
-// Define the response schema for the agent
-const agentResponseSchema = z.object({
-  thought: z.string().describe('The agent\'s reasoning process.'),
-  analysis: z.object({
-    status: z.enum(['green', 'red']).describe('Green if the route is logical, Red if there are issues.'),
-    message: z.string().describe('Explanation of the status, e.g., "Route is efficient" or "Too much travel in one day".'),
-  }),
-  proposed_route: routeConceptSchema.describe('The modified route concept based on user instruction.'),
-})
+// NOTE: We cannot use logAiAudit here if this file is imported by Client Components
+// because logAiAudit eventually depends on next/headers which is server-only.
 
-export type AgentResponse = z.infer<typeof agentResponseSchema>
+export interface AgentResponse {
+  thought: string
+  analysis: {
+    status: 'green' | 'red'
+    message: string
+  }
+  proposed_route: RouteConcept
+}
 
-export async function refineRouteWithAI(currentRoute: RouteConcept, instruction: string) {
-  const apiKey = process.env.GEMINI_API_KEY
-  const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-3-flash-preview'
+export interface RouteAgentResult {
+  success: boolean
+  data?: AgentResponse
+  error?: string
+}
 
-  if (!apiKey && process.env.NODE_ENV !== 'test') {
+const apiKey = process.env.GEMINI_API_KEY
+const primaryModelName = process.env.GEMINI_PRIMARY_MODEL || 'gemini-3-flash-preview'
+const fallbackModelName = 'gemini-2.5-flash'
+const genAI = new GoogleGenerativeAI(apiKey || '')
+
+export async function refineRouteWithAI(
+  currentRoute: RouteConcept, 
+  instruction: string
+): Promise<RouteAgentResult> {
+  if (!apiKey) {
     logger.error('GEMINI_API_KEY is not set')
     return { success: false, error: 'API key missing' }
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey || 'fake-key')
   const startTime = Date.now()
   let responseText = ''
-  let errorCode: string | undefined
+  let finalModelUsed = primaryModelName
 
   try {
-    const model = genAI.getGenerativeModel({
-      model: modelName,
-      generationConfig: {
-        responseMimeType: "application/json",
-        // ... rest of config
-        responseSchema: {
-          type: SchemaType.OBJECT,
-          properties: {
-            thought: { type: SchemaType.STRING },
-            analysis: {
-              type: SchemaType.OBJECT,
-              properties: {
-                status: { type: SchemaType.STRING, enum: ["green", "red"], format: "enum" },
-                message: { type: SchemaType.STRING }
-              },
-              required: ["status", "message"]
-            },
-            proposed_route: {
-              type: SchemaType.OBJECT,
-              properties: {
-                nodes: {
-                  type: SchemaType.ARRAY,
-                  items: {
-                    type: SchemaType.OBJECT,
-                    properties: {
-                      day: { type: SchemaType.INTEGER },
-                      location: { type: SchemaType.STRING },
-                      description: { type: SchemaType.STRING },
-                      transport: { type: SchemaType.STRING }
-                    },
-                    required: ["day", "location"]
-                  }
-                },
-                rationale: { type: SchemaType.STRING },
-                total_days: { type: SchemaType.INTEGER }
-              },
-              required: ["nodes", "rationale", "total_days"]
-            }
-          },
-          required: ["thought", "analysis", "proposed_route"]
-        }
-      }
-    })
-
     const prompt = `
-      You are an expert Travel Route Architect Agent.
-      Your goal is to help the user refine their travel route based on their instructions.
+      You are an expert Route Planner Agent.
+      Your goal is to help the user refine their travel route skeleton.
       
       Current Route JSON:
       ${JSON.stringify(currentRoute, null, 2)}
@@ -89,48 +51,83 @@ export async function refineRouteWithAI(currentRoute: RouteConcept, instruction:
       "${instruction}"
       
       Task:
-      1. Analyze the instruction and the current route.
-      2. modify the route (nodes, order, days) to meet the user's request.
-      3. Ensure the route logic (geography, travel time) is sound.
-      4. Return the result in the specified JSON structure.
+      1. Analyze the instruction.
+      2. If the user wants to add/remove a city, update the nodes and rationale.
+      3. If the user wants to change the sequence or stay duration, update accordingly.
+      4. Ensure the total_days matches the final node sequence.
+      5. Return the FULL updated route structure.
       
-      Constraint:
-      - Maintain the original data structure.
-      - If the instruction is impossible or highly illogical, set status to "red" and explain why in the message, but still provide a best-effort modification if possible.
+      Constraints:
+      - Return 'analysis' with 'status' ("green" or "red") and a short 'message' in Traditional Chinese.
     `
 
-    try {
-      const result = await withRetry(() => model.generateContent(prompt))
-      responseText = result.response.text()
-    } catch (err: any) {
-      errorCode = err.status?.toString() || err.message
-      throw err
-    } finally {
-      const duration = Date.now() - startTime
-      logAiAudit({
-        prompt,
-        response: responseText,
-        model: modelName,
-        duration_ms: duration,
-        error_code: errorCode
+    const generationConfig: GenerationConfig = {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: SchemaType.OBJECT,
+        properties: {
+          thought: { type: SchemaType.STRING },
+          analysis: {
+            type: SchemaType.OBJECT,
+            properties: {
+              status: { type: SchemaType.STRING, enum: ["green", "red"] },
+              message: { type: SchemaType.STRING }
+            },
+            required: ["status", "message"]
+          },
+          proposed_route: {
+            type: SchemaType.OBJECT,
+            properties: {
+              nodes: {
+                type: SchemaType.ARRAY,
+                items: {
+                  type: SchemaType.OBJECT,
+                  properties: {
+                    day: { type: SchemaType.INTEGER },
+                    location: { type: SchemaType.STRING },
+                    description: { type: SchemaType.STRING },
+                    transport: { type: SchemaType.STRING }
+                  },
+                  required: ["day", "location"]
+                }
+              },
+              rationale: { type: SchemaType.STRING },
+              total_days: { type: SchemaType.INTEGER }
+            },
+            required: ["nodes", "rationale", "total_days"]
+          }
+        },
+        required: ["thought", "analysis", "proposed_route"]
+      } as any
+    }
+
+    const result = await withRetry(async (attempt) => {
+      finalModelUsed = attempt > 0 ? fallbackModelName : primaryModelName;
+      if (attempt > 0) {
+        logger.info(`Fallback triggered: Switching model to ${finalModelUsed} for attempt ${attempt + 1}`)
+      }
+      const model = genAI.getGenerativeModel({
+        model: finalModelUsed,
+        generationConfig
       })
-    }
+      return model.generateContent(prompt)
+    })
 
-    // Clean markdown code blocks if present
-    const cleanJson = responseText.replace(/```json\n?|\n?```/g, '').trim()
+    responseText = result.response.text()
+    const parsed = JSON.parse(responseText)
     
-    let data: AgentResponse
-    try {
-        data = JSON.parse(cleanJson) as AgentResponse
-    } catch (parseError) {
-        logger.error('JSON Parse Error', { raw: responseText })
-        throw new Error('Failed to parse AI response as JSON')
+    // Validate with zod
+    routeConceptSchema.parse(parsed.proposed_route)
+
+    return { 
+      success: true, 
+      data: parsed as unknown as AgentResponse
     }
-
-    return { success: true, data }
-
   } catch (error: any) {
-    logger.error('AI Refinement Error', { error: error.message })
+    logger.error('Route refinement failed', { 
+      error: error.message,
+      stack: error.stack
+    })
     return { success: false, error: 'Failed to refine route with AI' }
   }
 }

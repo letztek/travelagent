@@ -231,6 +231,33 @@ export async function regenerateItinerary(itineraryId: string) {
   }
 }
 
+export async function deleteItinerary(id: string) {
+  const supabase = await createClient()
+  
+  // Get current user session
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'User not authenticated' }
+  }
+
+  // Delete the itinerary
+  const { error } = await supabase
+    .from('itineraries')
+    .delete()
+    .eq('id', id)
+    // Security check: must be owner. 
+    // The policy "Users can delete their own itineraries" handles this via join, 
+    // but the delete request here will fail if the user doesn't own it.
+    .eq('user_id', user.id) 
+
+  if (error) {
+    console.error('Supabase delete error:', error)
+    return { success: false, error: error.message }
+  }
+
+  return { success: true }
+}
+
 export async function getItinerary(id: string) {
   const supabase = await createClient()
   const { data, error } = await supabase

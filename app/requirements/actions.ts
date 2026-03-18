@@ -80,6 +80,30 @@ export async function updateRequirement(id: string, data: Partial<Requirement>) 
   return { success: true, data: updatedData }
 }
 
+export async function deleteRequirement(id: string) {
+  const supabase = await createClient()
+  
+  // Get current user session
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'User not authenticated' }
+  }
+
+  // Delete the requirement (CASCADE will handle itineraries)
+  const { error } = await supabase
+    .from('requirements')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id) // Security check: must be owner
+
+  if (error) {
+    console.error('Supabase delete error:', error)
+    return { success: false, error: error.message }
+  }
+
+  return { success: true }
+}
+
 export async function getRequirement(id: string) {
   const supabase = await createClient()
   const { data, error } = await supabase

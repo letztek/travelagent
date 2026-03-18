@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { requirementSchema, type Requirement } from '@/schemas/requirement'
+import { revalidatePath } from 'next/cache'
 
 export async function createRequirement(data: Requirement) {
   // 1. Validate data
@@ -35,6 +36,7 @@ export async function createRequirement(data: Requirement) {
     return { success: false, error: error.message }
   }
 
+  revalidatePath('/requirements')
   return { success: true, data: insertedData }
 }
 
@@ -77,6 +79,7 @@ export async function updateRequirement(id: string, data: Partial<Requirement>) 
     return { success: false, error: error.message }
   }
 
+  revalidatePath('/requirements')
   return { success: true, data: updatedData }
 }
 
@@ -101,6 +104,8 @@ export async function deleteRequirement(id: string) {
     return { success: false, error: error.message }
   }
 
+  revalidatePath('/requirements')
+  revalidatePath('/itineraries') // Since itineraries might be cascade deleted
   return { success: true }
 }
 

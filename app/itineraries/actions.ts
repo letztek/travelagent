@@ -10,6 +10,7 @@ import { withRetry } from '@/lib/utils/ai-retry'
 import { logger } from '@/lib/utils/logger'
 import { logAiAudit } from '@/lib/supabase/audit'
 import { AgentContext, ItineraryAgentResponse, ItineraryAgentResult } from './itinerary-agent'
+import { revalidatePath } from 'next/cache'
 
 export async function refineItineraryAction(
   currentItinerary: Itinerary, 
@@ -184,6 +185,7 @@ export async function generateItinerary(requirement: Requirement, requirementId:
       return { success: false, error: 'Failed to save itinerary to database' }
     }
 
+    revalidatePath('/itineraries')
     return { success: true, data: data } // Returns the inserted itinerary record (including id)
   } catch (error: any) {
     console.error('AI Generation Error:', error)
@@ -224,6 +226,8 @@ export async function regenerateItinerary(itineraryId: string) {
       return { success: false, error: '更新行程失敗' }
     }
 
+    revalidatePath(`/itineraries/${itineraryId}`)
+    revalidatePath('/itineraries')
     return { success: true, data }
   } catch (error: any) {
     console.error('AI Regeneration Error:', error)
@@ -255,6 +259,7 @@ export async function deleteItinerary(id: string) {
     return { success: false, error: error.message }
   }
 
+  revalidatePath('/itineraries')
   return { success: true }
 }
 
@@ -309,6 +314,7 @@ export async function updateItinerary(id: string, content: Itinerary) {
     return { success: false, error: error.message }
   }
 
+  revalidatePath(`/itineraries/${id}`)
+  revalidatePath('/itineraries')
   return { success: true, data }
 }
-

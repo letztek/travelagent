@@ -1,6 +1,7 @@
 import { getItineraries } from './actions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import DeleteItineraryButton from './DeleteItineraryButton'
 import Link from 'next/link'
 import { Plus, Calendar, MapPin, ArrowRight } from 'lucide-react'
 import { format } from 'date-fns'
@@ -68,8 +69,9 @@ export default async function ItinerariesPage() {
               return (
                 <Card key={itinerary.id} className="group border-none shadow-xl bg-white/80 backdrop-blur-md overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col">
                   <CardHeader className="pb-4">
-                    <CardTitle className="text-2xl font-bold text-slate-900 line-clamp-1">
+                    <CardTitle className="text-2xl font-bold text-slate-900 line-clamp-1 flex justify-between items-center">
                       {itinerary.content.title || '精彩旅程'}
+                      <DeleteItineraryButton id={itinerary.id} />
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="flex-grow flex flex-col gap-6">

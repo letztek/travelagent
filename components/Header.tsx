@@ -1,12 +1,13 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, isAdmin } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/actions'
 import { Button } from '@/components/ui/button'
-import { LogOut, User, Map } from 'lucide-react'
+import { LogOut, User, Map, Users } from 'lucide-react'
 
 export default async function Header() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const adminStatus = user ? await isAdmin() : false
   
   let profile = null
   if (user) {
@@ -39,6 +40,11 @@ export default async function Header() {
               <Link href="/itineraries" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
                 我的行程
               </Link>
+              {adminStatus && (
+                <Link href="/admin/users" className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
+                  <Users size={14} /> 使用者管理
+                </Link>
+              )}
             </div>
           )}
           {user ? (
@@ -57,10 +63,7 @@ export default async function Header() {
           ) : (
             <div className="flex items-center gap-2">
               <Link href="/login">
-                <Button variant="ghost" size="sm">登入</Button>
-              </Link>
-              <Link href="/signup">
-                <Button size="sm" className="bg-slate-900 text-white hover:bg-slate-800">註冊</Button>
+                <Button className="bg-slate-900 text-white hover:bg-slate-800">登入</Button>
               </Link>
             </div>
           )}

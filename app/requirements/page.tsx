@@ -1,5 +1,6 @@
 import { getRequirements } from './actions'
 import GenerateButton from './GenerateButton'
+import DeleteRequirementButton from './DeleteRequirementButton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -132,9 +133,11 @@ export default async function RequirementsListPage() {
 
                     </div>
 
-                    <div className="group-hover:translate-x-[-4px] transition-transform">
+                    <div className="flex items-center gap-2 group-hover:translate-x-[-4px] transition-transform">
 
                       <GenerateButton requirement={req} />
+
+                      <DeleteRequirementButton id={req.id} />
 
                     </div>
 

@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { refineItineraryWithAI, ItineraryAgentResponse, AgentContext } from '../../itinerary-agent'
+import { AgentContext, ItineraryAgentResponse } from '../../itinerary-agent'
+import { refineItineraryAction } from '../../actions'
 import { Itinerary } from '@/schemas/itinerary'
 import { Bot, Loader2, Sparkles, X, Check, Target, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { TrafficLightStatus } from './TrafficLightStatus'
@@ -53,9 +54,10 @@ export function ItineraryAgentChat({
     setLastRequest({ itinerary: currentItinerary, context: focusedContext, instruction: input })
 
     try {
-      const result = await refineItineraryWithAI(currentItinerary, focusedContext, userMsg.content)
-      
+      const result = await refineItineraryAction(currentItinerary, focusedContext, input)
+
       if (result.success && result.data) {
+
         const aiResponse = result.data
         const aiMsg: Message = {
           role: 'assistant',
@@ -84,7 +86,7 @@ export function ItineraryAgentChat({
     setMessages(prev => prev.slice(0, -1))
 
     try {
-      const result = await refineItineraryWithAI(lastRequest.itinerary, lastRequest.context, lastRequest.instruction)
+      const result = await refineItineraryAction(lastRequest.itinerary, lastRequest.context, lastRequest.instruction)
       
       if (result.success && result.data) {
         const aiResponse = result.data

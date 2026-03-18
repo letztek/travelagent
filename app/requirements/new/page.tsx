@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,22 +25,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useRouter } from 'next/navigation'
 import { createRequirement } from '../actions'
-import { analyzeGaps } from '../gap-actions'
-import { GapAnalysis } from '@/schemas/gap-analysis'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
-import { GapWizard } from './components/GapWizard'
-import { AIErrorFallback } from '@/components/ui/ai-error-fallback'
 import { Loader2, Sparkles, PlaneTakeoff, MapPin, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { ImportWizard } from '@/app/import/components/ImportWizard'
+import { ImportWizard } from './components/ImportWizard'
 import { cn } from '@/lib/utils'
 
 const dietaryOptions = [
@@ -67,29 +53,7 @@ const budgetOptions = [
 export default function RequirementFormPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'manual' | 'import'>('manual')
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [analysis, setAnalysis] = useState<GapAnalysis | null>(null)
-  const [analysisError, setAnalysisError] = useState<string | null>(null)
-  const [showAnalysis, setShowAnalysis] = useState(false)
-  const [pendingValues, setPendingValues] = useState<Requirement | null>(null)
-
-  const handleRetryAnalysis = async () => {
-    const values = form.getValues()
-    setAnalysisError(null)
-    setIsAnalyzing(true)
-    const result = await analyzeGaps(values)
-    setIsAnalyzing(false)
-
-    if (result.success && result.data) {
-      setAnalysis(result.data)
-      setShowAnalysis(true)
-    } else {
-      setAnalysisError(result.error || '分析失敗')
-      setShowAnalysis(true)
-    }
-  }
-  
   const [destInput, setDestInput] = useState('')
 
   const form = useForm<any>({
@@ -116,53 +80,17 @@ export default function RequirementFormPage() {
     },
   })
 
-  async function handleFinalSubmit(values: Requirement) {
+  async function onSubmit(values: Requirement) {
     setIsSaving(true)
     const result = await createRequirement(values)
     setIsSaving(false)
-    if (result.success) {
-      alert('需求已成功儲存！接著將進行初步路線規劃。')
-      router.push(`/requirements/${result.data.id}/route`)
+
+    if (result.success && result.data) {
+      // Redirect to the dedicated gap analysis page
+      router.push(`/requirements/${result.data.id}/gap`)
     } else {
       alert('儲存失敗：' + (typeof result.error === 'string' ? result.error : '格式錯誤'))
     }
-  }
-
-  async function onSubmit(values: Requirement) {
-    setAnalysisError(null)
-    setIsAnalyzing(true)
-    const result = await analyzeGaps(values)
-    setIsAnalyzing(false)
-
-    if (result.success && result.data) {
-      if (result.data.overall_status === 'ready' && result.data.missing_info.length === 0 && result.data.logic_issues.length === 0) {
-        handleFinalSubmit(values)
-      } else {
-        setAnalysis(result.data)
-        setPendingValues(values)
-        setShowAnalysis(true)
-      }
-    } else {
-      setAnalysisError(result.error || 'AI 診斷暫時不可用')
-      setPendingValues(values)
-      setShowAnalysis(true)
-    }
-  }
-
-  const handleWizardComplete = (answers: Record<string, string>) => {
-    if (!pendingValues) return
-
-    const newValues = { ...pendingValues }
-    const entries = Object.entries(answers)
-    if (entries.length > 0) {
-      const additionalNotes = entries.map(([field, answer]) => `- ${field}: ${answer}`).join('\n')
-      newValues.notes = newValues.notes 
-        ? `${newValues.notes}\n\n【補充資訊】\n${additionalNotes}`
-        : `【補充資訊】\n${additionalNotes}`
-    }
-
-    setShowAnalysis(false)
-    handleFinalSubmit(newValues)
   }
 
   const handleAddDestination = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -474,16 +402,16 @@ export default function RequirementFormPage() {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={isAnalyzing || isSaving}>
-                {isAnalyzing ? (
+              <Button type="submit" className="w-full" disabled={isSaving}>
+                {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    AI 正在診斷需求...
+                    正在儲存需求...
                   </>
                 ) : (
                   <>
                     <Sparkles className="mr-2 h-4 w-4" />
-                    進行 AI 診斷並儲存
+                    儲存需求並進行 AI 診斷
                   </>
                 )}
               </Button>
@@ -493,40 +421,6 @@ export default function RequirementFormPage() {
       ) : (
         <ImportWizard />
       )}
-
-      <Dialog open={showAnalysis} onOpenChange={setShowAnalysis}>
-        <DialogContent className="sm:max-w-[600px] sm:min-h-[400px]">
-          <VisuallyHidden>
-            <DialogTitle>AI 診斷精靈</DialogTitle>
-          </VisuallyHidden>
-          
-          {analysisError ? (
-            <div className="space-y-6 py-4">
-              <AIErrorFallback 
-                error={analysisError} 
-                onRetry={handleRetryAnalysis} 
-                title="AI 診斷暫時發生問題"
-              />
-              <div className="flex justify-center border-t pt-4">
-                <Button variant="ghost" onClick={() => handleFinalSubmit(pendingValues!)}>
-                  跳過 AI 診斷並直接儲存
-                </Button>
-              </div>
-            </div>
-          ) : analysis ? (
-            <GapWizard 
-              analysis={analysis} 
-              onComplete={handleWizardComplete}
-              onCancel={() => setShowAnalysis(false)}
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center p-12 space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p>正在重新嘗試診斷...</p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

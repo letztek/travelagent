@@ -53,6 +53,33 @@ export async function getRequirements() {
   return { success: true, data }
 }
 
+export async function updateRequirement(id: string, data: Partial<Requirement>) {
+  const supabase = await createClient()
+  
+  // Get current user session
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'User not authenticated' }
+  }
+
+  const { data: updatedData, error } = await supabase
+    .from('requirements')
+    .update({
+      ...data
+    })
+    .eq('id', id)
+    .eq('user_id', user.id) // Security check
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Supabase update error:', error)
+    return { success: false, error: error.message }
+  }
+
+  return { success: true, data: updatedData }
+}
+
 export async function getRequirement(id: string) {
   const supabase = await createClient()
   const { data, error } = await supabase

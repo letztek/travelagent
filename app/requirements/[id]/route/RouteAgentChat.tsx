@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { refineRouteWithAI, AgentResponse } from '../../route-agent'
+import { refineRouteAction } from '../../route-actions'
+import { AgentResponse } from '../../route-agent'
 import { RouteConcept } from '@/schemas/route'
 import { Bot, User, Loader2, Sparkles, RefreshCw, X, Check } from 'lucide-react'
 import { TrafficLightStatus } from './TrafficLightStatus'
@@ -48,7 +49,7 @@ export function RouteAgentChat({
     setLastRequest({ route: currentRoute, instruction: input })
 
     try {
-      const result = await refineRouteWithAI(currentRoute, userMsg.content)
+      const result = await refineRouteAction(currentRoute, input)
       
       if (result.success && result.data) {
         const aiResponse = result.data
@@ -79,7 +80,7 @@ export function RouteAgentChat({
     setMessages(prev => prev.slice(0, -1))
 
     try {
-      const result = await refineRouteWithAI(lastRequest.route, lastRequest.instruction)
+      const result = await refineRouteAction(lastRequest.route, lastRequest.instruction)
       
       if (result.success && result.data) {
         const aiResponse = result.data

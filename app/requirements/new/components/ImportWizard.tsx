@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { UploadCloud, FileText, Image as ImageIcon, X, Loader2 } from 'lucide-react'
-import { parseImportData, finalizeImport } from '../actions'
+import { parseImportData, finalizeImport } from '../../import-actions'
 import { fileToBase64 } from '@/lib/utils/file-conversion'
 import { ImportReview } from './ImportReview'
 import { ImportParserResult } from '@/lib/skills/import-parser'
@@ -105,6 +105,12 @@ export function ImportWizard() {
     setError(null)
 
     try {
+      // Format the parsed itinerary draft into a readable string for the AI notes
+      const itinerarySummary = parsedData.itinerary.days.map(day => {
+        const activities = day.activities.map(a => `- ${a.time_slot}: ${a.activity}`).join('\n')
+        return `Day ${day.day} (${day.date}):\n${activities}`
+      }).join('\n\n')
+
       const metadata = {
         origin: formData.origin,
         destinations: formData.destinations,
@@ -112,13 +118,14 @@ export function ImportWizard() {
         travelers: { adult: Number(formData.adults), child: Number(formData.children), infant: 0, senior: 0 },
         budget_range: formData.budget,
         preferences: { dietary: [], accommodation: [] },
-        notes: '從檔案匯入'
+        notes: `【從檔案匯入的原始行程摘要】\n標題：${parsedData.itinerary.title}\n\n${itinerarySummary}`
       }
 
-      const result = await finalizeImport(metadata as any, parsedData.itinerary)
+      const result = await finalizeImport(metadata as any)
 
-      if (result.success && result.itineraryId) {
-        router.push(`/itineraries/${result.itineraryId}`)
+      if (result.success && result.requirementId) {
+        // Redirect to Gap Analyzer instead of final itinerary
+        router.push(`/requirements/${result.requirementId}/gap`)
       } else {
         setError(result.error || '建檔失敗')
       }
@@ -176,8 +183,8 @@ export function ImportWizard() {
         </CardHeader>
         <CardContent>
           <div
-            className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
-              isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'
+            className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors border-muted-foreground/25 hover:border-primary/50 ${
+              isDragging ? 'border-primary bg-primary/5' : ''
             }`}
             onDragEnter={handleDragEnter}
             onDragOver={handleDragEnter}

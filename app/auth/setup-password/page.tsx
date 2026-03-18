@@ -34,60 +34,7 @@ export default function SetupPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [hasSession, setHasSession] = useState(false)
   
-  // Use useMemo to ensure the client is only created once
   const supabase = useMemo(() => createClient(), [])
-
-  useEffect(() => {
-    // Check if we have a session on mount or when auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state change event:', event)
-      if (session) {
-        setHasSession(true)
-        setError(null)
-      } else {
-        setHasSession(false)
-      }
-    })
-
-    const checkInitialSession = async () => {
-      // 1. Try to get session normally
-      let { data: { session } } = await supabase.auth.getSession()
-      
-      // 2. If no session, check if it's in the hash and try to manually set it
-      // This is a common fix for Supabase invite hash fragments
-      if (!session && typeof window !== 'undefined' && window.location.hash) {
-        const hash = window.location.hash.substring(1) // remove '#'
-        const params = new URLSearchParams(hash)
-        const accessToken = params.get('access_token')
-        const refreshToken = params.get('refresh_token')
-        
-        if (accessToken && refreshToken) {
-          console.log('Manually setting session from hash fragment...')
-          const { data, error: setError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          })
-          if (!setError) {
-            session = data.session
-            setHasSession(true)
-          }
-        }
-      }
-
-      console.log('Initial session check result:', session ? 'Found' : 'Not Found')
-      if (session) {
-        setHasSession(true)
-      } else if (!window.location.hash.includes('access_token=')) {
-        setError('找不到有效的邀請資訊，請確保您是透過郵件中的連結進入此頁面。')
-      }
-    }
-    
-    checkInitialSession()
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [supabase])
 
   const form = useForm<z.infer<typeof setupSchema>>({
     resolver: zodResolver(setupSchema),
@@ -97,28 +44,79 @@ export default function SetupPasswordPage() {
     },
   })
 
+  useEffect(() => {
+    // 偵錯：確認環境變數是否有抓到
+    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('Supabase Key exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth Event:', event, session ? 'Session OK' : 'No Session')
+      if (session) {
+        setHasSession(true)
+        setError(null)
+      } else {
+        setHasSession(false)
+      }
+    })
+
+    const checkInitialSession = async () => {
+      // 1. 嘗試獲取現有 Session
+      let { data: { session } } = await supabase.auth.getSession()
+      
+      // 2. 如果沒 Session 且有 Hash，強制執行 setSession
+      if (!session && typeof window !== 'undefined' && window.location.hash) {
+        const hash = window.location.hash.substring(1)
+        const params = new URLSearchParams(hash)
+        const accessToken = params.get('access_token')
+        const refreshToken = params.get('refresh_token')
+        const errorMsg = params.get('error_description')
+
+        if (errorMsg) {
+          setError(`邀請連結無效：${decodeURIComponent(errorMsg.replace(/\+/g, ' '))}`)
+          return
+        }
+        
+        if (accessToken && refreshToken) {
+          console.log('手動從 Hash 恢復 Session...')
+          const { data, error: setErrorObj } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          })
+          
+          if (setErrorObj) {
+            console.error('SetSession Error:', setErrorObj)
+            if (setErrorObj.message.includes('User from sub claim')) {
+              setError('錯誤：該邀請的使用者 ID 已在資料庫中消失。請聯繫管理員重新發送一份「全新」的邀請郵件。')
+            } else {
+              setError(`無法啟用邀請：${setErrorObj.message}`)
+            }
+          } else {
+            session = data.session
+            setHasSession(true)
+          }
+        }
+      }
+
+      if (session) {
+        setHasSession(true)
+      } else if (!window.location.hash.includes('access_token=')) {
+        setError('找不到有效的邀請資訊，請確保您是透過郵件中的連結進入此頁面。')
+      }
+    }
+    
+    checkInitialSession()
+    return () => subscription.unsubscribe()
+  }, [supabase])
+
   async function onSubmit(values: z.infer<typeof setupSchema>) {
     setIsLoading(true)
     setError(null)
     
     try {
-      // Re-verify session before update
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      console.log('Submission session check:', session ? 'Found' : 'Not Found')
-      
-      if (sessionError) {
-        throw new Error(`獲取會話時發生錯誤: ${sessionError.message}`)
-      }
+      const { data: { session } } = await supabase.auth.getSession()
       
       if (!session) {
-        // One last desperate attempt to parse the hash
-        const hash = window.location.hash
-        if (hash.includes('access_token=')) {
-          setError('正在初始化您的邀請資訊，請稍候 3 秒後再點擊一次。若持續發生請點擊重新整理。')
-          setIsLoading(false)
-          return
-        }
-        throw new Error('目前沒有有效的登入工作階段 (Auth session missing)。請重新點擊郵件連結或重新整理頁面。')
+        throw new Error('登入工作階段已失效。這通常是因為您點擊了舊的連結，或是該連結的使用者已被刪除。請重新點擊郵件連結。')
       }
       
       const { error: updateError } = await supabase.auth.updateUser({ 
@@ -134,7 +132,7 @@ export default function SetupPasswordPage() {
         router.refresh()
       }
     } catch (err: any) {
-      setError(err.message || '系統發生預期外的錯誤，請嘗試重新整理頁面。')
+      setError(err.message)
       setIsLoading(false)
     }
   }
@@ -148,7 +146,7 @@ export default function SetupPasswordPage() {
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">最後一步：設定密碼</CardTitle>
           <CardDescription className="text-slate-500">
-            {hasSession ? '請為您的 TravelAgent 帳號設定登入密碼' : '正在載入您的邀請資訊...'}
+            {hasSession ? '請為您的 TravelAgent 帳號設定登入密碼' : '正在驗證您的邀請資訊...'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -156,7 +154,7 @@ export default function SetupPasswordPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               {error && (
                 <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800 py-3">
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription className="whitespace-pre-line">{error}</AlertDescription>
                 </Alert>
               )}
               
@@ -174,7 +172,6 @@ export default function SetupPasswordPage() {
                           placeholder="請輸入至少 6 位字元" 
                           {...field} 
                           className="pl-10 focus:ring-2 focus:ring-blue-500/20"
-                          autoComplete="new-password"
                           disabled={!hasSession && !error}
                         />
                       </div>
@@ -198,7 +195,6 @@ export default function SetupPasswordPage() {
                           placeholder="請再次輸入密碼" 
                           {...field} 
                           className="pl-10 focus:ring-2 focus:ring-blue-500/20"
-                          autoComplete="new-password"
                           disabled={!hasSession && !error}
                         />
                       </div>
@@ -220,12 +216,6 @@ export default function SetupPasswordPage() {
                   </>
                 ) : '設定密碼並開始使用'}
               </Button>
-              
-              {!hasSession && !error && (
-                <p className="text-xs text-slate-400 text-center mt-4">
-                  正在確認您的邀請狀態，請稍候...
-                </p>
-              )}
             </form>
           </Form>
         </CardContent>

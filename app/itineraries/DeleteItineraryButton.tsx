@@ -16,7 +16,7 @@ import {
 import { Trash2, Loader2 } from 'lucide-react'
 import { deleteItinerary } from './actions'
 import { useRouter } from 'next/navigation'
-import { useToast } from '@/components/ui/use-toast'
+import { toast } from 'sonner'
 
 interface DeleteItineraryButtonProps {
   id: string
@@ -24,7 +24,6 @@ interface DeleteItineraryButtonProps {
 
 export default function DeleteItineraryButton({ id }: DeleteItineraryButtonProps) {
   const router = useRouter()
-  const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
 
@@ -32,16 +31,13 @@ export default function DeleteItineraryButton({ id }: DeleteItineraryButtonProps
     startTransition(async () => {
       const result = await deleteItinerary(id)
       if (result.success) {
-        toast({
-          title: "刪除成功",
+        toast.success("刪除成功", {
           description: "該行程已從系統移除。",
         })
         setOpen(false)
         router.refresh()
       } else {
-        toast({
-          variant: "destructive",
-          title: "刪除失敗",
+        toast.error("刪除失敗", {
           description: result.error || "無法執行刪除操作，請稍後再試。",
         })
       }

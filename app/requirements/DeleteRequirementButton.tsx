@@ -16,7 +16,7 @@ import {
 import { Trash2, Loader2 } from 'lucide-react'
 import { deleteRequirement } from './actions'
 import { useRouter } from 'next/navigation'
-import { useToast } from '@/components/ui/use-toast'
+import { toast } from 'sonner'
 
 interface DeleteRequirementButtonProps {
   id: string
@@ -24,7 +24,6 @@ interface DeleteRequirementButtonProps {
 
 export default function DeleteRequirementButton({ id }: DeleteRequirementButtonProps) {
   const router = useRouter()
-  const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
 
@@ -32,16 +31,13 @@ export default function DeleteRequirementButton({ id }: DeleteRequirementButtonP
     startTransition(async () => {
       const result = await deleteRequirement(id)
       if (result.success) {
-        toast({
-          title: "刪除成功",
+        toast.success("刪除成功", {
           description: "該旅遊需求及相關行程已從系統移除。",
         })
         setOpen(false)
         router.refresh()
       } else {
-        toast({
-          variant: "destructive",
-          title: "刪除失敗",
+        toast.error("刪除失敗", {
           description: result.error || "無法執行刪除操作，請稍後再試。",
         })
       }

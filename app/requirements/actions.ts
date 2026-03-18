@@ -4,6 +4,17 @@ import { createClient } from '@/lib/supabase/server'
 import { requirementSchema, type Requirement } from '@/schemas/requirement'
 import { revalidatePath } from 'next/cache'
 
+// Helper to check if user is admin (copied from admin-actions for consistency)
+async function checkIsAdmin(supabase: any, userId: string) {
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .single()
+  
+  return !error && data?.role === 'admin'
+}
+
 export async function createRequirement(data: Requirement) {
   // 1. Validate data
   const validated = requirementSchema.safeParse(data)
@@ -42,10 +53,20 @@ export async function createRequirement(data: Requirement) {
 
 export async function getRequirements() {
   const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('requirements')
-    .select('*')
-    .order('created_at', { ascending: false })
+  
+  // Admin can see everything, normal users see only their own
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const isAdmin = await checkIsAdmin(supabase, user.id)
+
+  let query = supabase.from('requirements').select('*')
+  
+  if (!isAdmin) {
+    query = query.eq('user_id', user.id)
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false })
 
   if (error) {
     console.error('Supabase error:', error)
@@ -64,15 +85,16 @@ export async function updateRequirement(id: string, data: Partial<Requirement>) 
     return { success: false, error: 'User not authenticated' }
   }
 
-  const { data: updatedData, error } = await supabase
-    .from('requirements')
-    .update({
-      ...data
-    })
-    .eq('id', id)
-    .eq('user_id', user.id) // Security check
-    .select()
-    .single()
+  const isAdmin = await checkIsAdmin(supabase, user.id)
+
+  let query = supabase.from('requirements').update({ ...data }).eq('id', id)
+  
+  // If not admin, must be the owner
+  if (!isAdmin) {
+    query = query.eq('user_id', user.id)
+  }
+
+  const { data: updatedData, error } = await query.select().single()
 
   if (error) {
     console.error('Supabase update error:', error)
@@ -86,26 +108,37 @@ export async function updateRequirement(id: string, data: Partial<Requirement>) 
 export async function deleteRequirement(id: string) {
   const supabase = await createClient()
   
-  // Get current user session
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return { success: false, error: 'User not authenticated' }
   }
 
-  // Delete the requirement (CASCADE will handle itineraries)
-  const { error } = await supabase
-    .from('requirements')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', user.id) // Security check: must be owner
+  const isAdmin = await checkIsAdmin(supabase, user.id)
+  console.log(`User ${user.email} (Admin: ${isAdmin}) attempting to delete requirement ${id}`)
+
+  // Request count to verify if anything was actually deleted
+  let query = supabase.from('requirements').delete({ count: 'exact' }).eq('id', id)
+
+  // If not admin, security check: must be owner
+  if (!isAdmin) {
+    query = query.eq('user_id', user.id)
+  }
+
+  const { error, count } = await query
 
   if (error) {
     console.error('Supabase delete error:', error)
     return { success: false, error: error.message }
   }
 
+  console.log(`Delete operation finished. Rows affected: ${count}`)
+
+  if (count === 0) {
+    return { success: false, error: '刪除失敗：找不到該項目或您沒有足夠的權限。' }
+  }
+
   revalidatePath('/requirements')
-  revalidatePath('/itineraries') // Since itineraries might be cascade deleted
+  revalidatePath('/itineraries')
   return { success: true }
 }
 

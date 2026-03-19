@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Map, Zap, Layout } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { InviteRedirect } from "@/components/InviteRedirect";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -14,6 +15,9 @@ export default async function Home() {
 
   return (
     <div className="relative min-h-screen bg-white overflow-hidden font-sans">
+      {/* 偵測邀請 Hash 並自動導向設定密碼頁面 */}
+      <InviteRedirect />
+
       {/* Aesthetic Background Elements */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-50/50 blur-[120px]" />

@@ -1,8 +1,10 @@
 import { LoginForm } from './login-form'
+import { InviteRedirect } from '@/components/InviteRedirect'
 
 export default function LoginPage() {
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+      <InviteRedirect />
       {/* Background Aesthetic */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-100/50 blur-[120px]" />

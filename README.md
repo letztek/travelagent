@@ -1,36 +1,30 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TravelAgent Core Application
 
-## Getting Started
+這是 TravelAgent 的核心應用程式，採用 Next.js 15+ (App Router) 開發。
 
-First, run the development server:
+## 開發指令
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run dev      # 啟動開發伺服器
+npm run build    # 專案編譯
+npm run lint     # 語法檢查
+npm run test     # 執行單元測試 (Vitest)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 技術特點
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **App Router**: 利用 React Server Components 最佳化載入速度。
+- **Supabase SSR**: 完整實作伺服器端認證與工作階段管理。
+- **Zod Schema**: 嚴格驗證 AI 輸出的 JSON，確保前端渲染穩定性。
+- **Modular Actions**: 所有的資料庫操作均封裝於 `actions.ts` 檔案中。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 測試規範
 
-## Learn More
+專案使用 `Vitest` 進行測試：
+- 測試檔案與原始碼放置於同一目錄，命名為 `*.test.ts`。
+- 所有的 Schema 變更都必須伴隨對應的測試案例。
 
-To learn more about Next.js, take a look at the following resources:
+## 文件參考
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 全域產品說明請參考：`../README.md`
+- 開發軌道紀錄請參考：`../conductor/`

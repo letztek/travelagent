@@ -25,5 +25,5 @@ test('RequirementFormPage renders all form fields', () => {
   expect(screen.getByLabelText(/目的地/i)).toBeDefined()
   expect(screen.getByLabelText(/成人/i)).toBeDefined()
   expect(screen.getByText(/預算範圍/i)).toBeDefined()
-  expect(screen.getByRole('button', { name: /進行 AI 診斷並儲存/i })).toBeDefined()
+  expect(screen.getByRole('button', { name: /儲存需求並進行 AI 診斷/i })).toBeDefined()
 })

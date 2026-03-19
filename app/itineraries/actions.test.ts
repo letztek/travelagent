@@ -1,6 +1,10 @@
 import { expect, test, vi } from 'vitest'
 import { generateItinerary } from './actions'
 
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
+}))
+
 // Mock runItinerarySkill
 vi.mock('@/lib/skills/itinerary-generator', () => ({
   runItinerarySkill: vi.fn().mockResolvedValue({

@@ -1,6 +1,10 @@
 import { expect, test, vi } from 'vitest'
 import { createRequirement } from './actions'
 
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
+}))
+
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => Promise.resolve({
     auth: {

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(),
+  isAdmin: vi.fn(),
 }))
 
 vi.mock('@/app/auth/actions', () => ({
@@ -16,7 +17,7 @@ describe('Header', () => {
     vi.clearAllMocks()
   })
 
-  test('renders login and signup buttons when no user', async () => {
+  test('renders login and logo when no user', async () => {
     vi.mocked(createClient).mockResolvedValue({
       auth: { getUser: vi.fn(() => Promise.resolve({ data: { user: null } })) },
     } as any)
@@ -25,7 +26,7 @@ describe('Header', () => {
     render(result)
 
     expect(screen.getByText('登入')).toBeDefined()
-    expect(screen.getByText('註冊')).toBeDefined()
+    expect(screen.getByText('TravelAgent')).toBeDefined()
   })
 
   test('renders user display name when logged in', async () => {

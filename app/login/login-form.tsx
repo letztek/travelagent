@@ -45,6 +45,7 @@ export function LoginForm() {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash
       if (hash.includes('type=invite') || hash.includes('access_token=')) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsInviteMode(true)
       }
     }

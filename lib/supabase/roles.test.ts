@@ -1,4 +1,4 @@
-import { expect, test, vi, beforeEach } from 'vitest'
+import { expect, test, vi, beforeEach, describe } from 'vitest'
 import { getUserRole, isAdmin, createClient } from './server'
 
 // Mock entire server module to avoid cookies() issues

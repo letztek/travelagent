@@ -7,6 +7,13 @@ vi.mock('./actions', () => ({
   getItineraries: vi.fn(),
 }))
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  }),
+}))
+
 test('ItinerariesPage renders empty state when no itineraries', async () => {
   vi.mocked(actions.getItineraries).mockResolvedValue({
     success: true,

@@ -1,6 +1,7 @@
 import { expect, test, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import SignupPage from './page'
+import { notFound } from 'next/navigation'
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
@@ -10,10 +11,10 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => ({
     get: vi.fn(),
   }),
+  notFound: vi.fn(),
 }))
 
-test('SignupPage renders correctly', () => {
+test('SignupPage calls notFound because signup is disabled', () => {
   render(<SignupPage />)
-  expect(screen.getByText('建立帳號')).toBeDefined()
-  expect(screen.getByPlaceholderText('您的姓名或暱稱')).toBeDefined()
+  expect(notFound).toHaveBeenCalled()
 })

@@ -40,6 +40,9 @@ export default async function Header() {
               <Link href="/itineraries" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
                 我的行程
               </Link>
+              <Link href="/favorites" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+                私房最愛
+              </Link>
               {adminStatus && (
                 <Link href="/admin/users" className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
                   <Users size={14} /> 使用者管理

@@ -1,8 +1,19 @@
 import { expect, test, vi, beforeEach, describe } from 'vitest'
-import { createFavorite, getFavorites, updateFavorite, deleteFavorite } from './actions'
+import { createFavorite, getFavorites, updateFavorite, deleteFavorite, suggestTags } from './actions'
 
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
+}))
+
+vi.mock('@google/generative-ai', () => ({
+  GoogleGenerativeAI: vi.fn(() => ({
+    getGenerativeModel: vi.fn(() => ({
+      generateContent: vi.fn(() => Promise.resolve({
+        response: { text: () => JSON.stringify({ tags: ['Tag A', 'Tag B'] }) }
+      }))
+    }))
+  })),
+  SchemaType: { OBJECT: 'OBJECT', ARRAY: 'ARRAY', STRING: 'STRING' }
 }))
 
 const mockChain = {
@@ -151,6 +162,16 @@ describe('Favorite Actions', () => {
       const result = await deleteFavorite('123')
       expect(result.success).toBe(false)
       expect(result.error).toBe('DB Error')
+    })
+  })
+
+  describe('suggestTags', () => {
+    test('suggestTags returns recommended tags', async () => {
+      vi.stubEnv('GEMINI_API_KEY', 'fake-key')
+      const result = await suggestTags('Taipei 101')
+      expect(result.success).toBe(true)
+      expect(result.data).toContain('Tag A')
+      vi.unstubAllEnvs()
     })
   })
 })

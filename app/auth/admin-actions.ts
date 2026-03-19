@@ -16,27 +16,25 @@ export async function inviteUserAction(email: string) {
     const adminClient = await createAdminClient()
 
     // 3. Determine the base URL for redirection
-    // Priority: NEXT_PUBLIC_SITE_URL > headers(host) > VERCEL_URL > localhost
-    let baseUrl = process.env.NEXT_PUBLIC_SITE_URL
-    
-    if (!baseUrl) {
-      const headersList = await headers()
-      const host = headersList.get('host')
-      if (host) {
-        const protocol = host.includes('localhost') ? 'http' : 'https'
-        baseUrl = `${protocol}://${host}`
-      }
-    }
+    // Priority: headers(host) > NEXT_PUBLIC_SITE_URL (if not localhost) > VERCEL_URL > localhost
+    const headersList = await headers()
+    const host = headersList.get('host')
+    let baseUrl = ''
 
-    if (!baseUrl && process.env.VERCEL_URL) {
+    if (host && !host.includes('localhost')) {
+      baseUrl = `https://${host}`
+    } else if (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes('localhost')) {
+      baseUrl = process.env.NEXT_PUBLIC_SITE_URL
+    } else if (process.env.VERCEL_URL) {
       baseUrl = `https://${process.env.VERCEL_URL}`
+    } else {
+      baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
     }
 
-    if (!baseUrl) {
-      baseUrl = 'http://localhost:3000'
-    }
+    // Ensure no trailing slash
+    baseUrl = baseUrl.replace(/\/$/, '')
 
-    console.log('Using baseUrl for invite:', baseUrl)
+    console.log('Final Invitation Base URL:', baseUrl)
 
     // 4. Send invitation
     // Redirect to a dedicated password setup page to avoid hash/form conflicts

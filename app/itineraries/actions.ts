@@ -181,8 +181,13 @@ export async function generateItinerary(requirement: Requirement, requirementId:
       .single()
 
     if (error) {
-      console.error('Supabase Insertion Error:', error)
-      return { success: false, error: 'Failed to save itinerary to database' }
+      console.error('Supabase Insertion Error Detail:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      })
+      return { success: false, error: `無法儲存行程至資料庫: ${error.message}` }
     }
 
     revalidatePath('/itineraries')

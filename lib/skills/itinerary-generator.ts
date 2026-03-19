@@ -6,7 +6,18 @@ import { withRetry } from '../utils/ai-retry'
 import { logAiAudit } from '../supabase/audit'
 import { logger } from '../utils/logger'
 
-export async function runItinerarySkill(requirement: Requirement, routeConcept?: RouteConcept): Promise<Itinerary> {
+export interface FavoriteItem {
+  name: string
+  type: string
+  description?: string
+  tags?: string[]
+}
+
+export async function runItinerarySkill(
+  requirement: Requirement, 
+  routeConcept?: RouteConcept,
+  userFavorites?: FavoriteItem[]
+): Promise<Itinerary> {
   const apiKey = process.env.GEMINI_API_KEY
   const primaryModelName = process.env.GEMINI_PRIMARY_MODEL || 'gemini-3-flash-preview'
   const fallbackModelName = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash'
@@ -60,6 +71,14 @@ export async function runItinerarySkill(requirement: Requirement, routeConcept?:
       required: ["days"]
     } as any
   }
+
+  const favoritesPrompt = userFavorites && userFavorites.length > 0 
+    ? `
+    【使用者私房最愛名單】
+    以下是使用者儲存的口袋名單（包含景點、餐廳、住宿）。如果這些地點位於目的地附近，請「優先考慮」將其排入行程中，以提升個性化體驗：
+    ${userFavorites.map(f => `- [${f.type === 'spot' ? '景點' : f.type === 'food' ? '餐廳' : '住宿'}] ${f.name}${f.description ? `: ${f.description}` : ''}${f.tags ? ` (標籤: ${f.tags.join(', ')})` : ''}`).join('\n    ')}
+    ` : ''
+
   const systemPrompt = `
     你是一位專業的旅遊顧問助理。
     請根據客戶的需求，生成一份詳細且地理邏輯合理（不走回頭路、交通時間最佳化）的旅遊行程。
@@ -69,6 +88,8 @@ export async function runItinerarySkill(requirement: Requirement, routeConcept?:
     - 規劃理由：${routeConcept.rationale}
     - 城市順序：${routeConcept.nodes.map(n => `Day ${n.day}: ${n.location} (${n.description})`).join(' -> ')}
     ` : ''}
+
+    ${favoritesPrompt}
 
     【需求細節】
     - 出發地：${requirement.origin || '未指定'}
@@ -118,7 +139,7 @@ export async function runItinerarySkill(requirement: Requirement, routeConcept?:
       model: finalModelUsed,
       duration_ms: duration,
       error_code: errorCode
-    })
+    }).catch(() => {}) // Prevent unhandled rejection in background task
   }
 
   const parsedData = JSON.parse(responseText)

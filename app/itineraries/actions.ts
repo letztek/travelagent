@@ -157,9 +157,6 @@ export async function refineItineraryAction(
 
 export async function generateItinerary(requirement: Requirement, requirementId: string, routeConcept?: RouteConcept) {
   try {
-    const itineraryData = await runItinerarySkill(requirement, routeConcept)
-    
-    // Save to Supabase
     const supabase = await createClient()
     
     // Get current user session
@@ -168,6 +165,14 @@ export async function generateItinerary(requirement: Requirement, requirementId:
       return { success: false, error: 'User not authenticated' }
     }
 
+    // Fetch user favorites
+    const { data: favorites } = await supabase
+      .from('user_favorites')
+      .select('name, type, description, tags')
+      .eq('user_id', user.id)
+
+    const itineraryData = await runItinerarySkill(requirement, routeConcept, favorites || [])
+    
     const { data, error } = await supabase
       .from('itineraries')
       .insert([
@@ -216,8 +221,15 @@ export async function regenerateItinerary(itineraryId: string) {
     const requirement = (original as any).requirements
     const routeConcept = (original as any).route_concepts?.content
 
+    // 1.5 Fetch user favorites
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: favorites } = await supabase
+      .from('user_favorites')
+      .select('name, type, description, tags')
+      .eq('user_id', user?.id || '')
+
     // 2. Run skill again
-    const newItineraryData = await runItinerarySkill(requirement, routeConcept)
+    const newItineraryData = await runItinerarySkill(requirement, routeConcept, favorites || [])
 
     // 3. Update existing itinerary
     const { data, error: updateError } = await supabase

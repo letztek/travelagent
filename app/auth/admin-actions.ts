@@ -2,6 +2,7 @@
 
 import { createAdminClient, isAdmin } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 
 export async function inviteUserAction(email: string) {
   // 1. Authorization check
@@ -14,10 +15,33 @@ export async function inviteUserAction(email: string) {
     // 2. Create admin client with service role
     const adminClient = await createAdminClient()
 
-    // 3. Send invitation
+    // 3. Determine the base URL for redirection
+    // Priority: NEXT_PUBLIC_SITE_URL > headers(host) > VERCEL_URL > localhost
+    let baseUrl = process.env.NEXT_PUBLIC_SITE_URL
+    
+    if (!baseUrl) {
+      const headersList = await headers()
+      const host = headersList.get('host')
+      if (host) {
+        const protocol = host.includes('localhost') ? 'http' : 'https'
+        baseUrl = `${protocol}://${host}`
+      }
+    }
+
+    if (!baseUrl && process.env.VERCEL_URL) {
+      baseUrl = `https://${process.env.VERCEL_URL}`
+    }
+
+    if (!baseUrl) {
+      baseUrl = 'http://localhost:3000'
+    }
+
+    console.log('Using baseUrl for invite:', baseUrl)
+
+    // 4. Send invitation
     // Redirect to a dedicated password setup page to avoid hash/form conflicts
     const { data, error } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/setup-password`,
+      redirectTo: `${baseUrl}/auth/setup-password`,
     })
 
     if (error) {

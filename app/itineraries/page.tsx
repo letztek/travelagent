@@ -33,7 +33,7 @@ export default async function ItinerariesPage() {
         <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">我的行程列表</h1>
-            <p className="text-slate-500 mt-2">管理與查看您所有的慢遊計畫</p>
+            <p className="text-slate-500 mt-2">管理與查看您所有的專業旅遊計畫</p>
           </div>
           <Button asChild className="bg-slate-900 hover:bg-slate-800 rounded-full px-6 h-12 shadow-lg shadow-slate-200">
             <Link href="/requirements">
@@ -104,7 +104,7 @@ export default async function ItinerariesPage() {
 
       <footer className="relative z-10 py-12">
         <div className="container mx-auto px-6 text-center text-slate-400 text-sm">
-          © 2026 Taiwan Scenic Slow Travel. All rights reserved.
+          © 2026 TravelAgent. All rights reserved.
         </div>
       </footer>
     </div>

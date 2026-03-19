@@ -53,7 +53,7 @@ export default async function RequirementsListPage() {
 
               <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">需求列表</h1>
 
-              <p className="text-slate-500 mt-2">查看並管理您的旅遊初步需求</p>
+              <p className="text-slate-500 mt-2">管理您的客戶旅遊需求與 AI 規畫起點</p>
 
             </div>
 
@@ -231,7 +231,7 @@ export default async function RequirementsListPage() {
 
           <div className="container mx-auto px-6 text-center text-slate-400 text-sm">
 
-            © 2026 Taiwan Scenic Slow Travel. All rights reserved.
+            © 2026 TravelAgent. All rights reserved.
 
           </div>
 

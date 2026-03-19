@@ -27,7 +27,7 @@ export default async function Header() {
             <Map size={20} />
           </div>
           <span className="font-bold text-xl tracking-tight text-slate-900 hidden sm:inline-block">
-            Slow Travel
+            TravelAgent
           </span>
         </Link>
 

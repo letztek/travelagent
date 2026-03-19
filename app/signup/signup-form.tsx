@@ -72,7 +72,7 @@ export function SignupForm() {
       <CardHeader className="space-y-1 pb-6">
         <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">建立帳號</CardTitle>
         <CardDescription className="text-slate-500">
-          加入我們，開始您的台灣慢遊之旅
+          加入我們，開始您的專業旅遊規劃之旅
         </CardDescription>
       </CardHeader>
       <CardContent>

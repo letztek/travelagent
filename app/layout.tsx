@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Taiwan Scenic Slow Travel",
-  description: "Experience the art of slow travel in Taiwan",
+  title: "TravelAgent - AI 智慧旅遊規畫助理",
+  description: "專為專業旅遊顧問打造的 AI 智慧行程規劃與管理平台",
 };
 
 export default function RootLayout({

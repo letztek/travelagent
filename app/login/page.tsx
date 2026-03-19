@@ -12,17 +12,17 @@ export default function LoginPage() {
       <div className="relative z-10 w-full flex flex-col items-center">
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-extrabold tracking-tighter text-slate-900 sm:text-5xl">
-            Taiwan Scenic Slow Travel
+            TravelAgent
           </h1>
           <p className="mt-2 text-lg text-slate-600 font-medium">
-            體驗慢生活的藝術
+            AI 智慧旅遊規畫系統
           </p>
         </div>
         
         <LoginForm />
         
         <p className="mt-8 text-sm text-slate-400">
-          © 2026 Taiwan Scenic Slow Travel. All rights reserved.
+          © 2026 TravelAgent. All rights reserved.
         </p>
       </div>
     </div>

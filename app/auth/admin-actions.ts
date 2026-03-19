@@ -15,9 +15,9 @@ export async function inviteUserAction(email: string) {
     const adminClient = await createAdminClient()
 
     // 3. Send invitation
-    // Note: redirectTo should point to our login page where we handle the token
+    // Redirect to a dedicated password setup page to avoid hash/form conflicts
     const { data, error } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/login`,
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/setup-password`,
     })
 
     if (error) {

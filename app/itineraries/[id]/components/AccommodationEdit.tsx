@@ -1,10 +1,11 @@
 'use client'
 
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Home } from 'lucide-react'
 import { AddToFavoritesButton } from '@/app/favorites/AddToFavoritesButton'
 import { Favorite } from '@/app/favorites/actions'
+import { useDroppable } from '@dnd-kit/core'
+import { cn } from '@/lib/utils'
 
 interface AccommodationEditProps {
   value: string
@@ -29,12 +30,23 @@ export function AccommodationEdit({
 }: AccommodationEditProps) {
   const isSelected = selectedContext?.dayIndex === dayIndex && selectedContext?.type === 'accommodation'
   const favorite = userFavorites.find(f => f.name === value && f.type === 'accommodation')
+  
+  const { setNodeRef, isOver } = useDroppable({
+    id: `day-${dayIndex}-accommodation`,
+    data: {
+      type: 'accommodation',
+      dayIndex
+    }
+  })
 
   return (
     <div 
-      className={`flex items-center gap-2 text-sm p-1 rounded transition-all cursor-pointer group relative ${
-        isSelected ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-primary/5'
-      }`}
+      ref={setNodeRef}
+      className={cn(
+        "flex items-center gap-2 text-sm p-1 rounded transition-all cursor-pointer group relative",
+        isSelected ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-primary/5',
+        isOver && "ring-2 ring-blue-500 bg-blue-50 scale-[1.02]"
+      )}
       onClick={() => onSelectContext({ dayIndex, type: 'accommodation' })}
     >
       <Home className="h-4 w-4 text-blue-500 shrink-0" />

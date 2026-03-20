@@ -327,6 +327,9 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     const activeId = active.id as string
     const overId = over.id as string
 
+    // If dragging a favorite, we don't do sorting previews
+    if (activeId.startsWith('fav-')) return
+
     if (activeId === overId) return
 
     const activeContainer = findContainer(activeId)
@@ -377,6 +380,59 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     const activeId = active.id as string
     const overId = over.id as string
 
+    // Case 1: Dragging a favorite item
+    if (activeId.startsWith('fav-')) {
+      const fav = active.data.current as Favorite
+      const overData = over.data.current as any
+      
+      if (!overData) {
+        setActiveId(null)
+        return
+      }
+
+      const newData = { ...data }
+      const dayIndex = overData.dayIndex
+
+      // Logic based on drop target type
+      if (overData.type === 'accommodation') {
+        if (fav.type !== 'accommodation') {
+          toast.error('只能將住宿類型的口袋名單拖入住宿區塊')
+        } else {
+          newData.days[dayIndex].accommodation = fav.name
+          setData(newData)
+          toast.success(`已更新第 ${dayIndex + 1} 天住宿為 ${fav.name}`)
+        }
+      } else if (overData.type === 'meal') {
+        if (fav.type !== 'food') {
+          toast.error('只能將餐食類型的口袋名單拖入用餐區塊')
+        } else {
+          const mealType = overData.mealType as 'breakfast' | 'lunch' | 'dinner'
+          newData.days[dayIndex].meals[mealType] = fav.name
+          setData(newData)
+          const mealLabel = mealType === 'breakfast' ? '早餐' : mealType === 'lunch' ? '午餐' : '晚餐'
+          toast.success(`已更新第 ${dayIndex + 1} 天${mealLabel}為 ${fav.name}`)
+        }
+      } else {
+        // Assume dropping into activity column or specific activity
+        const container = findContainer(overId)
+        if (container) {
+          const newActivity: ActivityWithId = {
+            id: Math.random().toString(36).substr(2, 9),
+            time_slot: container.timeSlot as any,
+            activity: fav.name,
+            description: fav.description || ''
+          }
+          newData.days[container.dayIndex].activities.push(newActivity)
+          setData(newData)
+          toast.success(`已將 ${fav.name} 加入第 ${container.dayIndex + 1} 天的活動`)
+        }
+      }
+
+      setActiveId(null)
+      return
+    }
+
+    // Case 2: Sorting existing activities
     const activeContainer = findContainer(activeId)
     const overContainer = findContainer(overId)
 
@@ -401,10 +457,19 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   }
 
   function findContainer(id: string) {
-    if (id.includes('-')) {
+    // If it's a direct column drop zone ID like "0-Morning"
+    if (id.includes('-') && !id.startsWith('day-')) {
       const [dIdx, slot] = id.split('-')
       return { dayIndex: parseInt(dIdx), timeSlot: slot }
     }
+    
+    // If it's a special drop zone ID like "day-0-accommodation"
+    if (id.startsWith('day-')) {
+      const parts = id.split('-')
+      return { dayIndex: parseInt(parts[1]), type: parts[2] }
+    }
+
+    // If it's an activity ID
     for (let d = 0; d < data.days.length; d++) {
       const day = data.days[d]
       if (day.activities.some(a => a.id === id)) {
@@ -417,6 +482,11 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
 
   const activeItem = useMemo(() => {
     if (!activeId) return null
+    // If it's a favorite being dragged, it won't be in the itinerary yet
+    if (activeId.startsWith('fav-')) {
+      // We could render a special favorite overlay here if we wanted
+      return null
+    }
     for (const day of data.days) {
       const item = day.activities.find(a => a.id === activeId)
       if (item) return item
@@ -670,7 +740,14 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
             </div>
 
             <DragOverlay dropAnimation={dropAnimation}>
-              {activeItem ? (
+              {activeId?.startsWith('fav-') ? (
+                <div className="opacity-80 scale-105 shadow-2xl bg-white border rounded-lg p-3 w-64 pointer-events-none">
+                   <div className="flex items-center gap-2 mb-1">
+                     <Sparkles className="text-amber-500" size={14} />
+                     <span className="font-bold text-sm">口袋名單: {userFavorites.find(f => `fav-${f.id}` === activeId)?.name}</span>
+                   </div>
+                </div>
+              ) : activeItem ? (
                 <SortableActivityCard
                   id={activeItem.id}
                   activity={activeItem}
@@ -679,6 +756,12 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
                 />
               ) : null}
             </DragOverlay>
+
+            <RecommendationSheet 
+              open={isRecommendationOpen}
+              onOpenChange={setIsRecommendationOpen}
+              onAdd={handleAddFavorite}
+            />
           </DndContext>
         </main>
 
@@ -704,12 +787,6 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
         open={isPresentationDialogOpen} 
         onOpenChange={setIsPresentationDialogOpen} 
         prompt={presentationPrompt || ''} 
-      />
-
-      <RecommendationSheet 
-        open={isRecommendationOpen}
-        onOpenChange={setIsRecommendationOpen}
-        onAdd={handleAddFavorite}
       />
     </div>
   )

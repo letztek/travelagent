@@ -418,9 +418,9 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       } else {
         // Assume dropping into activity column or specific activity
         const container = findContainer(overId)
-        if (container) {
+        if (container && container.dayIndex !== undefined && newData.days[container.dayIndex]) {
           const newActivity: ActivityWithId = {
-            id: Math.random().toString(36).substr(2, 9),
+            id: `activity-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
             time_slot: container.timeSlot as any,
             activity: fav.name,
             description: fav.description || ''
@@ -461,9 +461,12 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
 
   function findContainer(id: string) {
     // If it's a direct column drop zone ID like "0-Morning"
-    if (id.includes('-') && !id.startsWith('day-')) {
+    // Fix: Ensure we don't catch "activity-X-Y" IDs here
+    if (id.includes('-') && !id.startsWith('day-') && !id.startsWith('activity-')) {
       const [dIdx, slot] = id.split('-')
-      return { dayIndex: parseInt(dIdx), timeSlot: slot }
+      const index = parseInt(dIdx)
+      if (isNaN(index)) return null
+      return { dayIndex: index, timeSlot: slot }
     }
     
     // If it's a special drop zone ID like "day-0-accommodation"
@@ -472,7 +475,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       return { dayIndex: parseInt(parts[1]), type: parts[2] }
     }
 
-    // If it's an activity ID
+    // If it's an activity ID (including "activity-X-Y")
     for (let d = 0; d < data.days.length; d++) {
       const day = data.days[d]
       if (day.activities.some(a => a.id === id)) {

@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
 
 interface FavoriteItemsListProps {
   initialFavorites: Favorite[]
@@ -30,6 +31,8 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
   const [favorites, setFavorites] = useState(initialFavorites)
   const [filter, setFilter] = useState<FavoriteType | 'all'>('all')
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editDescription, setEditDescription] = useState('')
   const [editTags, setEditTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -40,6 +43,8 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
 
   const startEditing = (fav: Favorite) => {
     setEditingId(fav.id)
+    setEditName(fav.name)
+    setEditDescription(fav.description || '')
     setEditTags([...(fav.tags || [])])
     setNewTag('')
   }
@@ -55,14 +60,22 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
     setEditTags(editTags.filter(t => t !== tag))
   }
 
-  const handleSaveTags = async (id: string) => {
+  const handleSave = async (id: string) => {
+    if (!editName.trim()) {
+      toast.error('名稱不能為空')
+      return
+    }
     setIsSaving(true)
-    const result = await updateFavorite(id, { tags: editTags })
+    const result = await updateFavorite(id, { 
+      name: editName,
+      description: editDescription,
+      tags: editTags 
+    })
     setIsSaving(false)
     if (result.success) {
-      setFavorites(favorites.map(f => f.id === id ? { ...f, tags: editTags } : f))
+      setFavorites(favorites.map(f => f.id === id ? { ...f, name: editName, description: editDescription, tags: editTags } : f))
       setEditingId(null)
-      toast.success('標籤已更新')
+      toast.success('儲存成功')
     } else {
       toast.error(result.error || '更新失敗')
     }
@@ -116,6 +129,7 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
                       {editingId !== fav.id && (
                         <button 
                           onClick={() => startEditing(fav)}
+                          aria-label="編輯"
                           className="p-1 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
                         >
                           <Pencil size={14} />
@@ -123,12 +137,26 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
                       )}
                     </div>
                   </div>
-                  {fav.description && (
+                  {editingId !== fav.id && fav.description && (
                     <p className="text-sm text-slate-500 line-clamp-2">{fav.description}</p>
                   )}
                   
                   {editingId === fav.id ? (
                     <div className="pt-3 space-y-3 animate-in fade-in slide-in-from-top-1">
+                      <div className="space-y-2">
+                        <Input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          placeholder="項目名稱"
+                          className="h-8 text-sm font-bold"
+                        />
+                        <Textarea
+                          value={editDescription}
+                          onChange={(e) => setEditDescription(e.target.value)}
+                          placeholder="項目描述"
+                          className="text-xs min-h-[60px]"
+                        />
+                      </div>
                       <div className="flex flex-wrap gap-2">
                         {editTags.map(tag => (
                           <Badge key={tag} className="bg-slate-900 text-white gap-1 pl-2 pr-1 h-6">
@@ -166,7 +194,7 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
                         <Button 
                           size="sm" 
                           disabled={isSaving}
-                          onClick={() => handleSaveTags(fav.id)}
+                          onClick={() => handleSave(fav.id)}
                           className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white"
                         >
                           {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} className="mr-1" />}

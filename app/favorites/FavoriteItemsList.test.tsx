@@ -1,11 +1,20 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import FavoriteItemsList from './FavoriteItemsList'
+import * as actions from './actions'
+
+vi.mock('./actions', async () => {
+  const actual = await vi.importActual('./actions')
+  return {
+    ...actual,
+    updateFavorite: vi.fn(),
+  }
+})
 
 const mockFavorites = [
-  { id: '1', name: 'Spot A', type: 'spot', tags: ['tag1'] },
-  { id: '2', name: 'Food B', type: 'food', tags: ['tag2'] },
-  { id: '3', name: 'Acc C', type: 'accommodation', tags: ['tag3'] },
+  { id: '1', name: 'Spot A', description: 'Desc A', type: 'spot', tags: ['tag1'] },
+  { id: '2', name: 'Food B', description: 'Desc B', type: 'food', tags: ['tag2'] },
+  { id: '3', name: 'Acc C', description: 'Desc C', type: 'accommodation', tags: ['tag3'] },
 ]
 
 describe('FavoriteItemsList', () => {
@@ -31,5 +40,43 @@ describe('FavoriteItemsList', () => {
   it('shows empty state when no favorites match', () => {
     render(<FavoriteItemsList initialFavorites={[]} />)
     expect(screen.getByText(/尚無任何收藏/i)).toBeDefined()
+  })
+
+  it('shows name and description inputs when editing', () => {
+    render(<FavoriteItemsList initialFavorites={mockFavorites as any} />)
+    
+    // Click edit button of the first item
+    const editButtons = screen.getAllByRole('button', { name: /編輯/i })
+    fireEvent.click(editButtons[0])
+    
+    expect(screen.getByDisplayValue('Spot A')).toBeDefined()
+    expect(screen.getByDisplayValue('Desc A')).toBeDefined()
+  })
+
+  it('calls updateFavorite and updates UI on save', async () => {
+    vi.mocked(actions.updateFavorite).mockResolvedValue({ success: true } as any)
+    
+    render(<FavoriteItemsList initialFavorites={mockFavorites as any} />)
+    
+    // Start editing
+    const editButtons = screen.getAllByRole('button', { name: /編輯/i })
+    fireEvent.click(editButtons[0])
+    
+    // Change name
+    const nameInput = screen.getByDisplayValue('Spot A')
+    fireEvent.change(nameInput, { target: { value: 'New Name' } })
+    
+    // Click save
+    const saveButton = screen.getByRole('button', { name: /儲存/i })
+    fireEvent.click(saveButton)
+    
+    await waitFor(() => {
+      expect(actions.updateFavorite).toHaveBeenCalledWith('1', expect.objectContaining({
+        name: 'New Name',
+        description: 'Desc A',
+      }))
+    })
+    
+    expect(screen.getByText('New Name')).toBeDefined()
   })
 })

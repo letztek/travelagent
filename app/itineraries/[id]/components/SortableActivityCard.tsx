@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { AddToFavoritesButton } from '@/app/favorites/AddToFavoritesButton'
+import { Favorite } from '@/app/favorites/actions'
 
 interface SortableActivityCardProps {
   id: string
@@ -16,6 +17,9 @@ interface SortableActivityCardProps {
   onDelete: () => void
   isSelected?: boolean
   onSelect?: () => void
+  isOverlay?: boolean
+  userFavorites?: Favorite[]
+  onToggleFavorite?: () => void
 }
 
 export function SortableActivityCard({ 
@@ -25,7 +29,10 @@ export function SortableActivityCard({
   onUpdate, 
   onDelete, 
   isSelected, 
-  onSelect 
+  onSelect,
+  isOverlay,
+  userFavorites = [],
+  onToggleFavorite
 }: SortableActivityCardProps) {
   const {
     attributes,
@@ -42,33 +49,63 @@ export function SortableActivityCard({
     opacity: isDragging ? 0.5 : 1,
   }
 
+  const favorite = userFavorites.find(f => f.name === activity.activity && f.type === 'spot')
+
   return (
     <div 
       ref={setNodeRef} 
       style={style} 
-      className={`bg-white border rounded-md p-3 shadow-sm mb-2 group transition-all cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : 'hover:border-primary/50'}`}
+      className={`relative bg-white border rounded-md p-3 shadow-sm mb-2 group transition-all cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : 'hover:border-primary/50'}`}
       onClick={(e) => {
-        // Prevent triggering selection when editing inputs
         if ((e.target as HTMLElement).tagName !== 'INPUT' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
           onSelect?.()
         }
       }}
     >
+      {/* Favorite Button - Always visible on hover, or always if isFavorite */}
+      <div className={`absolute top-2 right-2 z-10 transition-opacity ${(favorite || isEditing) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+        <div className="flex items-center gap-2">
+          <AddToFavoritesButton 
+            name={activity.activity} 
+            type="spot" 
+            description={activity.description}
+            size="icon"
+            className="h-5 w-5"
+            isFavorite={!!favorite}
+            favoriteId={favorite?.id}
+            onToggle={onToggleFavorite}
+          />
+          {isEditing && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-5 w-5 text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+      </div>
+
       <div className="flex items-start gap-2">
         {isEditing && (
-          <div {...attributes} {...listeners} className="mt-1 cursor-grab active:cursor-grabbing">
+          <div {...attributes} {...listeners} className="mt-1 cursor-grab active:cursor-grabbing shrink-0">
             <GripVertical className="h-4 w-4 text-gray-400" />
           </div>
         )}
         
-        <div className="flex-1 space-y-2">
+        <div className="flex-1 min-w-0 space-y-2">
           {isEditing ? (
             <>
               <Input 
                 value={activity.activity} 
                 onChange={(e) => onUpdate('activity', e.target.value)}
                 placeholder="活動名稱"
-                className="font-medium h-8"
+                className="font-medium h-8 pr-12"
               />
               <Textarea 
                 value={activity.description} 
@@ -79,31 +116,11 @@ export function SortableActivityCard({
             </>
           ) : (
             <>
-              <div className="font-semibold text-sm">{activity.activity}</div>
+              <div className="font-semibold text-sm truncate pr-6">{activity.activity}</div>
               <div className="text-xs text-muted-foreground whitespace-pre-wrap">{activity.description}</div>
             </>
           )}
         </div>
-
-        {isEditing && (
-          <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <AddToFavoritesButton 
-              name={activity.activity} 
-              type="spot" 
-              description={activity.description}
-              size="icon"
-              className="h-6 w-6"
-            />
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6 text-destructive"
-              onClick={onDelete}
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
-        )}
       </div>
     </div>
   )

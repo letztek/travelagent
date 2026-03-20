@@ -1,13 +1,32 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 
 export function useHistory<T>(initialState: T | (() => T)) {
+  const getInitial = useCallback(() => {
+    return typeof initialState === 'function' ? (initialState as () => T)() : initialState
+  }, [initialState])
+
   const [state, setInternalState] = useState(() => {
-    const initial = typeof initialState === 'function' ? (initialState as () => T)() : initialState
     return {
-      history: [initial],
+      history: [getInitial()],
       index: 0
     }
   })
+
+  // Use ref to track initial value to prevent redundant resets
+  const prevInitialJson = useRef(JSON.stringify(getInitial()))
+
+  useEffect(() => {
+    const currentInitial = getInitial()
+    const currentInitialJson = JSON.stringify(currentInitial)
+    
+    if (currentInitialJson !== prevInitialJson.current) {
+      prevInitialJson.current = currentInitialJson
+      setInternalState({
+        history: [currentInitial],
+        index: 0
+      })
+    }
+  }, [getInitial])
 
   const { history, index } = state
   const currentState = history[index]
@@ -16,6 +35,12 @@ export function useHistory<T>(initialState: T | (() => T)) {
     setInternalState((prev) => {
       const current = prev.history[prev.index]
       const next = typeof newState === 'function' ? (newState as (prev: T) => T)(current) : newState
+      
+      // If no actual change, don't push to history
+      if (JSON.stringify(current) === JSON.stringify(next)) {
+        return prev
+      }
+
       const newHistory = prev.history.slice(0, prev.index + 1)
       return {
         history: [...newHistory, next],

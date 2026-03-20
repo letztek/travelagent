@@ -6,6 +6,7 @@ import { SortableActivityCard } from './SortableActivityCard'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
+import { Favorite } from '@/app/favorites/actions'
 
 interface TimeSlotColumnProps {
   id: string // e.g., "day-1-Morning"
@@ -18,6 +19,8 @@ interface TimeSlotColumnProps {
   dayIndex: number
   selectedContext: { dayIndex: number; itemId?: string; type: string } | null
   onSelectContext: (ctx: { dayIndex: number; itemId?: string; type: 'activity' | 'meal' | 'accommodation' | 'day' }) => void
+  userFavorites?: Favorite[]
+  onToggleFavorite?: () => void
 }
 
 export function TimeSlotColumn({ 
@@ -30,7 +33,9 @@ export function TimeSlotColumn({
   onAddActivity,
   dayIndex,
   selectedContext,
-  onSelectContext
+  onSelectContext,
+  userFavorites = [],
+  onToggleFavorite
 }: TimeSlotColumnProps) {
   const { setNodeRef } = useDroppable({ id })
 
@@ -61,6 +66,8 @@ export function TimeSlotColumn({
               onDelete={() => onActivityDelete(activity.id)}
               isSelected={selectedContext?.type === 'activity' && selectedContext?.itemId === activity.id}
               onSelect={() => onSelectContext({ dayIndex, itemId: activity.id, type: 'activity' })}
+              userFavorites={userFavorites}
+              onToggleFavorite={onToggleFavorite}
             />
           ))}
         </SortableContext>

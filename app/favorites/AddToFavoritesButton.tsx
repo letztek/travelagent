@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { BookHeart, Loader2 } from 'lucide-react'
-import { createFavorite, FavoriteType } from './actions'
+import { Heart, Loader2 } from 'lucide-react'
+import { createFavorite, deleteFavorite, FavoriteType } from './actions'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -13,6 +13,9 @@ interface AddToFavoritesButtonProps {
   description?: string
   className?: string
   size?: 'sm' | 'default' | 'icon'
+  isFavorite?: boolean
+  favoriteId?: string
+  onToggle?: () => void
 }
 
 export function AddToFavoritesButton({
@@ -20,33 +23,48 @@ export function AddToFavoritesButton({
   type,
   description,
   className,
-  size = 'icon'
+  size = 'icon',
+  isFavorite = false,
+  favoriteId,
+  onToggle
 }: AddToFavoritesButtonProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleAdd = async (e: React.MouseEvent) => {
+  const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     
-    if (!name || name === '未指定' || name === '待定') {
+    const cleanName = name?.trim()
+    if (!cleanName || cleanName === '未指定' || cleanName === '待定') {
       toast.error('請先輸入有效的名稱')
       return
     }
 
     setIsSubmitting(true)
     try {
-      const result = await createFavorite({
-        name,
-        type,
-        description: description || '',
-        tags: [],
-        location_data: {}
-      })
-
-      if (result.success) {
-        toast.success(`已將「${name}」加入口袋名單`)
+      if (isFavorite && favoriteId) {
+        const result = await deleteFavorite(favoriteId)
+        if (result.success) {
+          toast.success(`已從口袋名單移除`)
+          onToggle?.()
+        } else {
+          toast.error(result.error || '移除失敗')
+        }
       } else {
-        toast.error(result.error || '加入失敗')
+        const result = await createFavorite({
+          name: cleanName,
+          type,
+          description: description || '',
+          tags: [],
+          location_data: {}
+        })
+
+        if (result.success) {
+          toast.success(`已將「${cleanName}」加入口袋名單`)
+          onToggle?.()
+        } else {
+          toast.error(result.error || '加入失敗')
+        }
       }
     } catch (error) {
       toast.error('發生錯誤')
@@ -55,24 +73,35 @@ export function AddToFavoritesButton({
     }
   }
 
+  const cleanName = name?.trim()
+  if (!cleanName || cleanName === '未指定' || cleanName === '待定') return null
+
   return (
     <Button
       variant="ghost"
       size={size}
-      onClick={handleAdd}
+      onClick={handleToggle}
       disabled={isSubmitting}
       className={cn(
-        "text-slate-400 hover:text-pink-500 hover:bg-pink-50 transition-colors",
+        "transition-all duration-200 p-0 h-auto w-auto hover:bg-transparent",
+        isFavorite 
+          ? "text-pink-500 hover:text-pink-600" 
+          : "text-slate-300 hover:text-pink-400",
         className
       )}
-      title="加入口袋名單"
+      title={isFavorite ? "從口袋名單移除" : "加入口袋名單"}
     >
       {isSubmitting ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        <BookHeart className="h-4 w-4" />
+        <Heart 
+          className={cn(
+            "h-4 w-4 transition-colors", 
+            isFavorite ? "fill-current" : "fill-none"
+          )} 
+        />
       )}
-      {size !== 'icon' && <span className="ml-2">收藏</span>}
+      {size !== 'icon' && <span className="ml-2 text-xs">{isFavorite ? '取消收藏' : '收藏'}</span>}
     </Button>
   )
 }

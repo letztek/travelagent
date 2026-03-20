@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { updateItinerary, regenerateItinerary } from '../../actions'
+import { updateItinerary, regenerateItinerary, getFavorites as getFavs } from '../../actions'
 import { Itinerary, ItineraryDay } from '@/schemas/itinerary'
 import { Loader2, Pencil, Save, X, FileDown, Undo2, Redo2, Check, Sparkles, ArrowLeft, RefreshCw, Plus, Trash2, BookHeart } from 'lucide-react'
 import { saveAs } from 'file-saver'
@@ -42,7 +42,7 @@ import { ItineraryAgentResponse, AgentContext } from '../../itinerary-agent'
 import { generatePresentationPrompt } from '../../presentation-generator'
 import { PresentationPromptDialog } from './PresentationPromptDialog'
 import { RecommendationSheet } from './RecommendationSheet'
-import { Favorite } from '@/app/favorites/actions'
+import { Favorite, getFavorites } from '@/app/favorites/actions'
 import { toast } from 'sonner'
 
 interface ItineraryEditorProps {
@@ -78,8 +78,32 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const [moveDialog, setMoveDialog] = useState<{ open: boolean, dayIndex: number }>({ open: false, dayIndex: 0 })
   const [selectedContext, setSelectedContext] = useState<SelectedContext>(null)
   const [isRecommendationOpen, setIsRecommendationOpen] = useState(false)
+  const [userFavorites, setUserFavorites] = useState<Favorite[]>([])
+  
+  const loadUserFavorites = async () => {
+    const result = await getFavorites()
+    if (result.success) setUserFavorites(result.data || [])
+  }
+
+  useEffect(() => {
+    loadUserFavorites()
+  }, [])
+
   const router = useRouter()
   const [activeId, setActiveId] = useState<string | null>(null)
+
+  // Stabilize the initial state to prevent useHistory loop
+  const initialItineraryWithIds = useMemo(() => {
+    return {
+      days: (itinerary.days || []).map((day) => ({
+        ...day,
+        activities: (day.activities || []).map((activity) => ({
+          ...activity,
+          id: Math.random().toString(36).substr(2, 9)
+        }))
+      }))
+    }
+  }, [itineraryId]) // Only recompute if the itinerary ID changes
 
   // Use history hook for undo/redo
   const { 
@@ -91,35 +115,10 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     canRedo,
     clear: clearHistory,
     push: pushToHistory
-  } = useHistory<ItineraryWithIds>(() => {
-    return {
-      days: itinerary.days.map((day) => ({
-        ...day,
-        activities: day.activities.map((activity) => ({
-          ...activity,
-          id: Math.random().toString(36).substr(2, 9)
-        }))
-      }))
-    }
-  })
+  } = useHistory<ItineraryWithIds>(initialItineraryWithIds)
 
   // Proposal state
   const [proposal, setProposal] = useState<ItineraryAgentResponse | null>(null)
-
-  // Sync state if props change (initial load)
-  useEffect(() => {
-    if (itinerary) {
-      clearHistory({
-        days: itinerary.days.map((day) => ({
-          ...day,
-          activities: day.activities.map((activity) => ({
-            ...activity,
-            id: Math.random().toString(36).substr(2, 9)
-          }))
-        }))
-      })
-    }
-  }, [itineraryId])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -155,9 +154,9 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       if (result.success) {
         // Correctly update local state and history
         const newData = {
-          days: result.data.content.days.map((day: any) => ({
+          days: (result.data.content.days || []).map((day: any) => ({
             ...day,
-            activities: day.activities.map((activity: any) => ({
+            activities: (day.activities || []).map((activity: any) => ({
               ...activity,
               id: Math.random().toString(36).substr(2, 9)
             }))
@@ -179,9 +178,9 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const handleSave = async () => {
     setLoading(true)
     const cleanData: Itinerary = {
-      days: data.days.map(day => ({
+      days: (data.days || []).map(day => ({
         ...day,
-        activities: day.activities.map(({ id, ...rest }) => rest)
+        activities: (day.activities || []).map(({ id, ...rest }) => rest)
       }))
     }
     const result = await updateItinerary(itineraryId, cleanData)
@@ -202,7 +201,6 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       newData.days[targetDayIndex].accommodation = fav.name
       toast.success(`已將 ${fav.name} 設為第 ${targetDayIndex + 1} 天的住宿`)
     } else if (fav.type === 'food') {
-      // Pick a meal based on description or just default to lunch
       newData.days[targetDayIndex].meals.lunch = fav.name
       toast.success(`已將 ${fav.name} 加入第 ${targetDayIndex + 1} 天的午餐`)
     } else {
@@ -255,18 +253,6 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     }
   }
 
-  const handleAddActivity = (dayIndex: number) => {
-    const newData = { ...data }
-    const newActivity: ActivityWithId = {
-      id: Math.random().toString(36).substr(2, 9),
-      time_slot: 'Morning',
-      activity: '新活動',
-      description: ''
-    }
-    newData.days[dayIndex].activities.push(newActivity)
-    setData(newData)
-  }
-
   const handleDeleteActivity = (dayIndex: number, activityId: string) => {
     const newData = { ...data }
     newData.days[dayIndex].activities = newData.days[dayIndex].activities.filter(a => a.id !== activityId)
@@ -304,7 +290,6 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     const startDate = data.days[0].date
     const newDays = data.days.filter((_, i) => i !== index)
 
-    // Auto sync all dates
     const syncedDays = syncItineraryDates(newDays, startDate)
     setData({ ...data, days: syncedDays as any })
   }
@@ -313,9 +298,9 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     if (!proposal) return
     
     const newData: ItineraryWithIds = {
-      days: proposal.proposed_itinerary.days.map(day => ({
+      days: (proposal.proposed_itinerary.days || []).map(day => ({
         ...day,
-        activities: day.activities.map(a => ({
+        activities: (day.activities || []).map(a => ({
           ...a,
           id: Math.random().toString(36).substr(2, 9)
         }))
@@ -374,7 +359,6 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       const newDays = [...prev.days]
       const [movedItem] = newDays[activeContainer.dayIndex].activities.splice(activeIndex, 1)
       
-      // Update time_slot to match target column
       movedItem.time_slot = overContainer.timeSlot as any
       
       newDays[overContainer.dayIndex].activities.splice(newIndex, 0, movedItem)
@@ -417,6 +401,10 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   }
 
   function findContainer(id: string) {
+    if (id.includes('-')) {
+      const [dIdx, slot] = id.split('-')
+      return { dayIndex: parseInt(dIdx), timeSlot: slot }
+    }
     for (let d = 0; d < data.days.length; d++) {
       const day = data.days[d]
       if (day.activities.some(a => a.id === id)) {
@@ -437,9 +425,9 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   }, [activeId, data])
 
   const currentData = proposal ? {
-    days: proposal.proposed_itinerary.days.map(day => ({
+    days: (proposal.proposed_itinerary.days || []).map(day => ({
       ...day,
-      activities: day.activities.map(a => ({ ...a, id: Math.random().toString() }))
+      activities: (day.activities || []).map(a => ({ ...a, id: Math.random().toString() }))
     }))
   } : data
 
@@ -523,7 +511,6 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
           </div>
         </div>
 
-        {/* Secondary AI Proposal Bar */}
         {proposal && (
           <div className="bg-primary/10 border-b border-primary/20 animate-in slide-in-from-top-2">
             <div className="container mx-auto max-w-7xl h-10 flex items-center justify-between px-4">
@@ -557,121 +544,118 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
           >
             <div className="max-w-5xl mx-auto space-y-12">
               {currentData.days.map((day, dayIndex) => (
-                <div key={day.day} id={`day-${day.day}`} className="space-y-6 scroll-mt-24">
-                  <div className="flex items-center justify-between group">
-                    <div className="flex items-baseline gap-4">
-                      <h3 className="text-2xl font-black text-slate-900">
-                        Day {day.day}
-                      </h3>
-                      <span className="text-slate-400 font-medium">{day.date}</span>
-                    </div>
-                    {isEditing && (
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setMoveDialog({ open: true, dayIndex })}
-                          className="h-8 text-xs text-slate-500"
-                        >
-                          <RefreshCw className="mr-2 h-3 w-3" /> 重排
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteDay(dayIndex)}
-                          className="h-8 text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 className="mr-2 h-3 w-3" /> 刪除天數
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {(['Morning', 'Afternoon', 'Evening'] as const).map((slot) => (
-                      <TimeSlotColumn
-                        key={`${day.day}-${slot}`}
-                        id={`${dayIndex}-${slot}`}
-                        title={slot === 'Morning' ? '上午' : slot === 'Afternoon' ? '下午' : '晚上'}
-                        activities={day.activities.filter(a => a.time_slot === slot)}
-                        isEditing={isEditing}
-                        onUpdateActivity={(id, updates) => {
-                          const newData = { ...data }
-                          const activity = newData.days[dayIndex].activities.find(a => a.id === id)
-                          if (activity) {
-                            Object.assign(activity, updates)
+                <Card key={day.day} id={`day-card-${day.day}`} className="border-none shadow-sm overflow-hidden scroll-mt-32">
+                  <CardHeader className="bg-white border-b py-4 px-6">
+                    <div className="flex items-center justify-between group">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-baseline gap-4">
+                          <h3 className="text-xl font-bold text-slate-900">
+                            Day {day.day}
+                          </h3>
+                          <span className="text-slate-400 font-medium text-sm">{day.date}</span>
+                        </div>
+                        <AccommodationEdit 
+                          value={day.accommodation} 
+                          isEditing={isEditing}
+                          onChange={(val) => {
+                            const newData = { ...data }
+                            newData.days[dayIndex].accommodation = val
                             setData(newData)
+                          }}
+                          dayIndex={dayIndex}
+                          selectedContext={selectedContext}
+                          onSelectContext={(ctx) => setSelectedContext(ctx as any)}
+                          userFavorites={userFavorites}
+                          onToggleFavorite={loadUserFavorites}
+                        />
+                      </div>
+                      {isEditing && (
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setMoveDialog({ open: true, dayIndex })}
+                            className="h-8 text-xs text-slate-500"
+                          >
+                            <RefreshCw className="mr-2 h-3 w-3" /> 重排
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteDay(dayIndex)}
+                            className="h-8 text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="mr-2 h-3 w-3" /> 刪除
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="p-6 bg-white space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {(['Morning', 'Afternoon', 'Evening'] as const).map((slot) => (
+                        <TimeSlotColumn
+                          key={`${day.day}-${slot}`}
+                          id={`${dayIndex}-${slot}`}
+                          title={slot === 'Morning' ? '上午' : slot === 'Afternoon' ? '下午' : '晚上'}
+                          activities={day.activities.filter(a => a.time_slot === slot)}
+                          isEditing={isEditing}
+                          onActivityUpdate={(id, updates) => {
+                            const newData = { ...data }
+                            const activity = newData.days[dayIndex].activities.find(a => a.id === id)
+                            if (activity) {
+                              Object.assign(activity, updates)
+                              setData(newData)
+                            }
+                          }}
+                          onActivityDelete={(id) => handleDeleteActivity(dayIndex, id)}
+                          onAddActivity={() => {
+                            const newData = { ...data }
+                            const newActivity: ActivityWithId = {
+                              id: Math.random().toString(36).substr(2, 9),
+                              time_slot: slot,
+                              activity: '新活動',
+                              description: ''
+                            }
+                            newData.days[dayIndex].activities.push(newActivity)
+                            setData(newData)
+                          }}
+                          onSelectContext={(activityId) => {
+                            setSelectedContext({
+                              dayIndex,
+                              type: 'activity',
+                              itemId: activityId
+                            })
+                          }}
+                          isSelected={(activityId) => 
+                            selectedContext?.dayIndex === dayIndex && 
+                            selectedContext?.type === 'activity' && 
+                            selectedContext?.itemId === activityId
                           }
-                        }}
-                        onDeleteActivity={(id) => handleDeleteActivity(dayIndex, id)}
-                        onAddActivity={() => {
-                          const newData = { ...data }
-                          const newActivity: ActivityWithId = {
-                            id: Math.random().toString(36).substr(2, 9),
-                            time_slot: slot,
-                            activity: '新活動',
-                            description: ''
-                          }
-                          newData.days[dayIndex].activities.push(newActivity)
-                          setData(newData)
-                        }}
-                        onSelectContext={(activityId) => {
-                          setSelectedContext({
-                            dayIndex,
-                            type: 'activity',
-                            itemId: activityId
-                          })
-                        }}
-                        isSelected={(activityId) => 
-                          selectedContext?.dayIndex === dayIndex && 
-                          selectedContext?.type === 'activity' && 
-                          selectedContext?.itemId === activityId
-                        }
-                      />
-                    ))}
-                  </div>
+                          dayIndex={dayIndex}
+                          userFavorites={userFavorites}
+                          onToggleFavorite={loadUserFavorites}
+                        />
+                      ))}
+                    </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <MealsEdit 
                       meals={day.meals} 
                       isEditing={isEditing}
-                      onChange={(meals) => {
+                      onChange={(type, value) => {
                         const newData = { ...data }
-                        newData.days[dayIndex].meals = meals
+                        newData.days[dayIndex].meals[type] = value
                         setData(newData)
                       }}
-                      onSelectContext={() => {
-                        setSelectedContext({
-                          dayIndex,
-                          type: 'meal'
-                        })
-                      }}
-                      isSelected={
-                        selectedContext?.dayIndex === dayIndex && 
-                        selectedContext?.type === 'meal'
-                      }
+                      dayIndex={dayIndex}
+                      selectedContext={selectedContext}
+                      onSelectContext={(ctx) => setSelectedContext(ctx as any)}
+                      userFavorites={userFavorites}
+                      onToggleFavorite={loadUserFavorites}
                     />
-                    <AccommodationEdit 
-                      accommodation={day.accommodation} 
-                      isEditing={isEditing}
-                      onChange={(acc) => {
-                        const newData = { ...data }
-                        newData.days[dayIndex].accommodation = acc
-                        setData(newData)
-                      }}
-                      onSelectContext={() => {
-                        setSelectedContext({
-                          dayIndex,
-                          type: 'accommodation'
-                        })
-                      }}
-                      isSelected={
-                        selectedContext?.dayIndex === dayIndex && 
-                        selectedContext?.type === 'accommodation'
-                      }
-                    />
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
               
               {isEditing && (
@@ -699,10 +683,12 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
         </main>
 
         <ItineraryAgentChat 
-          itinerary={data as any} 
+          currentItinerary={data as any} 
           onProposal={setProposal} 
-          selectedContext={selectedContext}
-          onClearContext={() => setSelectedContext(null)}
+          focusedContext={selectedContext}
+          onAcceptProposal={acceptProposal}
+          onRejectProposal={rejectProposal}
+          isProposalMode={!!proposal}
         />
       </div>
 

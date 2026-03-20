@@ -1,9 +1,5 @@
 import { getFavorites } from './actions'
-import FavoriteItemsList from './FavoriteItemsList'
 import Header from '@/components/Header'
-import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
-import { useState } from 'react'
 import FavoritesPageClient from './FavoritesPageClient'
 
 export default async function FavoritesPage() {
@@ -12,8 +8,6 @@ export default async function FavoritesPage() {
 
   return (
     <div className="relative min-h-screen bg-white">
-      <Header />
-      
       {/* Aesthetic Background Elements */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-50/50 blur-[120px]" />

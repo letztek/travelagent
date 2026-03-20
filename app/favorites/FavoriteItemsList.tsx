@@ -1,11 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Favorite, FavoriteType } from './actions'
+import { Favorite, FavoriteType, updateFavorite } from './actions'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Utensils, Home, Tag } from 'lucide-react'
+import { MapPin, Utensils, Home, Tag, Pencil, X, Plus, Check, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 interface FavoriteItemsListProps {
   initialFavorites: Favorite[]
@@ -24,11 +27,46 @@ const TYPE_ICONS: Record<FavoriteType, React.ReactNode> = {
 }
 
 export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsListProps) {
+  const [favorites, setFavorites] = useState(initialFavorites)
   const [filter, setFilter] = useState<FavoriteType | 'all'>('all')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editTags, setEditTags] = useState<string[]>([])
+  const [newTag, setNewTag] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
 
-  const filteredFavorites = initialFavorites.filter(fav => 
+  const filteredFavorites = favorites.filter(fav => 
     filter === 'all' ? true : fav.type === filter
   )
+
+  const startEditing = (fav: Favorite) => {
+    setEditingId(fav.id)
+    setEditTags([...(fav.tags || [])])
+    setNewTag('')
+  }
+
+  const addTag = () => {
+    if (newTag && !editTags.includes(newTag)) {
+      setEditTags([...editTags, newTag])
+      setNewTag('')
+    }
+  }
+
+  const removeTag = (tag: string) => {
+    setEditTags(editTags.filter(t => t !== tag))
+  }
+
+  const handleSaveTags = async (id: string) => {
+    setIsSaving(true)
+    const result = await updateFavorite(id, { tags: editTags })
+    setIsSaving(false)
+    if (result.success) {
+      setFavorites(favorites.map(f => f.id === id ? { ...f, tags: editTags } : f))
+      setEditingId(null)
+      toast.success('標籤已更新')
+    } else {
+      toast.error(result.error || '更新失敗')
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -58,34 +96,98 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
           </div>
         ) : (
           filteredFavorites.map((fav) => (
-            <Card key={fav.id} className="border-none shadow-sm hover:shadow-md transition-shadow bg-white">
+            <Card key={fav.id} className="border-none shadow-sm hover:shadow-md transition-shadow bg-white overflow-hidden">
               <CardContent className="p-4 flex items-start gap-4">
                 <div className={cn(
-                  "p-3 rounded-xl",
+                  "p-3 rounded-xl shrink-0",
                   fav.type === 'spot' ? "bg-blue-50 text-blue-600" :
                   fav.type === 'food' ? "bg-orange-50 text-orange-600" :
                   "bg-indigo-50 text-indigo-600"
                 )}>
                   {TYPE_ICONS[fav.type]}
                 </div>
-                <div className="flex-grow space-y-1">
+                <div className="flex-grow space-y-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-slate-900">{fav.name}</h3>
-                    <span className="text-xs text-slate-400">
-                      {TYPE_LABELS[fav.type]}
-                    </span>
+                    <h3 className="font-bold text-slate-900 truncate">{fav.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-slate-300">
+                        {TYPE_LABELS[fav.type]}
+                      </span>
+                      {editingId !== fav.id && (
+                        <button 
+                          onClick={() => startEditing(fav)}
+                          className="p-1 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {fav.description && (
                     <p className="text-sm text-slate-500 line-clamp-2">{fav.description}</p>
                   )}
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {fav.tags?.map(tag => (
-                      <Badge key={tag} variant="secondary" className="bg-slate-50 text-slate-600 border-none flex items-center gap-1 text-[10px] px-2">
-                        <Tag size={10} />
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
+                  
+                  {editingId === fav.id ? (
+                    <div className="pt-3 space-y-3 animate-in fade-in slide-in-from-top-1">
+                      <div className="flex flex-wrap gap-2">
+                        {editTags.map(tag => (
+                          <Badge key={tag} className="bg-slate-900 text-white gap-1 pl-2 pr-1 h-6">
+                            {tag}
+                            <button onClick={() => removeTag(tag)} className="hover:bg-slate-700 rounded-full">
+                              <X size={12} />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="relative flex-grow">
+                          <Input 
+                            value={newTag}
+                            onChange={(e) => setNewTag(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                            placeholder="新增標籤..."
+                            className="h-8 text-xs pr-8"
+                          />
+                          <button 
+                            onClick={addTag}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => setEditingId(null)}
+                          className="h-8 px-2 text-slate-500"
+                        >
+                          取消
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          disabled={isSaving}
+                          onClick={() => handleSaveTags(fav.id)}
+                          className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} className="mr-1" />}
+                          儲存
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {fav.tags && fav.tags.length > 0 ? (
+                        fav.tags.map(tag => (
+                          <Badge key={tag} variant="secondary" className="bg-slate-50 text-slate-600 border-none flex items-center gap-1 text-[10px] px-2 py-0.5">
+                            <Tag size={10} />
+                            {tag}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-[10px] text-slate-300 italic">尚無標籤</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

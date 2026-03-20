@@ -3,6 +3,7 @@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Utensils } from 'lucide-react'
+import { AddToFavoritesButton } from '@/app/favorites/AddToFavoritesButton'
 
 interface MealsEditProps {
   meals: { breakfast: string; lunch: string; dinner: string }
@@ -23,44 +24,65 @@ export function MealsEdit({ meals, isEditing, onChange, dayIndex, selectedContex
       }`}
       onClick={() => onSelectContext({ dayIndex, type: 'meal' })}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 group">
         <span className="font-semibold text-orange-600 shrink-0">早餐：</span>
-        {isEditing ? (
-          <Input 
-            value={meals.breakfast} 
-            onChange={(e) => onChange('breakfast', e.target.value)} 
-            className="h-8"
-            onClick={(e) => e.stopPropagation()}
+        <div className="flex-grow flex items-center gap-1">
+          {isEditing ? (
+            <Input 
+              value={meals.breakfast} 
+              onChange={(e) => onChange('breakfast', e.target.value)} 
+              className="h-8"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <span>{meals.breakfast}</span>
+          )}
+          <AddToFavoritesButton 
+            name={meals.breakfast} 
+            type="food" 
+            className="h-6 w-6 opacity-0 group-hover:opacity-100" 
           />
-        ) : (
-          <span>{meals.breakfast}</span>
-        )}
+        </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 group">
         <span className="font-semibold text-orange-600 shrink-0">午餐：</span>
-        {isEditing ? (
-          <Input 
-            value={meals.lunch} 
-            onChange={(e) => onChange('lunch', e.target.value)} 
-            className="h-8"
-            onClick={(e) => e.stopPropagation()}
+        <div className="flex-grow flex items-center gap-1">
+          {isEditing ? (
+            <Input 
+              value={meals.lunch} 
+              onChange={(e) => onChange('lunch', e.target.value)} 
+              className="h-8"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <span>{meals.lunch}</span>
+          )}
+          <AddToFavoritesButton 
+            name={meals.lunch} 
+            type="food" 
+            className="h-6 w-6 opacity-0 group-hover:opacity-100" 
           />
-        ) : (
-          <span>{meals.lunch}</span>
-        )}
+        </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 group">
         <span className="font-semibold text-orange-600 shrink-0">晚餐：</span>
-        {isEditing ? (
-          <Input 
-            value={meals.dinner} 
-            onChange={(e) => onChange('dinner', e.target.value)} 
-            className="h-8"
-            onClick={(e) => e.stopPropagation()}
+        <div className="flex-grow flex items-center gap-1">
+          {isEditing ? (
+            <Input 
+              value={meals.dinner} 
+              onChange={(e) => onChange('dinner', e.target.value)} 
+              className="h-8"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <span>{meals.dinner}</span>
+          )}
+          <AddToFavoritesButton 
+            name={meals.dinner} 
+            type="food" 
+            className="h-6 w-6 opacity-0 group-hover:opacity-100" 
           />
-        ) : (
-          <span>{meals.dinner}</span>
-        )}
+        </div>
       </div>
     </div>
   )

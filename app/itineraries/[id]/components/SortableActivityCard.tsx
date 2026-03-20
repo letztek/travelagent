@@ -6,6 +6,7 @@ import { GripVertical, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
+import { AddToFavoritesButton } from '@/app/favorites/AddToFavoritesButton'
 
 interface SortableActivityCardProps {
   id: string
@@ -85,14 +86,23 @@ export function SortableActivityCard({
         </div>
 
         {isEditing && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={onDelete}
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
+          <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <AddToFavoritesButton 
+              name={activity.activity} 
+              type="spot" 
+              description={activity.description}
+              size="icon"
+              className="h-6 w-6"
+            />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6 text-destructive"
+              onClick={onDelete}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
         )}
       </div>
     </div>

@@ -1,19 +1,24 @@
 import { useState, useCallback } from 'react'
 
-export function useHistory<T>(initialState: T) {
-  const [state, setInternalState] = useState({
-    history: [initialState],
-    index: 0
+export function useHistory<T>(initialState: T | (() => T)) {
+  const [state, setInternalState] = useState(() => {
+    const initial = typeof initialState === 'function' ? (initialState as () => T)() : initialState
+    return {
+      history: [initial],
+      index: 0
+    }
   })
 
   const { history, index } = state
   const currentState = history[index]
 
-  const setState = useCallback((newState: T) => {
+  const setState = useCallback((newState: T | ((prev: T) => T)) => {
     setInternalState((prev) => {
+      const current = prev.history[prev.index]
+      const next = typeof newState === 'function' ? (newState as (prev: T) => T)(current) : newState
       const newHistory = prev.history.slice(0, prev.index + 1)
       return {
-        history: [...newHistory, newState],
+        history: [...newHistory, next],
         index: prev.index + 1
       }
     })
@@ -33,6 +38,13 @@ export function useHistory<T>(initialState: T) {
     }))
   }, [])
 
+  const clear = useCallback((newState: T) => {
+    setInternalState({
+      history: [newState],
+      index: 0
+    })
+  }, [])
+
   const canUndo = index > 0
   const canRedo = index < history.length - 1
 
@@ -41,6 +53,7 @@ export function useHistory<T>(initialState: T) {
     setState,
     undo,
     redo,
+    clear,
     canUndo,
     canRedo,
     history

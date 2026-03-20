@@ -84,6 +84,7 @@ export function SortableActivityCard({
                 e.stopPropagation();
                 onDelete();
               }}
+              aria-label="刪除活動"
             >
               <Trash2 className="h-3 w-3" />
             </Button>

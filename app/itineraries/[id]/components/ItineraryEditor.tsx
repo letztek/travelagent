@@ -92,18 +92,24 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const router = useRouter()
   const [activeId, setActiveId] = useState<string | null>(null)
 
-  // Stabilize the initial state to prevent useHistory loop
-  const initialItineraryWithIds = useMemo(() => {
+  // Function to convert plain itinerary to state with IDs
+  const convertToStateWithIds = (raw: Itinerary): ItineraryWithIds => {
     return {
-      days: (itinerary.days || []).map((day) => ({
+      days: (raw.days || []).map((day, dIdx) => ({
         ...day,
-        activities: (day.activities || []).map((activity) => ({
+        activities: (day.activities || []).map((activity, aIdx) => ({
           ...activity,
-          id: Math.random().toString(36).substr(2, 9)
+          // Stable ID: either existing ID, or a path-based one
+          id: (activity as any).id || `activity-${dIdx}-${aIdx}`
         }))
       }))
     }
-  }, [itineraryId]) // Only recompute if the itinerary ID changes
+  }
+
+  // Stabilize the initial state to prevent useHistory loop
+  const initialItineraryWithIds = useMemo(() => {
+    return convertToStateWithIds(itinerary)
+  }, [itineraryId, itinerary]) // Added itinerary to re-sync if props change
 
   // Use history hook for undo/redo
   const { 
@@ -153,15 +159,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       const result = await regenerateItinerary(itineraryId)
       if (result.success) {
         // Correctly update local state and history
-        const newData = {
-          days: (result.data.content.days || []).map((day: any) => ({
-            ...day,
-            activities: (day.activities || []).map((activity: any) => ({
-              ...activity,
-              id: Math.random().toString(36).substr(2, 9)
-            }))
-          }))
-        }
+        const newData = convertToStateWithIds(result.data.content)
         setData(newData)
         setIsEditing(false)
         router.refresh()
@@ -187,6 +185,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     setLoading(false)
     if (result.success) {
       setIsEditing(false)
+      clearHistory(data) // Checkpoint history to current state
       router.refresh()
     } else {
       alert('儲存失敗: ' + result.error)
@@ -195,7 +194,8 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
 
   const handleAddFavorite = (fav: Favorite) => {
     const targetDayIndex = selectedContext?.dayIndex ?? 0
-    const newData = { ...data }
+    // Deep clone to ensure reactivity
+    const newData = JSON.parse(JSON.stringify(data))
     
     if (fav.type === 'accommodation') {
       newData.days[targetDayIndex].accommodation = fav.name
@@ -221,6 +221,9 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const handleCancel = () => {
     if (confirm('確定要取消所有未儲存的變更嗎？')) {
       setIsEditing(false)
+      setProposal(null)
+      setSelectedContext(null)
+      clearHistory(initialItineraryWithIds) // REPAIR: Reset history to initial props
       router.refresh()
     }
   }
@@ -254,8 +257,19 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   }
 
   const handleDeleteActivity = (dayIndex: number, activityId: string) => {
-    const newData = { ...data }
-    newData.days[dayIndex].activities = newData.days[dayIndex].activities.filter(a => a.id !== activityId)
+    // REPAIR: Use deep clone or at least clone the days array to ensure reactivity
+    const newData = {
+      ...data,
+      days: data.days.map((day, idx) => {
+        if (idx === dayIndex) {
+          return {
+            ...day,
+            activities: day.activities.filter(a => a.id !== activityId)
+          }
+        }
+        return day
+      })
+    }
     setData(newData)
   }
 
@@ -296,17 +310,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
 
   const acceptProposal = () => {
     if (!proposal) return
-    
-    const newData: ItineraryWithIds = {
-      days: (proposal.proposed_itinerary.days || []).map(day => ({
-        ...day,
-        activities: (day.activities || []).map(a => ({
-          ...a,
-          id: Math.random().toString(36).substr(2, 9)
-        }))
-      }))
-    }
-    
+    const newData = convertToStateWithIds(proposal.proposed_itinerary as any)
     setData(newData)
     setProposal(null)
   }
@@ -340,14 +344,16 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     }
 
     setData((prev) => {
-      const activeItems = prev.days[activeContainer.dayIndex].activities
-      const overItems = prev.days[overContainer.dayIndex].activities
+      // Deep clone for DND updates
+      const newDays = JSON.parse(JSON.stringify(prev.days))
+      const activeItems = newDays[activeContainer.dayIndex].activities
+      const overItems = newDays[overContainer.dayIndex].activities
 
-      const activeIndex = activeItems.findIndex((item) => item.id === activeId)
-      const overIndex = overItems.findIndex((item) => item.id === overId)
+      const activeIndex = activeItems.findIndex((item: any) => item.id === activeId)
+      const overIndex = overItems.findIndex((item: any) => item.id === overId)
 
       let newIndex
-      if (overId in prev.days) {
+      if (overId in newDays) {
         newIndex = overItems.length + 1
       } else {
         const isBelowLastItem =
@@ -359,12 +365,9 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
         newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1
       }
 
-      const newDays = [...prev.days]
-      const [movedItem] = newDays[activeContainer.dayIndex].activities.splice(activeIndex, 1)
-      
+      const [movedItem] = activeItems.splice(activeIndex, 1)
       movedItem.time_slot = overContainer.timeSlot as any
-      
-      newDays[overContainer.dayIndex].activities.splice(newIndex, 0, movedItem)
+      overItems.splice(newIndex, 0, movedItem)
 
       return { ...prev, days: newDays }
     })
@@ -390,7 +393,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
         return
       }
 
-      const newData = { ...data }
+      const newData = JSON.parse(JSON.stringify(data))
       const dayIndex = overData.dayIndex
 
       // Logic based on drop target type
@@ -494,12 +497,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     return null
   }, [activeId, data])
 
-  const currentData = proposal ? {
-    days: (proposal.proposed_itinerary.days || []).map(day => ({
-      ...day,
-      activities: (day.activities || []).map(a => ({ ...a, id: Math.random().toString() }))
-    }))
-  } : data
+  const currentData = proposal ? convertToStateWithIds(proposal.proposed_itinerary as any) : data
 
   return (
     <div className="flex flex-col w-full">

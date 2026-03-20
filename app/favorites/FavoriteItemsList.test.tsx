@@ -8,6 +8,7 @@ vi.mock('./actions', async () => {
   return {
     ...actual,
     updateFavorite: vi.fn(),
+    suggestTags: vi.fn(),
   }
 })
 
@@ -78,5 +79,26 @@ describe('FavoriteItemsList', () => {
     })
     
     expect(screen.getByText('New Name')).toBeDefined()
+  })
+
+  it('calls suggestTags and updates tags on "重新推薦" button click', async () => {
+    vi.mocked(actions.suggestTags).mockResolvedValue({ success: true, data: ['AI Tag 1', 'AI Tag 2'] })
+    
+    render(<FavoriteItemsList initialFavorites={mockFavorites as any} />)
+    
+    // Start editing
+    const editButtons = screen.getAllByRole('button', { name: /編輯/i })
+    fireEvent.click(editButtons[0])
+    
+    // Click "重新推薦" button
+    const suggestButton = screen.getByRole('button', { name: /重新推薦/i })
+    fireEvent.click(suggestButton)
+    
+    await waitFor(() => {
+      expect(actions.suggestTags).toHaveBeenCalledWith('Spot A', 'Desc A', 'spot')
+    })
+    
+    expect(screen.getByText('AI Tag 1')).toBeDefined()
+    expect(screen.getByText('AI Tag 2')).toBeDefined()
   })
 })

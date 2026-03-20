@@ -173,5 +173,21 @@ describe('Favorite Actions', () => {
       expect(result.data).toContain('Tag A')
       vi.unstubAllEnvs()
     })
+
+    test('suggestTags handles description and type', async () => {
+      vi.stubEnv('GEMINI_API_KEY', 'fake-key')
+      const result = await suggestTags('Taipei 101', 'Tall building', 'spot')
+      expect(result.success).toBe(true)
+      expect(result.data).toContain('Tag A')
+      vi.unstubAllEnvs()
+    })
+
+    test('suggestTags returns fallback when no API key', async () => {
+      vi.stubEnv('GEMINI_API_KEY', '')
+      const result = await suggestTags('Taipei 101')
+      expect(result.success).toBe(true)
+      expect(result.data).toContain('親子')
+      vi.unstubAllEnvs()
+    })
   })
 })

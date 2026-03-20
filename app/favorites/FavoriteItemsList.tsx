@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Favorite, FavoriteType, updateFavorite } from './actions'
+import { Favorite, FavoriteType, updateFavorite, suggestTags } from './actions'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Utensils, Home, Tag, Pencil, X, Plus, Check, Loader2 } from 'lucide-react'
+import { MapPin, Utensils, Home, Tag, Pencil, X, Plus, Check, Loader2, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
@@ -36,6 +36,7 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
   const [editTags, setEditTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [isSuggesting, setIsSuggesting] = useState(false)
 
   const filteredFavorites = favorites.filter(fav => 
     filter === 'all' ? true : fav.type === filter
@@ -58,6 +59,18 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
 
   const removeTag = (tag: string) => {
     setEditTags(editTags.filter(t => t !== tag))
+  }
+
+  const handleSuggestTags = async (fav: Favorite) => {
+    setIsSuggesting(true)
+    const result = await suggestTags(editName, editDescription, fav.type)
+    setIsSuggesting(false)
+    if (result.success && result.data) {
+      setEditTags(result.data)
+      toast.success('已更新推薦標籤')
+    } else {
+      toast.error(result.error || '推薦失敗')
+    }
   }
 
   const handleSave = async (id: string) => {
@@ -166,6 +179,16 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
                             </button>
                           </Badge>
                         ))}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSuggestTags(fav)}
+                          disabled={isSuggesting}
+                          className="h-6 text-[10px] px-2 border-dashed border-blue-200 text-blue-600 hover:bg-blue-50"
+                        >
+                          {isSuggesting ? <Loader2 size={10} className="animate-spin mr-1" /> : <Sparkles size={10} className="mr-1" />}
+                          重新推薦
+                        </Button>
                       </div>
                       <div className="flex gap-2">
                         <div className="relative flex-grow">

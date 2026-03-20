@@ -2,6 +2,14 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import FavoriteItemsList from './FavoriteItemsList'
 import * as actions from './actions'
+import { toast } from 'sonner'
+
+vi.mock('sonner', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}))
 
 vi.mock('./actions', async () => {
   const actual = await vi.importActual('./actions')
@@ -79,6 +87,24 @@ describe('FavoriteItemsList', () => {
     })
     
     expect(screen.getByText('New Name')).toBeDefined()
+  })
+
+  it('shows error toast when updateFavorite fails', async () => {
+    vi.mocked(actions.updateFavorite).mockResolvedValue({ success: false, error: 'Update Failed' } as any)
+    
+    render(<FavoriteItemsList initialFavorites={mockFavorites as any} />)
+    
+    // Start editing
+    const editButtons = screen.getAllByRole('button', { name: /編輯/i })
+    fireEvent.click(editButtons[0])
+    
+    // Click save
+    const saveButton = screen.getByRole('button', { name: /儲存/i })
+    fireEvent.click(saveButton)
+    
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Update Failed')
+    })
   })
 
   it('calls suggestTags and updates tags on "重新推薦" button click', async () => {

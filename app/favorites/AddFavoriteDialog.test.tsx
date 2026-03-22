@@ -19,7 +19,7 @@ describe('AddFavoriteDialog', () => {
   })
 
   it('calls suggestTags when name is entered and button is clicked', async () => {
-    // @ts-ignore
+    // @ts-expect-error: mocking
     actions.suggestTags.mockResolvedValue({ success: true, data: ['AI Tag 1', 'AI Tag 2'] })
     
     render(<AddFavoriteDialog open={true} onOpenChange={() => {}} />)
@@ -37,7 +37,7 @@ describe('AddFavoriteDialog', () => {
   })
 
   it('allows selecting tags', async () => {
-    // @ts-ignore
+    // @ts-expect-error: mocking
     actions.suggestTags.mockResolvedValue({ success: true, data: ['Tag A'] })
     render(<AddFavoriteDialog open={true} onOpenChange={() => {}} />)
     

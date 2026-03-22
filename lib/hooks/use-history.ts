@@ -21,6 +21,7 @@ export function useHistory<T>(initialState: T | (() => T)) {
     
     if (currentInitialJson !== prevInitialJson.current) {
       prevInitialJson.current = currentInitialJson
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInternalState({
         history: [currentInitial],
         index: 0

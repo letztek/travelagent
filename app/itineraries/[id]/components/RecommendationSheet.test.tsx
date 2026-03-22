@@ -13,14 +13,14 @@ describe('RecommendationSheet', () => {
   })
 
   it('renders correctly when open', async () => {
-    // @ts-ignore
+    // @ts-expect-error: mocking
     actions.getFavorites.mockResolvedValue({ success: true, data: [] })
     render(<RecommendationSheet open={true} onOpenChange={() => {}} onAdd={() => {}} />)
     expect(screen.getByText(/私房推薦/i)).toBeDefined()
   })
 
   it('displays favorites from the list', async () => {
-    // @ts-ignore
+    // @ts-expect-error: mocking
     actions.getFavorites.mockResolvedValue({
       success: true,
       data: [{ id: '1', name: 'Cool Place', type: 'spot', tags: [] }]

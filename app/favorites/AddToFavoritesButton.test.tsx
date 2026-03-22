@@ -20,7 +20,7 @@ describe('AddToFavoritesButton', () => {
   })
 
   it('calls createFavorite when clicked', async () => {
-    // @ts-ignore
+    // @ts-expect-error: mocking
     actions.createFavorite.mockResolvedValue({ success: true })
     
     render(

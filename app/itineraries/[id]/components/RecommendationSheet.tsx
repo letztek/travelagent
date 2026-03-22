@@ -193,12 +193,6 @@ export function RecommendationSheet({
   const [isLoading, setIsLoading] = useState(false)
   const [filter, setFilter] = useState<'all' | 'spot' | 'food' | 'accommodation'>('all')
 
-  useEffect(() => {
-    if (open) {
-      loadFavorites()
-    }
-  }, [open])
-
   const loadFavorites = async () => {
     setIsLoading(true)
     const result = await getFavorites()
@@ -207,6 +201,13 @@ export function RecommendationSheet({
     }
     setIsLoading(false)
   }
+
+  useEffect(() => {
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      loadFavorites()
+    }
+  }, [open])
 
   const filtered = favorites.filter(f => filter === 'all' ? true : f.type === filter)
 

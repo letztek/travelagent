@@ -9,6 +9,10 @@ vi.mock('next/navigation', () => ({
   }),
 }))
 
+vi.mock('@/app/favorites/actions', () => ({
+  getFavorites: vi.fn(() => Promise.resolve({ success: true, data: [] })),
+}))
+
 // Mock DnD Kit (Simplified mock as full DnD logic is hard to test in unit tests)
 vi.mock('@dnd-kit/core', () => ({
   DndContext: ({ children }: any) => <div>{children}</div>,

@@ -15,6 +15,10 @@ vi.mock('../../actions', () => ({
   getFavorites: vi.fn(() => Promise.resolve({ success: true, data: [] })),
 }))
 
+vi.mock('@/app/favorites/actions', () => ({
+  getFavorites: vi.fn(() => Promise.resolve({ success: true, data: [] })),
+}))
+
 const mockItinerary: Itinerary = {
   days: [
     {

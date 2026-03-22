@@ -8,6 +8,10 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: vi.fn() })
 }))
 
+vi.mock('@/app/favorites/actions', () => ({
+  getFavorites: vi.fn(() => Promise.resolve({ success: true, data: [] })),
+}))
+
 vi.mock('@dnd-kit/core', () => ({
   DndContext: ({ children }: any) => <div>{children}</div>,
   useSensors: () => {},

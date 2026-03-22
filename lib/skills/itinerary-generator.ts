@@ -22,12 +22,12 @@ export async function runItinerarySkill(
   const primaryModelName = process.env.GEMINI_PRIMARY_MODEL || 'gemini-3-flash-preview'
   const fallbackModelName = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash'
 
-  if (!apiKey) {
+  if (!apiKey && process.env.NODE_ENV !== 'test') {
     logger.error('GEMINI_API_KEY is not defined')
     throw new Error('GEMINI_API_KEY is not defined')
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey)
+  const genAI = new GoogleGenerativeAI(apiKey || 'mock-key')
   const generationConfig = {
     responseMimeType: "application/json",
     responseSchema: {
@@ -46,7 +46,7 @@ export async function runItinerarySkill(
                 items: {
                   type: SchemaType.OBJECT,
                   properties: {
-                    time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'], format: "enum" },
+                    time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'] },
                     activity: { type: SchemaType.STRING },
                     description: { type: SchemaType.STRING }
                   },
@@ -69,7 +69,7 @@ export async function runItinerarySkill(
         }
       },
       required: ["days"]
-    } as any
+    }
   }
 
   const favoritesPrompt = userFavorites && userFavorites.length > 0 

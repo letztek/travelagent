@@ -85,10 +85,19 @@ export function ImportWizard() {
     
     try {
       const base64Files = await Promise.all(files.map(fileToBase64))
-      const result = await parseImportData(textInput, base64Files)
       
-      if (result.success && result.data) {
-        setParsedData(result.data)
+      // BUG-0320-01 Fix: Use FormData to send large payloads to Server Action.
+      // This bypasses plain object serialization limits.
+      const formData = new FormData()
+      formData.append('textInput', textInput)
+      formData.append('filesDataUrls', JSON.stringify(base64Files))
+
+      const result = await parseImportData(formData)
+      
+      if (result.success && result.resultJson) {
+        // BUG-0320-01 Fix: Unpack the totally stringified response
+        const parsedResult = JSON.parse(result.resultJson) as ImportParserResult;
+        setParsedData(parsedResult)
       } else {
         setError(result.error || '解析失敗，請稍後再試。')
       }

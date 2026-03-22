@@ -192,26 +192,29 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     }
   }
 
-  const handleAddFavorite = (fav: Favorite) => {
-    const targetDayIndex = selectedContext?.dayIndex ?? 0
+  const handleAddFavorite = (fav: Favorite, dayIndex: number, slot?: string) => {
     // Deep clone to ensure reactivity
     const newData = JSON.parse(JSON.stringify(data))
     
     if (fav.type === 'accommodation') {
-      newData.days[targetDayIndex].accommodation = fav.name
-      toast.success(`已將 ${fav.name} 設為第 ${targetDayIndex + 1} 天的住宿`)
+      newData.days[dayIndex].accommodation = fav.name
+      toast.success(`已將 ${fav.name} 設為第 ${dayIndex + 1} 天的住宿`)
     } else if (fav.type === 'food') {
-      newData.days[targetDayIndex].meals.lunch = fav.name
-      toast.success(`已將 ${fav.name} 加入第 ${targetDayIndex + 1} 天的午餐`)
+      const mealType = (slot as 'breakfast' | 'lunch' | 'dinner') || 'lunch'
+      newData.days[dayIndex].meals[mealType] = fav.name
+      const mealLabel = mealType === 'breakfast' ? '早餐' : mealType === 'lunch' ? '午餐' : '晚餐'
+      toast.success(`已將 ${fav.name} 加入第 ${dayIndex + 1} 天的${mealLabel}`)
     } else {
+      const timeSlot = (slot as any) || 'Afternoon'
       const newActivity: ActivityWithId = {
-        id: Math.random().toString(36).substr(2, 9),
-        time_slot: 'Afternoon',
+        id: `activity-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        time_slot: timeSlot,
         activity: fav.name,
         description: fav.description || ''
       }
-      newData.days[targetDayIndex].activities.push(newActivity)
-      toast.success(`已將 ${fav.name} 加入第 ${targetDayIndex + 1} 天的活動`)
+      newData.days[dayIndex].activities.push(newActivity)
+      const slotLabel = timeSlot === 'Morning' ? '上午' : timeSlot === 'Afternoon' ? '下午' : '晚上'
+      toast.success(`已將 ${fav.name} 加入第 ${dayIndex + 1} 天的${slotLabel}活動`)
     }
     
     setData(newData)
@@ -762,6 +765,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
               open={isRecommendationOpen}
               onOpenChange={setIsRecommendationOpen}
               onAdd={handleAddFavorite}
+              totalDays={data.days.length}
             />
           </DndContext>
         </main>

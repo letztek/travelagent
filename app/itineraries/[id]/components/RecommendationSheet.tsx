@@ -20,10 +20,39 @@ import {
 interface RecommendationSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onAdd: (item: Favorite) => void
+  onAdd: (item: Favorite, dayIndex: number, slot?: string) => void
+  totalDays: number
 }
 
-function DraggableFavoriteItem({ fav, onAdd }: { fav: Favorite, onAdd: (item: Favorite) => void }) {
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
+function FavoriteItemWithPicker({ 
+  fav, 
+  onAdd, 
+  totalDays 
+}: { 
+  fav: Favorite, 
+  onAdd: (item: Favorite, dayIndex: number, slot?: string) => void,
+  totalDays: number
+}) {
+  const [selectedDay, setSelectedDay] = useState(0)
+  const [selectedSlot, setSelectedSlot] = useState(
+    fav.type === 'food' ? 'lunch' : 
+    fav.type === 'spot' ? 'Afternoon' : ''
+  )
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false)
+
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `fav-${fav.id}`,
     data: fav,
@@ -32,6 +61,23 @@ function DraggableFavoriteItem({ fav, onAdd }: { fav: Favorite, onAdd: (item: Fa
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
   } : undefined
+
+  const handleAdd = () => {
+    onAdd(fav, selectedDay, selectedSlot)
+    setIsPopoverOpen(false)
+  }
+
+  const slotOptions = fav.type === 'food' 
+    ? [
+        { value: 'breakfast', label: '早餐' },
+        { value: 'lunch', label: '午餐' },
+        { value: 'dinner', label: '晚餐' }
+      ]
+    : [
+        { value: 'Morning', label: '上午' },
+        { value: 'Afternoon', label: '下午' },
+        { value: 'Evening', label: '晚上' }
+      ]
 
   return (
     <Card 
@@ -64,14 +110,61 @@ function DraggableFavoriteItem({ fav, onAdd }: { fav: Favorite, onAdd: (item: Fa
           <div className="flex-grow min-w-0">
             <div className="flex items-center justify-between gap-2">
               <h4 className="font-bold text-slate-900 truncate">{fav.name}</h4>
-              <Button 
-                size="icon" 
-                variant="ghost" 
-                className="h-7 w-7 rounded-full bg-white shadow-sm border border-slate-100 text-slate-400 hover:text-slate-900"
-                onClick={() => onAdd(fav)}
-              >
-                <Plus size={14} />
-              </Button>
+              
+              <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="h-7 w-7 rounded-full bg-white shadow-sm border border-slate-100 text-slate-400 hover:text-slate-900"
+                  >
+                    <Plus size={14} />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-3" align="end" side="top">
+                  <div className="space-y-3">
+                    <h5 className="text-xs font-bold text-slate-500 flex items-center gap-1.5">
+                      <Plus size={12} /> 加入至行程
+                    </h5>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-bold text-slate-400 w-10 shrink-0">天數</label>
+                        <Select value={selectedDay.toString()} onValueChange={(v) => setSelectedDay(parseInt(v))}>
+                          <SelectTrigger className="h-7 text-[11px] flex-grow">
+                            <SelectValue placeholder="選擇天數" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: totalDays }).map((_, i) => (
+                              <SelectItem key={i} value={i.toString()} className="text-[11px]">Day {i + 1}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {fav.type !== 'accommodation' && (
+                        <div className="flex items-center gap-2">
+                          <label className="text-[10px] font-bold text-slate-400 w-10 shrink-0">時段</label>
+                          <Select value={selectedSlot} onValueChange={setSelectedSlot}>
+                            <SelectTrigger className="h-7 text-[11px] flex-grow">
+                              <SelectValue placeholder="選擇時段" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {slotOptions.map(opt => (
+                                <SelectItem key={opt.value} value={opt.value} className="text-[11px]">{opt.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button size="sm" className="w-full h-7 text-[11px] bg-blue-600 hover:bg-blue-700 text-white" onClick={handleAdd}>
+                      確認加入
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             {fav.description && (
               <p className="text-xs text-slate-500 line-clamp-2 mt-1">{fav.description}</p>
@@ -94,6 +187,7 @@ export function RecommendationSheet({
   open,
   onOpenChange,
   onAdd,
+  totalDays,
 }: RecommendationSheetProps) {
   const [favorites, setFavorites] = useState<Favorite[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -161,7 +255,7 @@ export function RecommendationSheet({
           ) : (
             <div className="space-y-4 pr-4">
               {filtered.map((fav) => (
-                <DraggableFavoriteItem key={fav.id} fav={fav} onAdd={onAdd} />
+                <FavoriteItemWithPicker key={fav.id} fav={fav} onAdd={onAdd} totalDays={totalDays} />
               ))}
             </div>
           )}

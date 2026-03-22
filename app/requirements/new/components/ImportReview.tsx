@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface ImportReviewProps {
   data: ImportParserResult
@@ -44,7 +43,7 @@ export function ImportReview({ data, onConfirm, onCancel }: ImportReviewProps) {
           <CardDescription>AI 從檔案中萃取出的行程草稿</CardDescription>
         </CardHeader>
         <CardContent className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full pr-4">
+          <div className="h-full pr-4 overflow-y-auto">
             <div className="space-y-6">
               <div>
                 <h3 className="text-xl font-bold">{data.itinerary.title}</h3>
@@ -78,7 +77,7 @@ export function ImportReview({ data, onConfirm, onCancel }: ImportReviewProps) {
                 </div>
               ))}
             </div>
-          </ScrollArea>
+          </div>
         </CardContent>
       </Card>
 

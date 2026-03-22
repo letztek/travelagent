@@ -82,7 +82,7 @@ export async function runImportParserSkill(
                     items: {
                       type: SchemaType.OBJECT,
                       properties: {
-                        time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'], format: "enum" },
+                        time_slot: { type: SchemaType.STRING, enum: ['Morning', 'Afternoon', 'Evening'] },
                         activity: { type: SchemaType.STRING },
                         description: { type: SchemaType.STRING }
                       },
@@ -108,7 +108,7 @@ export async function runImportParserSkill(
         }
       },
       required: ["extracted_metadata", "itinerary"]
-    } as any
+    }
   }
 
   const systemPrompt = `
@@ -120,10 +120,15 @@ export async function runImportParserSkill(
     3. **嚴格日期格式**：所有日期相關欄位 (包含 travel_dates.start, travel_dates.end, 以及每日的 date) 必須「絕對嚴格」遵守 YYYY-MM-DD 格式 (例如 2024-05-01)。若文件未提供日期，請務必自行推算一組合理的未來日期填入，絕對不允許填入 "TBD"、"未知" 或其他非 YYYY-MM-DD 的文字。
     4. **格式化行程**：請將每一天的活動拆分為早、午、晚 (Morning, Afternoon, Evening) 三個時段，並確保活動與描述內容清晰。
     5. **語系**：請一律將輸出的行程內容轉換為繁體中文。
+    6. **忠於原意與嚴禁幻覺**：
+       - 請「僅根據使用者提供的內容」進行解析。
+       - **絕對禁止** 套用任何非相關的範例行程（如東京、大阪、京都等）。
+       - **精準對齊來源**：若輸入文字的核心目的地是 A，則輸出的 'extracted_metadata.destinations' 必須精確為 A。嚴禁將目的地 A 誤植或腦補為其他地區。
+       - 若輸入內容過於簡略，請在 'extracted_metadata' 中如實反映，不要自行編造未提及的景點。
 
-    請根據附帶的檔案與以下文字補充說明進行解析：
-    ${textInput ? `補充文字：
-\${textInput}` : '無補充文字'}
+    請根據附帶的檔案與以下文字補充說明進行解析（這是最高優先權的資訊來源）：
+    ${textInput ? `使用者輸入文字：
+${textInput}` : '無補充文字'}
   `
 
   const parts: any[] = [{ text: systemPrompt }]

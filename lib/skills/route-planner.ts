@@ -38,7 +38,7 @@ export async function runRoutePlannerSkill(requirement: Requirement): Promise<Ro
         total_days: { type: SchemaType.INTEGER }
       },
       required: ["nodes", "rationale", "total_days"]
-    } as any
+    }
   }
 
   const systemPrompt = `

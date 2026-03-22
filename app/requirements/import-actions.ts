@@ -6,11 +6,14 @@ import { type Requirement } from '@/schemas/requirement'
 
 /**
  * Parses import data by invoking the Gemini multi-modal skill.
- * @param textInput Any text input provided by the user.
- * @param filesDataUrls Array of data URLs (e.g. "data:image/png;base64,iVBO...")
+ * Uses FormData to avoid "Maximum array nesting exceeded" errors with large payloads.
  */
-export async function parseImportData(textInput: string, filesDataUrls: string[]) {
+export async function parseImportData(formData: FormData) {
   try {
+    const textInput = formData.get('textInput') as string || ''
+    const filesDataUrlsJson = formData.get('filesDataUrls') as string || '[]'
+    const filesDataUrls: string[] = JSON.parse(filesDataUrlsJson)
+
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -33,7 +36,12 @@ export async function parseImportData(textInput: string, filesDataUrls: string[]
     // Call the AI skill
     const result = await runImportParserSkill(textInput, files)
 
-    return { success: true, data: result }
+    // BUG-0320-01 Fix: Stringify the entire response data to cut RSC serialization tree depth.
+    // This is the safest way to return deep/large objects from a Server Action.
+    return { 
+      success: true, 
+      resultJson: JSON.stringify(result)
+    }
   } catch (error: any) {
     console.error('Parse Import Data Error:', error)
     return { success: false, error: error.message || 'Failed to parse import data' }

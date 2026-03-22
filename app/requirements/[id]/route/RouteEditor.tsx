@@ -53,8 +53,10 @@ function generateId() {
 }
 
 export function RouteEditor({ initialConcept, requirement, requirementId }: RouteEditorProps) {
-  // Initial items with IDs
-  const initialItems: RouteNodeWithId[] = initialConcept.nodes.map(node => ({ ...node, id: generateId() }))
+  // Initial items with IDs - Memoized to prevent useHistory reset loop
+  const initialItems = useMemo<RouteNodeWithId[]>(() => {
+    return initialConcept.nodes.map(node => ({ ...node, id: generateId() }))
+  }, [initialConcept.nodes])
   
   // History management for items
   const { 

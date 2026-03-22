@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { refineRouteAction } from '../../route-actions'
 import { AgentResponse } from '../../route-agent'
 import { RouteConcept } from '@/schemas/route'
@@ -112,7 +111,7 @@ export function RouteAgentChat({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-0">
-        <ScrollArea className="flex-1 p-4">
+        <div className="flex-1 p-4 overflow-y-auto">
           <div className="space-y-4">
             {messages.length === 0 && (
               <p className="text-xs text-muted-foreground text-center my-4">
@@ -147,7 +146,7 @@ export function RouteAgentChat({
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         {isProposalMode ? (
           <div className="p-3 border-t bg-primary/5 space-y-2">

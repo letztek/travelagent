@@ -152,7 +152,7 @@ ${textInput}` : '無補充文字'}
       if (attempt > 0) {
         logger.info(`Fallback triggered: Switching model to ${finalModelUsed} for attempt ${attempt + 1}`)
       }
-      const model = genAI.getGenerativeModel({ model: finalModelUsed, generationConfig })
+      const model = genAI.getGenerativeModel({ model: finalModelUsed, generationConfig: generationConfig as any })
       return model.generateContent(parts)
     })
     const response = await result.response

@@ -13,8 +13,8 @@ interface SortableActivityCardProps {
   id: string
   activity: any
   isEditing: boolean
-  onUpdate: (field: string, value: string) => void
-  onDelete: () => void
+  onUpdate?: (field: string, value: string) => void
+  onDelete?: () => void
   isSelected?: boolean
   onSelect?: () => void
   isOverlay?: boolean
@@ -82,7 +82,7 @@ export function SortableActivityCard({
               className="h-5 w-5 text-destructive hover:text-destructive hover:bg-destructive/10"
               onClick={(e) => {
                 e.stopPropagation();
-                onDelete();
+                onDelete?.();
               }}
               aria-label="刪除活動"
             >
@@ -104,13 +104,13 @@ export function SortableActivityCard({
             <>
               <Input 
                 value={activity.activity} 
-                onChange={(e) => onUpdate('activity', e.target.value)}
+                onChange={(e) => onUpdate?.('activity', e.target.value)}
                 placeholder="活動名稱"
                 className="font-medium h-8 pr-12"
               />
               <Textarea 
                 value={activity.description} 
-                onChange={(e) => onUpdate('description', e.target.value)}
+                onChange={(e) => onUpdate?.('description', e.target.value)}
                 placeholder="描述"
                 className="text-sm min-h-[60px]"
               />

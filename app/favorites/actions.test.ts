@@ -65,12 +65,10 @@ describe('Favorite Actions', () => {
 
     const result = await createFavorite(favoriteData as any)
     expect(result.success).toBe(true)
-    // @ts-expect-error: mocking
     expect(result.data.name).toBe('Taipei 101')
   })
 
   test('getFavorites returns favorites for the user', async () => {
-    // @ts-expect-error: mocking
     mockChain.order.mockResolvedValue({
       data: [{ id: 'fav-123', name: 'Taipei 101' }],
       error: null
@@ -78,7 +76,6 @@ describe('Favorite Actions', () => {
 
     const result = await getFavorites()
     expect(result.success).toBe(true)
-    // @ts-expect-error: mocking
     expect(result.data).toHaveLength(1)
   })
 
@@ -91,7 +88,6 @@ describe('Favorite Actions', () => {
 
     const result = await updateFavorite('fav-123', updateData)
     expect(result.success).toBe(true)
-    // @ts-expect-error: mocking
     expect(result.data.name).toBe('New Name')
   })
 
@@ -128,8 +124,7 @@ describe('Favorite Actions', () => {
     })
 
     test('getFavorites returns database error', async () => {
-      // @ts-expect-error: mocking
-      mockChain.order.mockResolvedValue({ data: null, error: { message: 'DB Error' } })
+        mockChain.order.mockResolvedValue({ data: null, error: { message: 'DB Error' } })
       const result = await getFavorites()
       expect(result.success).toBe(false)
       expect(result.error).toBe('DB Error')
@@ -157,8 +152,7 @@ describe('Favorite Actions', () => {
     })
 
     test('deleteFavorite returns database error', async () => {
-      // @ts-expect-error: mocking
-      mockChain.eq.mockReturnValueOnce(mockChain).mockResolvedValueOnce({ error: { message: 'DB Error' } })
+        mockChain.eq.mockReturnValueOnce(mockChain).mockResolvedValueOnce({ error: { message: 'DB Error' } })
       const result = await deleteFavorite('123')
       expect(result.success).toBe(false)
       expect(result.error).toBe('DB Error')

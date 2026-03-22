@@ -30,11 +30,7 @@ describe('RecommendationSheet Draggable', () => {
 
   it('renders favorites as draggable items', async () => {
     render(
-      <RecommendationSheet 
-        open={true} 
-        onOpenChange={() => {}} 
-        onAdd={() => {}} 
-      />
+      <RecommendationSheet open={true} onOpenChange={() => {}} onAdd={() => {}} totalDays={3} />
     )
 
     await waitFor(() => {

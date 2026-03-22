@@ -15,7 +15,7 @@ describe('RecommendationSheet', () => {
   it('renders correctly when open', async () => {
     // @ts-expect-error: mocking
     actions.getFavorites.mockResolvedValue({ success: true, data: [] })
-    render(<RecommendationSheet open={true} onOpenChange={() => {}} onAdd={() => {}} />)
+    render(<RecommendationSheet open={true} onOpenChange={() => {}} onAdd={() => {}} totalDays={3} />)
     expect(screen.getByText(/私房推薦/i)).toBeDefined()
   })
 
@@ -26,7 +26,7 @@ describe('RecommendationSheet', () => {
       data: [{ id: '1', name: 'Cool Place', type: 'spot', tags: [] }]
     })
     
-    render(<RecommendationSheet open={true} onOpenChange={() => {}} onAdd={() => {}} />)
+    render(<RecommendationSheet open={true} onOpenChange={() => {}} onAdd={() => {}} totalDays={3} />)
     
     await waitFor(() => {
       expect(screen.getByText('Cool Place')).toBeDefined()

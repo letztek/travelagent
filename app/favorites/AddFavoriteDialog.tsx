@@ -52,7 +52,7 @@ export default function AddFavoriteDialog({
     setIsSuggesting(false)
     if (result.success && result.data) {
       // Filter out tags already selected
-      const newSuggestions = result.data.filter(t => !selectedTags.includes(t))
+      const newSuggestions = result.data.filter((t: string) => !selectedTags.includes(t))
       setSuggestedTags(newSuggestions)
     } else {
       toast.error('AI 推薦失敗')

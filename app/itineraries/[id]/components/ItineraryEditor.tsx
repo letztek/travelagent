@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { updateItinerary, regenerateItinerary, getFavorites as getFavs } from '../../actions'
+import { updateItinerary, regenerateItinerary } from '../../actions'
 import { Itinerary, ItineraryDay } from '@/schemas/itinerary'
 import { Loader2, Pencil, Save, X, FileDown, Undo2, Redo2, Check, Sparkles, ArrowLeft, RefreshCw, Plus, Trash2, BookHeart } from 'lucide-react'
 import { saveAs } from 'file-saver'
@@ -51,9 +51,9 @@ interface ItineraryEditorProps {
 }
 
 // Helper types
-type ActivityWithId = ItineraryDay['activities'][0] & { id: string }
-type ItineraryWithIds = {
-  days: (ItineraryDay & {
+type ActivityWithId = Omit<ItineraryDay['activities'][0], 'id'> & { id: string }
+type ItineraryWithIds = Omit<Itinerary, 'days'> & {
+  days: (Omit<ItineraryDay, 'activities'> & {
     activities: ActivityWithId[]
   })[]
 }
@@ -119,8 +119,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     redo, 
     canUndo, 
     canRedo,
-    clear: clearHistory,
-    push: pushToHistory
+    clear: clearHistory
   } = useHistory<ItineraryWithIds>(initialItineraryWithIds)
 
   // Proposal state
@@ -178,7 +177,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
     const cleanData: Itinerary = {
       days: (data.days || []).map(day => ({
         ...day,
-        activities: (day.activities || []).map(({ id, ...rest }) => rest)
+        activities: (day.activities || []).map(({ id, ...rest }: any) => rest)
       }))
     }
     const result = await updateItinerary(itineraryId, cleanData)
@@ -234,7 +233,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const handleExport = async () => {
     try {
       const blob = await generateItineraryDoc(itinerary)
-      saveAs(blob, `${itinerary.content?.title || '行程'}.docx`)
+      saveAs(blob, `${itinerary.title || '行程'}.docx`)
     } catch (error) {
       console.error('Export error:', error)
       alert('匯出失敗')
@@ -244,13 +243,18 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
   const [presentationPrompt, setPresentationPrompt] = useState<string | null>(null)
   const [isPresentationDialogOpen, setIsPresentationDialogOpen] = useState(false)
+  const [presentationLanguage, setPresentationLanguage] = useState<'zh'|'en'>('zh')
 
-  const handleGeneratePresentationPrompt = async () => {
+  const handleGeneratePresentationPrompt = async (lang: 'zh'|'en' = 'zh') => {
     setIsGeneratingPrompt(true)
     try {
-      const prompt = await generatePresentationPrompt(itinerary)
-      setPresentationPrompt(prompt)
-      setIsPresentationDialogOpen(true)
+      const result = await generatePresentationPrompt(itinerary, lang)
+      if (result.success && result.data) {
+        setPresentationPrompt(result.data)
+        setIsPresentationDialogOpen(true)
+      } else {
+        alert('產生簡報提示詞失敗: ' + (result.error || ''))
+      }
     } catch (error) {
       console.error('Presentation prompt generation failed:', error)
       alert('產生簡報提示詞失敗')
@@ -518,7 +522,7 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
             </Button>
             <div className="w-px h-4 bg-slate-200" />
             <h2 className="text-sm font-bold text-slate-900 truncate max-w-[200px] md:max-w-md">
-              {itinerary.content?.title || '精彩旅程'}
+              {itinerary.title || '精彩旅程'}
             </h2>
           </div>
 
@@ -695,18 +699,8 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
                             newData.days[dayIndex].activities.push(newActivity)
                             setData(newData)
                           }}
-                          onSelectContext={(activityId) => {
-                            setSelectedContext({
-                              dayIndex,
-                              type: 'activity',
-                              itemId: activityId
-                            })
-                          }}
-                          isSelected={(activityId) => 
-                            selectedContext?.dayIndex === dayIndex && 
-                            selectedContext?.type === 'activity' && 
-                            selectedContext?.itemId === activityId
-                          }
+                          selectedContext={selectedContext}
+                          onSelectContext={setSelectedContext}
                           dayIndex={dayIndex}
                           userFavorites={userFavorites}
                           onToggleFavorite={loadUserFavorites}
@@ -791,7 +785,13 @@ export default function ItineraryEditor({ itinerary, itineraryId }: ItineraryEdi
       <PresentationPromptDialog 
         open={isPresentationDialogOpen} 
         onOpenChange={setIsPresentationDialogOpen} 
-        prompt={presentationPrompt || ''} 
+        prompt={presentationPrompt || ''}
+        isLoading={isGeneratingPrompt}
+        language={presentationLanguage}
+        onLanguageChange={(lang) => {
+          setPresentationLanguage(lang)
+          handleGeneratePresentationPrompt(lang)
+        }}
       />
     </div>
   )

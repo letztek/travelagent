@@ -125,7 +125,7 @@ export async function runItinerarySkill(
       }
       const model = genAI.getGenerativeModel({
         model: finalModelUsed,
-        generationConfig
+        generationConfig: generationConfig as any
       })
       return model.generateContent(systemPrompt)
     })

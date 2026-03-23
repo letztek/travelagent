@@ -15,6 +15,8 @@ export interface Favorite {
   location_data: any
   tags: string[]
   created_at: string
+  google_place_id?: string
+  metadata?: any // Can be typed to GooglePlaceResult later if needed
 }
 
 export async function createFavorite(data: Omit<Favorite, 'id' | 'user_id' | 'created_at'>) {

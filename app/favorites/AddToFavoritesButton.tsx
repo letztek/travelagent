@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Heart, Loader2 } from 'lucide-react'
 import { createFavorite, deleteFavorite, FavoriteType } from './actions'
+import { createFavoriteWithGrounding } from './grounding-actions'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -51,12 +52,10 @@ export function AddToFavoritesButton({
           toast.error(result.error || '移除失敗')
         }
       } else {
-        const result = await createFavorite({
+        const result = await createFavoriteWithGrounding({
           name: cleanName,
           type,
           description: description || '',
-          tags: [],
-          location_data: {}
         })
 
         if (result.success) {

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Favorite, FavoriteType, updateFavorite, suggestTags } from './actions'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Utensils, Home, Tag, Pencil, X, Plus, Check, Loader2, Sparkles } from 'lucide-react'
+import { MapPin, Utensils, Home, Tag, Pencil, X, Plus, Check, Loader2, Sparkles, Star, ExternalLink, Clock, Globe, Phone } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
@@ -152,6 +152,57 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
                   </div>
                   {editingId !== fav.id && fav.description && (
                     <p className="text-sm text-slate-500 line-clamp-2">{fav.description}</p>
+                  )}
+
+                  {/* Google Places Info */}
+                  {editingId !== fav.id && fav.metadata && (
+                    <div className="pt-2 space-y-2">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
+                        {fav.metadata.rating && (
+                          <div className="flex items-center gap-1 text-amber-500 font-medium">
+                            <Star size={12} className="fill-current" />
+                            <span>{fav.metadata.rating}</span>
+                            {fav.metadata.userRatingCount && (
+                              <span className="text-slate-300 font-normal">({fav.metadata.userRatingCount.toLocaleString()})</span>
+                            )}
+                          </div>
+                        )}
+                        {fav.metadata.formattedAddress && (
+                          <div className="flex items-center gap-1 min-w-0">
+                            <MapPin size={12} className="shrink-0 text-slate-300" />
+                            <span className="truncate">{fav.metadata.formattedAddress}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        {fav.metadata.websiteUri && (
+                          <a 
+                            href={fav.metadata.websiteUri} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-[10px] flex items-center gap-1 text-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <Globe size={10} /> 官方網站
+                          </a>
+                        )}
+                        {fav.metadata.nationalPhoneNumber && (
+                          <div className="text-[10px] flex items-center gap-1 text-slate-400">
+                            <Phone size={10} /> {fav.metadata.nationalPhoneNumber}
+                          </div>
+                        )}
+                        {fav.google_place_id && (
+                          <a 
+                            href={`https://www.google.com/maps/search/?api=1&query_place_id=${fav.google_place_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] flex items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors ml-auto"
+                          >
+                            Google 地圖 <ExternalLink size={10} />
+                          </a>
+                        )}
+                      </div>
+                    </div>
                   )}
                   
                   {editingId === fav.id ? (

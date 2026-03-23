@@ -2,12 +2,18 @@
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, Trash2 } from 'lucide-react'
+import { GripVertical, Trash2, MapPin } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { AddToFavoritesButton } from '@/app/favorites/AddToFavoritesButton'
 import { Favorite } from '@/app/favorites/actions'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface SortableActivityCardProps {
   id: string
@@ -117,7 +123,21 @@ export function SortableActivityCard({
             </>
           ) : (
             <>
-              <div className="font-semibold text-sm truncate pr-6">{activity.activity}</div>
+              <div className="font-semibold text-sm truncate pr-6 flex items-center gap-1">
+                {activity.activity}
+                {favorite?.google_place_id && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <MapPin className="h-3 w-3 text-blue-500 fill-blue-50" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">已連結 Google 地圖實時資料</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
               <div className="text-xs text-muted-foreground whitespace-pre-wrap">{activity.description}</div>
             </>
           )}

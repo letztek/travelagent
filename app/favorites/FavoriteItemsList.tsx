@@ -193,15 +193,18 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
                         )}
                         {fav.google_place_id && (
                           <a 
-                            href={`https://www.google.com/maps/search/?api=1&query_place_id=${fav.google_place_id}`}
-                            target="_blank"
+                            href={
+                              fav.metadata?.location 
+                                ? `https://www.google.com/maps/search/?api=1&query=${fav.metadata.location.latitude},${fav.metadata.location.longitude}&query_place_id=${fav.google_place_id}`
+                                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fav.name)}&query_place_id=${fav.google_place_id}`
+                            }
+                            target="_blank" 
                             rel="noopener noreferrer"
                             className="text-[10px] flex items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors ml-auto"
                           >
                             Google 地圖 <ExternalLink size={10} />
                           </a>
-                        )}
-                      </div>
+                        )}                      </div>
                     </div>
                   )}
                   

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { groundItinerary } from './grounding'
-import { placesService } from '../../services/google-places'
+import { cachedPlacesService } from '../../services/google-places-cache'
 import { Itinerary } from '@/schemas/itinerary'
 
-vi.mock('../../services/google-places', () => ({
-  placesService: {
+vi.mock('../../services/google-places-cache', () => ({
+  cachedPlacesService: {
     searchText: vi.fn()
   }
 }))
@@ -29,7 +29,7 @@ describe('Itinerary Grounding Logic', () => {
       ]
     }
 
-    vi.mocked(placesService.searchText).mockResolvedValue([{
+    vi.mocked(cachedPlacesService.searchText).mockResolvedValue([{
       id: 'place_id_123',
       displayName: { text: 'Taipei 101', languageCode: 'zh-TW' },
       regularOpeningHours: {
@@ -41,7 +41,7 @@ describe('Itinerary Grounding Logic', () => {
     }])
 
     const grounded = await groundItinerary(mockItinerary)
-    expect(placesService.searchText).toHaveBeenCalledWith('Taipei 101')
+    expect(cachedPlacesService.searchText).toHaveBeenCalledWith('Taipei 101')
     expect(grounded.days[0].activities[0].activity).toBe('Taipei 101')
     // We expect it to add some metadata to the activity perhaps, but at least not change the name
   })
@@ -62,7 +62,7 @@ describe('Itinerary Grounding Logic', () => {
     }
 
     // Return empty array to simulate place not found
-    vi.mocked(placesService.searchText).mockResolvedValue([])
+    vi.mocked(cachedPlacesService.searchText).mockResolvedValue([])
 
     // Our grounding function might throw or return a warning object, 
     // let's say it updates the description to warn the user for now

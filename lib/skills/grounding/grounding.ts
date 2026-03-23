@@ -1,5 +1,5 @@
 import { Itinerary } from '@/schemas/itinerary'
-import { placesService } from '../../services/google-places'
+import { cachedPlacesService } from '../../services/google-places-cache'
 
 export async function groundItinerary(itinerary: Itinerary): Promise<Itinerary> {
   const newItinerary = JSON.parse(JSON.stringify(itinerary)) as Itinerary
@@ -7,7 +7,7 @@ export async function groundItinerary(itinerary: Itinerary): Promise<Itinerary> 
   for (const day of newItinerary.days) {
     for (const activity of day.activities) {
       try {
-        const results = await placesService.searchText(activity.activity)
+        const results = await cachedPlacesService.searchText(activity.activity)
         if (results && results.length > 0) {
           // Add metadata or verify opening hours here if needed in the future
           // For now, it exists.

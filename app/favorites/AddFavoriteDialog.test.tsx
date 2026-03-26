@@ -3,9 +3,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import AddFavoriteDialog from './AddFavoriteDialog'
 import * as actions from './actions'
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    refresh: vi.fn(),
+  }),
+}))
+
 vi.mock('./actions', () => ({
   createFavorite: vi.fn(),
   suggestTags: vi.fn(),
+}))
+
+vi.mock('./grounding-actions', () => ({
+  createFavoriteWithGrounding: vi.fn(),
 }))
 
 describe('AddFavoriteDialog', () => {

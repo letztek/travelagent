@@ -3,7 +3,7 @@ import { GooglePlacesService } from './google-places'
 import { createAdminClient } from '@/lib/supabase/server'
 import { logger } from '../utils/logger'
 
-const CACHE_TTL_DAYS = 7
+const CACHE_TTL_DAYS = 90
 
 export class CachedGooglePlacesService {
   private service: GooglePlacesService

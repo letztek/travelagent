@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Favorite, FavoriteType, updateFavorite, suggestTags } from './actions'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +29,12 @@ const TYPE_ICONS: Record<FavoriteType, React.ReactNode> = {
 
 export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsListProps) {
   const [favorites, setFavorites] = useState(initialFavorites)
+
+  // Sync state when props change (e.g., after router.refresh())
+  useEffect(() => {
+    setFavorites(initialFavorites)
+  }, [initialFavorites])
+
   const [filter, setFilter] = useState<FavoriteType | 'all'>('all')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
@@ -174,6 +180,23 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
                           </div>
                         )}
                       </div>
+
+                      {/* Opening Hours Display */}
+                      {fav.metadata.regularOpeningHours?.weekdayDescriptions && (
+                        <div className="bg-slate-50/50 rounded-lg p-2 space-y-1">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 mb-1">
+                            <Clock size={12} className="text-slate-300" />
+                            營業時間參考
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0.5">
+                            {fav.metadata.regularOpeningHours.weekdayDescriptions.map((desc: string, i: number) => (
+                              <div key={i} className="text-[10px] text-slate-500 leading-relaxed">
+                                {desc}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       
                       <div className="flex items-center gap-3">
                         {fav.metadata.websiteUri && (

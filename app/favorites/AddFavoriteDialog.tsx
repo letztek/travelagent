@@ -23,7 +23,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Sparkles, Loader2, X, Plus } from 'lucide-react'
 import { createFavorite, suggestTags, FavoriteType } from './actions'
+import { createFavoriteWithGrounding } from './grounding-actions'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 interface AddFavoriteDialogProps {
   open: boolean
@@ -34,6 +36,7 @@ export default function AddFavoriteDialog({
   open,
   onOpenChange,
 }: AddFavoriteDialogProps) {
+  const router = useRouter()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [type, setType] = useState<FavoriteType>('spot')
@@ -71,12 +74,10 @@ export default function AddFavoriteDialog({
   const handleSubmit = async () => {
     if (!name) return
     setIsSubmitting(true)
-    const result = await createFavorite({
+    const result = await createFavoriteWithGrounding({
       name,
       description,
-      type,
-      tags: selectedTags,
-      location_data: {} // Placeholder
+      type
     })
     setIsSubmitting(false)
     if (result.success) {
@@ -88,6 +89,7 @@ export default function AddFavoriteDialog({
       setType('spot')
       setSelectedTags([])
       setSuggestedTags([])
+      router.refresh()
     } else {
       toast.error(result.error || '新增失敗')
     }

@@ -20,6 +20,11 @@ vi.mock('@/lib/skills/itinerary-generator', () => ({
   })
 }))
 
+// Mock Search Favorites Service
+vi.mock('@/lib/services/favorites-search', () => ({
+  searchFavorites: vi.fn().mockResolvedValue({ success: true, data: [] })
+}))
+
 // Mock Supabase
 const mockInsert = vi.fn(() => ({
   select: vi.fn(() => ({

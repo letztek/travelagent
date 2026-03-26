@@ -50,6 +50,6 @@ test('runItinerarySkill includes user favorites in prompt', async () => {
   await runItinerarySkill(requirement as any, undefined, favorites as any)
   
   const call = vi.mocked(mockModel.generateContent).mock.calls[0][0] as string
-  expect(call).toContain('【使用者私房最愛名單】')
+  expect(call).toContain('【使用者私房最愛名單 (RAG Context)】')
   expect(call).toContain('My Favorite Spot')
 })

@@ -11,6 +11,7 @@ import { logger } from '@/lib/utils/logger'
 import { logAiAudit } from '@/lib/supabase/audit'
 import { AgentContext, ItineraryAgentResponse, ItineraryAgentResult } from './itinerary-agent'
 import { revalidatePath } from 'next/cache'
+import { searchFavorites } from '@/lib/services/favorites-search'
 
 export async function refineItineraryAction(
   currentItinerary: Itinerary, 
@@ -165,13 +166,11 @@ export async function generateItinerary(requirement: Requirement, requirementId:
       return { success: false, error: 'User not authenticated' }
     }
 
-    // Fetch user favorites
-    const { data: favorites } = await supabase
-      .from('user_favorites')
-      .select('name, type, description, tags')
-      .eq('user_id', user.id)
+    // Fetch user favorites using RAG search
+    const destination = requirement.destinations?.[0] || ''
+    const { data: favorites } = await searchFavorites({ query: destination })
 
-    const itineraryData = await runItinerarySkill(requirement, routeConcept, favorites || [])
+    const itineraryData = await runItinerarySkill(requirement, routeConcept, (favorites as any) || [])
     
     const { data, error } = await supabase
       .from('itineraries')
@@ -221,15 +220,12 @@ export async function regenerateItinerary(itineraryId: string) {
     const requirement = (original as any).requirements
     const routeConcept = (original as any).route_concepts?.content
 
-    // 1.5 Fetch user favorites
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data: favorites } = await supabase
-      .from('user_favorites')
-      .select('name, type, description, tags')
-      .eq('user_id', user?.id || '')
+    // 1.5 Fetch user favorites using RAG search
+    const destination = requirement.destinations?.[0] || ''
+    const { data: favorites } = await searchFavorites({ query: destination })
 
     // 2. Run skill again
-    const newItineraryData = await runItinerarySkill(requirement, routeConcept, favorites || [])
+    const newItineraryData = await runItinerarySkill(requirement, routeConcept, (favorites as any) || [])
 
     // 3. Update existing itinerary
     const { data, error: updateError } = await supabase

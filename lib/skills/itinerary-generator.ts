@@ -11,6 +11,12 @@ export interface FavoriteItem {
   type: string
   description?: string
   tags?: string[]
+  metadata?: {
+    location?: { latitude: number; longitude: number };
+    regularOpeningHours?: { weekdayDescriptions?: string[] };
+    rating?: number;
+    formattedAddress?: string;
+  }
 }
 
 export async function runItinerarySkill(
@@ -74,9 +80,18 @@ export async function runItinerarySkill(
 
   const favoritesPrompt = userFavorites && userFavorites.length > 0 
     ? `
-    【使用者私房最愛名單】
-    以下是使用者儲存的口袋名單（包含景點、餐廳、住宿）。如果這些地點位於目的地附近，請「優先考慮」將其排入行程中，以提升個性化體驗：
-    ${userFavorites.map(f => `- [${f.type === 'spot' ? '景點' : f.type === 'food' ? '餐廳' : '住宿'}] ${f.name}${f.description ? `: ${f.description}` : ''}${f.tags ? ` (標籤: ${f.tags.join(', ')})` : ''}`).join('\n    ')}
+    【使用者私房最愛名單 (RAG Context)】
+    以下是從使用者資料庫檢索到的相關口袋名單。請務必核對「營業時間」以確保行程可行性，並優先考慮將其排入行程中：
+    ${userFavorites.map(f => {
+      const typeStr = f.type === 'spot' ? '景點' : f.type === 'food' ? '餐廳' : '住宿'
+      const meta = f.metadata
+      const hours = meta?.regularOpeningHours?.weekdayDescriptions?.join('; ') || '無資訊'
+      const rating = meta?.rating ? ` (評分: ${meta.rating})` : ''
+      return `- [${typeStr}] ${f.name}${rating}${f.description ? `: ${f.description}` : ''}
+      地址: ${meta?.formattedAddress || '無'}
+      營業時間: ${hours}
+      座標: ${meta?.location?.latitude}, ${meta?.location?.longitude}`
+    }).join('\n    ')}
     ` : ''
 
   const systemPrompt = `

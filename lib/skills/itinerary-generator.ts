@@ -5,6 +5,17 @@ import { RouteConcept } from '@/schemas/route'
 import { withRetry } from '../utils/ai-retry'
 import { logAiAudit } from '../supabase/audit'
 import { logger } from '../utils/logger'
+import { format, parseISO } from 'date-fns'
+import { zhTW } from 'date-fns/locale'
+
+function formatDateWithWeekday(dateStr: string): string {
+  try {
+    const date = parseISO(dateStr)
+    return format(date, 'yyyy-MM-dd (EEEE)', { locale: zhTW })
+  } catch {
+    return dateStr
+  }
+}
 
 export interface FavoriteItem {
   name: string
@@ -81,23 +92,22 @@ export async function runItinerarySkill(
   const favoritesPrompt = userFavorites && userFavorites.length > 0 
     ? `
     【使用者私房最愛名單 (RAG Context)】
-    以下是從使用者資料庫檢索到的相關口袋名單。請務必核對「營業時間」以確保行程可行性，並優先考慮將其排入行程中：
-    ${userFavorites.map(f => {
+    以下是從使用者資料庫檢索到的相關口袋名單。請優先參考此名單進行排程：
+    ${userFavorites.map((f, idx) => {
       const typeStr = f.type === 'spot' ? '景點' : f.type === 'food' ? '餐廳' : '住宿'
       const meta = f.metadata
       const hours = meta?.regularOpeningHours?.weekdayDescriptions?.join('; ') || '無資訊'
       const rating = meta?.rating ? ` (評分: ${meta.rating})` : ''
-      return `- [${typeStr}] ${f.name}${rating}${f.description ? `: ${f.description}` : ''}
+      return `- [Ref ID: ${idx}] [${typeStr}] ${f.name}${rating}${f.description ? `: ${f.description}` : ''}
       地址: ${meta?.formattedAddress || '無'}
       營業時間: ${hours}
       座標: ${meta?.location?.latitude}, ${meta?.location?.longitude}`
     }).join('\n    ')}
 
-    【營業時間感知規範 (Strict Opening Hours Awareness)】
-    1. 你「必須」核對上述名單中的「營業時間」。
-    2. 嚴禁在該地點的「公休日」安排活動。
-    3. 若該地點在特定時段（如：晚上）不營業，你不得在該時段安排該活動。
-    4. 如果名單中的地點與你的行程安排衝突（如：週一公休但行程正好是週一），你應該尋找替代方案或調整天數順序。
+    【RAG 執行規範】
+    1. **【意圖感知過濾 (Intent-based Filtering)】**：上述名單僅作為「建議池」，你必須根據本次行程的主題（如：${requirement.notes || '一般旅遊'}）與需求，僅選取符合本次行程主題的地點。不相關的地點請忽略。
+    2. **【精準身份對齊 (Strict Identity Alignment)】**：若你決定採用上述名單中的某個地點，你「必須」直接複製該 [Ref ID] 對應的名稱與描述，嚴禁根據你的內建知識進行重命名或修改（例如：若收藏名為 A，即便你認為它更常被稱為 B，你也必須寫 A）。
+    3. **【營業時間感知】**：你「必須」核對上述名單中的「營業時間」，嚴禁在該地點的「公休日」安排活動。若衝突，請調整天數或尋找替代方案。
     ` : ''
 
   const systemPrompt = `
@@ -115,7 +125,7 @@ export async function runItinerarySkill(
     【需求細節】
     - 出發地：${requirement.origin || '未指定'}
     - 目的地：${requirement.destinations && requirement.destinations.length > 0 ? requirement.destinations.join(', ') : '未指定'}
-    - 旅遊日期：${requirement.travel_dates.start} 至 ${requirement.travel_dates.end}
+    - 旅遊日期：${formatDateWithWeekday(requirement.travel_dates.start)} 至 ${formatDateWithWeekday(requirement.travel_dates.end)}
     - 旅客結構：成人 ${requirement.travelers.adult}, 長輩 ${requirement.travelers.senior}, 兒童 ${requirement.travelers.child}, 嬰兒 ${requirement.travelers.infant}
     - 總預算範圍：${requirement.budget_range} (此為整團旅客的總預算)
     - 偏好設定：飲食禁忌 [${requirement.preferences.dietary.join(', ')}], 住宿偏好 [${requirement.preferences.accommodation.join(', ')}]

@@ -78,6 +78,6 @@ test('runItinerarySkill includes strict opening hours awareness instructions', a
   await runItinerarySkill(requirement as any, undefined, favorites as any)
   
   const call = vi.mocked(mockModel.generateContent).mock.calls[0][0] as string
-  expect(call).toContain('【營業時間感知規範 (Strict Opening Hours Awareness)】')
+  expect(call).toContain('【RAG 執行規範】')
   expect(call).toContain('嚴禁在該地點的「公休日」安排活動')
 })

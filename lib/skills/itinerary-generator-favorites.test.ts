@@ -53,3 +53,31 @@ test('runItinerarySkill includes user favorites in prompt', async () => {
   expect(call).toContain('【使用者私房最愛名單 (RAG Context)】')
   expect(call).toContain('My Favorite Spot')
 })
+
+test('runItinerarySkill includes strict opening hours awareness instructions', async () => {
+  vi.stubEnv('GEMINI_API_KEY', 'fake-key')
+  
+  const requirement = {
+    travel_dates: { start: '2026-06-01', end: '2026-06-02' },
+    travelers: { adult: 1, senior: 0, child: 0, infant: 0 },
+    budget_range: 'Mid',
+    preferences: { dietary: [], accommodation: [] },
+    notes: 'Test'
+  }
+
+  const favorites = [
+    { 
+      name: 'Closed on Monday Spot', 
+      type: 'spot', 
+      metadata: { 
+        regularOpeningHours: { weekdayDescriptions: ['Monday: Closed'] } 
+      } 
+    }
+  ]
+  
+  await runItinerarySkill(requirement as any, undefined, favorites as any)
+  
+  const call = vi.mocked(mockModel.generateContent).mock.calls[0][0] as string
+  expect(call).toContain('【營業時間感知規範 (Strict Opening Hours Awareness)】')
+  expect(call).toContain('嚴禁在該地點的「公休日」安排活動')
+})

@@ -92,6 +92,12 @@ export async function runItinerarySkill(
       營業時間: ${hours}
       座標: ${meta?.location?.latitude}, ${meta?.location?.longitude}`
     }).join('\n    ')}
+
+    【營業時間感知規範 (Strict Opening Hours Awareness)】
+    1. 你「必須」核對上述名單中的「營業時間」。
+    2. 嚴禁在該地點的「公休日」安排活動。
+    3. 若該地點在特定時段（如：晚上）不營業，你不得在該時段安排該活動。
+    4. 如果名單中的地點與你的行程安排衝突（如：週一公休但行程正好是週一），你應該尋找替代方案或調整天數順序。
     ` : ''
 
   const systemPrompt = `

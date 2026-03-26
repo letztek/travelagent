@@ -23,15 +23,16 @@ describe('Favorites Search Service', () => {
     vi.mocked(createClient).mockResolvedValue(mockSupabase)
   })
 
-  it('performs name-based search correctly', async () => {
-    mockSupabase.or.mockResolvedValue({ data: [{ id: '1', name: 'Taipei 101' }], error: null })
+  it('performs name and address-based search correctly', async () => {
+    mockSupabase.or.mockResolvedValue({ data: [{ id: '1', name: 'National Palace Museum', metadata: { formattedAddress: 'Taipei, Taiwan' } }], error: null })
 
     const result = await searchFavorites({ query: 'Taipei' })
 
     expect(mockSupabase.from).toHaveBeenCalledWith('user_favorites')
-    expect(mockSupabase.or).toHaveBeenCalledWith('name.ilike.%Taipei%,description.ilike.%Taipei%')
+    expect(mockSupabase.or).toHaveBeenCalledWith('name.ilike.%Taipei%,description.ilike.%Taipei%,metadata->>formattedAddress.ilike.%Taipei%')
     expect(result.success).toBe(true)
     expect(result.data).toHaveLength(1)
+    expect(result.data[0].metadata.formattedAddress).toContain('Taipei')
   })
 
   it('performs radius-based search correctly (simulated)', async () => {

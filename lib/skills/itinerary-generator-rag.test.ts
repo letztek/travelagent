@@ -107,4 +107,26 @@ describe('Itinerary Generator RAG requirements', () => {
     expect(call).not.toContain('台北故宮')
     expect(call).not.toContain('國立故宮博物院')
   })
+
+  test('runItinerarySkill includes category alignment instruction', async () => {
+    const requirement = {
+      travel_dates: { start: '2026-06-01', end: '2026-06-02' },
+      travelers: { adult: 1, senior: 0, child: 0, infant: 0 },
+      budget_range: 'Mid',
+      preferences: { dietary: [], accommodation: [] },
+      notes: 'Test'
+    }
+
+    const favorites = [
+      { name: 'Famous Restaurant', type: 'food' }
+    ]
+    
+    await runItinerarySkill(requirement as any, undefined, favorites as any)
+    
+    const call = vi.mocked(mockModel.generateContent).mock.calls[0][0] as string
+    
+    expect(call).toContain('【類別屬性對齊】')
+    expect(call).toContain('[餐廳]')
+    expect(call).toContain('meals')
+  })
 })

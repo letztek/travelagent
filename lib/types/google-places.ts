@@ -40,3 +40,22 @@ export interface GooglePlaceResult {
   types?: string[];
   primaryType?: string;
 }
+
+export interface GoogleDistanceMatrixResponse {
+  status: string;
+  origin_addresses: string[];
+  destination_addresses: string[];
+  rows: {
+    elements: {
+      status: string;
+      duration: {
+        value: number;
+        text: string;
+      };
+      distance: {
+        value: number;
+        text: string;
+      };
+    }[];
+  }[];
+}

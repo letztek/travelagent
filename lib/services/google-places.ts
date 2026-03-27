@@ -1,7 +1,8 @@
-import { GooglePlaceResult } from '../types/google-places'
+import { GooglePlaceResult, GoogleDistanceMatrixResponse } from '../types/google-places'
 import { logger } from '../utils/logger'
 
 const PLACES_API_URL = 'https://places.googleapis.com/v1/places'
+const DISTANCE_MATRIX_API_URL = 'https://maps.googleapis.com/maps/api/distancematrix/json'
 
 export class GooglePlacesService {
   private apiKey: string
@@ -68,6 +69,37 @@ export class GooglePlacesService {
       return await response.json()
     } catch (error) {
       logger.error(`Failed to get place details for ${placeId}`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Get travel distance and duration between multiple origins and destinations.
+   * Origins and destinations can be place IDs (prefixed with 'place_id:') or coordinates 'lat,lng'.
+   */
+  async getDistanceMatrix(origins: string[], destinations: string[]): Promise<GoogleDistanceMatrixResponse> {
+    try {
+      const originsParam = origins.join('|')
+      const destinationsParam = destinations.join('|')
+      const url = `${DISTANCE_MATRIX_API_URL}?origins=${encodeURIComponent(originsParam)}&destinations=${encodeURIComponent(destinationsParam)}&key=${this.apiKey}`
+
+      const response = await fetch(url)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        logger.error(`Google Distance Matrix API Error: ${response.status} - ${errorText}`)
+        throw new Error(`Google Distance Matrix API Error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      if (data.status !== 'OK') {
+        logger.error(`Google Distance Matrix API Logical Error: ${data.status} - ${data.error_message || 'No message'}`)
+        throw new Error(`Google Distance Matrix API Error: ${data.status}`)
+      }
+
+      return data as GoogleDistanceMatrixResponse
+    } catch (error) {
+      logger.error('Failed to get distance matrix from Google Maps API', error)
       throw error
     }
   }

@@ -7,6 +7,7 @@ import { logAiAudit } from '../supabase/audit'
 import { logger } from '../utils/logger'
 import { format, parseISO } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
+import { GoogleDistanceMatrixResponse } from '../types/google-places'
 
 function formatDateWithWeekday(dateStr: string): string {
   try {
@@ -33,7 +34,8 @@ export interface FavoriteItem {
 export async function runItinerarySkill(
   requirement: Requirement, 
   routeConcept?: RouteConcept,
-  userFavorites?: FavoriteItem[]
+  userFavorites?: FavoriteItem[],
+  distanceMatrix?: GoogleDistanceMatrixResponse
 ): Promise<Itinerary> {
   const apiKey = process.env.GEMINI_API_KEY
   const primaryModelName = process.env.GEMINI_PRIMARY_MODEL || 'gemini-3-flash-preview'
@@ -114,6 +116,22 @@ export async function runItinerarySkill(
     4. **【營業時間感知】**：你「必須」核對上述名單中的「營業時間」，嚴禁在該地點的「公休日」安排活動。若衝突，請調整天數或尋找替代方案。
     ` : ''
 
+  const isDistanceMatrixEnabled = process.env.GOOGLE_DISTANCE_MATRIX_ENABLED === 'true'
+  const distancePrompt = (isDistanceMatrixEnabled && distanceMatrix && distanceMatrix.rows.length > 0 && userFavorites && userFavorites.length > 1)
+    ? `
+    【交通距離與時程參考 (Distance Matrix)】
+    以下是名單中各地點之間的交通參考（僅列出部分）：
+    ${userFavorites.map((f1, i) => {
+      if (i >= distanceMatrix.rows.length) return ''
+      return distanceMatrix.rows[i].elements.map((el, j) => {
+        if (i === j || el.status !== 'OK' || !userFavorites[j]) return ''
+        return `從 ${f1.name} 到 ${userFavorites[j].name}: ${el.duration.text} (${el.distance.text})`
+      }).filter(Boolean).join('\n    ')
+    }).filter(Boolean).join('\n    ')}
+    
+    請務必參考上述時程來規劃每日活動的「順序」與「間隔」，確保行程不會過於擁擠或地理邏輯不通。
+    ` : ''
+
   const systemPrompt = `
     你是一位專業的旅遊顧問助理。
     請根據客戶的需求，生成一份詳細且地理邏輯合理（不走回頭路、交通時間最佳化）的旅遊行程。
@@ -125,6 +143,7 @@ export async function runItinerarySkill(
     ` : ''}
 
     ${favoritesPrompt}
+    ${distancePrompt}
 
     【需求細節】
     - 出發地：${requirement.origin || '未指定'}

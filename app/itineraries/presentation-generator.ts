@@ -37,7 +37,8 @@ export async function generatePresentationPrompt(itinerary: Itinerary, language:
       You MUST organize the presentation into the following EXACT pages in order:
 
       1. **Cover Slide (頁面 1: 封面)**
-         - Use tag: \`[Layout: Full background image, dark overlay, centered text]\`
+         - Use tag: \`[Layout: Full background image, centered text with elegant solid background box for readability]\`
+         - ⚠️ IMPORTANT: Do NOT use a full dark overlay over the image. Ensure the text has a solid or semi-transparent background box to stay legible against the bright image.
          - Include a grand, evocative Title, a poetic Subtitle, and the total duration (e.g., "5 Days / 4 Nights").
          - \`[Image Prompt: A cinematic, photorealistic, ultra-high resolution, authentic travel photography shot of [Iconic destination from itinerary], dramatic lighting, epic scale, 8k]\`
 
@@ -51,7 +52,7 @@ export async function generatePresentationPrompt(itinerary: Itinerary, language:
 
       3. **Feature Spotlights (景點深度介紹 - 1 to 2 slides per day)**
          - Select 1 or 2 of the most iconic or unique activities from that day.
-         - Use tag: \`[Layout: Large image top, text bottom]\` or \`[Layout: Image grid with text overlay]\`
+         - Use tag: \`[Layout: Large image top, text bottom]\` or \`[Layout: Image grid with text in a solid background box]\`
          - Title: [Name of the Spot/Activity]
          - Content: A deeply engaging paragraph describing the sensory experience, history, or unique value of this spot. Make the client feel like they are already there.
          - \`[Image Prompt: Ultra-realistic, award-winning travel photography of [Specific spot/activity], close-up or sweeping view depending on context, vivid colors, 8k]\`

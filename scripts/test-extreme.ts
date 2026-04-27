@@ -32,9 +32,9 @@ async function testExtremeScenario() {
   try {
     const aiResult = await runItinerarySkill(requirement)
     console.log('✅ Generation Successful!')
-    console.log('Day 1 Sample:', JSON.stringify(aiResult.days[0], null, 2))
-    console.log('Meals Sample (Day 1):', JSON.stringify(aiResult.days[0].meals, null, 2))
-    console.log('Accommodation (Day 1):', aiResult.days[0].accommodation)
+    console.log('Day 1 Sample:', JSON.stringify(aiResult.itinerary.days[0], null, 2))
+    console.log('Meals Sample (Day 1):', JSON.stringify(aiResult.itinerary.days[0].meals, null, 2))
+    console.log('Accommodation (Day 1):', aiResult.itinerary.days[0].accommodation)
   } catch (error: any) {
     console.error('❌ Generation Failed:', error.message)
   }

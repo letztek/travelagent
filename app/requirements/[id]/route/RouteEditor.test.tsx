@@ -58,7 +58,7 @@ const mockRequirement: Requirement = {
   travel_dates: { start: '2026-02-02', end: '2026-02-04' },
   travelers: { adult: 2, senior: 0, child: 0, infant: 0 },
   budget_range: 'Mid',
-  preferences: { dietary: [], accommodation: [] },
+  preferences: { dietary: [], accommodation: [], auto_add_to_favorites: false, run_gap_analysis: true },
 }
 
 test('RouteEditor renders initial concept', () => {

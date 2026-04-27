@@ -12,26 +12,13 @@ const mockGenerateContent = vi.fn().mockResolvedValue({
 })
 
 // Mock Gemini SDK
-vi.mock('@google/generative-ai', () => {
-  const mockGenerateContent = vi.fn().mockResolvedValue({
-    response: {
-      text: () => `
-# Slide 1: Japan Trip
-![Image Prompt: Cinematic view of Tokyo Tower]
-      `
-    }
-  })
-  return {
-    GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
-      getGenerativeModel: vi.fn().mockReturnValue({
-        generateContent: mockGenerateContent
-      })
-    })),
-    mockGenerateContent
-  }
-})
-
-import { mockGenerateContent as injectedMock } from '@google/generative-ai'
+vi.mock('@google/generative-ai', () => ({
+  GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
+    getGenerativeModel: vi.fn().mockReturnValue({
+      generateContent: mockGenerateContent
+    })
+  }))
+}))
 
 const mockItinerary: Itinerary = {
   title: '東京五日遊',
@@ -88,4 +75,13 @@ test('Integration: System gracefully handles manual retries (successive calls)',
   
   // It should simply invoke the generation again without state bleeding or automated loops
   expect(injectedMock).toHaveBeenCalledTimes(2)
+})(result1.success).toBe(true)
+  expect(mockGenerateContent).toHaveBeenCalledTimes(1)
+
+  // Simulate user reviewing the result, then clicking regenerate (manual retry)
+  const result2 = await generatePresentationPrompt(mockItinerary)
+  expect(result2.success).toBe(true)
+  
+  // It should simply invoke the generation again without state bleeding or automated loops
+  expect(mockGenerateContent).toHaveBeenCalledTimes(2)
 })

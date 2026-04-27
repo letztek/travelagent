@@ -337,13 +337,13 @@ export async function regenerateItinerary(itineraryId: string) {
 
     // 1.5 Fetch user favorites using RAG search with broader query
     const destinations = requirement.destinations || []
-    const favoritesPromises = destinations.map(d => searchFavorites({ query: d }))
+    const favoritesPromises = destinations.map((d: string) => searchFavorites({ query: d }))
     const searchResults = await Promise.all(favoritesPromises)
     const allFavorites = searchResults.flatMap(res => res.success ? (res.data as any) : [])
     const uniqueFavorites = Array.from(new Map(allFavorites.map(f => [f.id, f])).values())
 
     // Fetch coordinates for destinations to provide better spatial context
-    const destinationCoordsPromises = destinations.map(async (d) => {
+    const destinationCoordsPromises = destinations.map(async (d: string) => {
       try {
         const results = await cachedPlacesService.searchText(d);
         if (results && results.length > 0 && results[0].location) {

@@ -47,7 +47,7 @@ async function debugItineraryGeneration(itineraryId: string) {
     const aiResult = await runItinerarySkill(requirement)
     console.log('✅ AI Re-generation Successful!')
     console.log('--- AI Response Content (Sample) ---')
-    console.log(JSON.stringify(aiResult.days[0], null, 2)) // Show only Day 1 to save space
+    console.log(JSON.stringify(aiResult.itinerary.days[0], null, 2)) // Show only Day 1 to save space
     console.log('...')
   } catch (error: any) {
     console.error('❌ AI Generation Failed during debug:', error.message)

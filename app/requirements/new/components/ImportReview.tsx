@@ -13,15 +13,27 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { budgetOptions } from '../page'
-
 interface ImportReviewProps {
   data: ImportParserResult
   onConfirm: (formData: any) => void
   onCancel: () => void
 }
 
+interface ImportFormData {
+  origin: string;
+  destinations: string;
+  budget: string;
+  startDate: string;
+  endDate: string;
+  adults: number;
+  children: number;
+  run_gap_analysis: boolean;
+  auto_add_to_favorites: boolean;
+  direct_generate: boolean;
+}
+
 export function ImportReview({ data, onConfirm, onCancel }: ImportReviewProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ImportFormData>({
     origin: data.extracted_metadata.origin || '',
     destinations: data.extracted_metadata.destinations?.join(', ') || '',
     budget: data.extracted_metadata.budget_range || '',
@@ -29,6 +41,9 @@ export function ImportReview({ data, onConfirm, onCancel }: ImportReviewProps) {
     endDate: data.extracted_metadata.travel_dates?.end || '',
     adults: data.extracted_metadata.travelers?.adult || 2,
     children: data.extracted_metadata.travelers?.child || 0,
+    run_gap_analysis: true,
+    auto_add_to_favorites: false,
+    direct_generate: false,
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

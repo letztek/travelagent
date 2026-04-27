@@ -75,13 +75,4 @@ test('Integration: System gracefully handles manual retries (successive calls)',
   
   // It should simply invoke the generation again without state bleeding or automated loops
   expect(injectedMock).toHaveBeenCalledTimes(2)
-})(result1.success).toBe(true)
-  expect(mockGenerateContent).toHaveBeenCalledTimes(1)
-
-  // Simulate user reviewing the result, then clicking regenerate (manual retry)
-  const result2 = await generatePresentationPrompt(mockItinerary)
-  expect(result2.success).toBe(true)
-  
-  // It should simply invoke the generation again without state bleeding or automated loops
-  expect(mockGenerateContent).toHaveBeenCalledTimes(2)
 })

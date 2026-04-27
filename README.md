@@ -1,87 +1,102 @@
-# TravelAgent - AI 智慧旅遊規畫助理
+# 🇹🇼 AI 智慧旅遊業務助理 (TravelAgent)
 
-TravelAgent 是一個專為旅遊規劃從業人員設計的 **AI 智慧行程規劃與管理平台**。透過生成式 AI 技術，將客戶碎片化的旅遊需求自動轉化為結構化、高品質的行程草案，並提供直覺的編輯介面與專業的文件導出功能。
-
----
-
-## ✨ 主要功能
-
-### 1. 智慧需求分析
-- **多樣化匯入**：支援 PDF、圖片或文字直接提取旅遊需求。
-- **資訊完整性偵測**：系統會自動分析需求內容，並提示缺少的關鍵資訊。
-
-### 2. AI 自動生成與路線規劃
-- **一鍵產出行程**：根據需求快速生成包含交通、餐飲、住宿與每日活動的完整行程。
-- **互動式路線編輯**：視覺化調整路線骨架，並由 AI 協助填充細節。
-
-### 3. 結構化資料管理
-- **同步更新**：介面上所有的修改都會即時同步到底層資料，確保資料一致性。
-- **專業格式導出**：支援導出為 Word 文件或簡報提示詞 (Prompt)。
-
-### 4. 安全權限控管
-- **私有邀請制**：系統不開放公開註冊，僅限受邀成員存取。
-- **角色管理**：區分管理員 (Admin) 與規畫師 (Editor) 權限。
+[繁體中文](#繁體中文) | [English](#english)
 
 ---
 
-## 🛠️ 技術架構
+<div align="center">
 
-- **前端框架**: Next.js 15+ (App Router)
-- **樣式工具**: Tailwind CSS, shadcn/ui
-- **後端服務**: Supabase (認證、資料庫、即時更新、儲存空間)
-- **資料驗證**: Zod (確保系統資料交換的穩定性)
+[![GitBook](https://img.shields.io/badge/Documentation-GitBook-blue?style=for-the-badge&logo=gitbook&logoColor=white)](https://letztek.gitbook.io/travelagent/)
+[![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Gemini](https://img.shields.io/badge/Google_Gemini-8E75E9?style=for-the-badge&logo=googlegemini&logoColor=white)](https://deepmind.google/technologies/gemini/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 
----
-
-## 🚦 地端安裝與部署指南
-
-若要在本地環境執行此專案，請參考以下步驟：
-
-### 1. 前置準備
-請確保您的電腦已安裝：
-- [Node.js](https://nodejs.org/) (建議 v18 以上版本)
-- [npm](https://www.npmjs.com/) 或 [yarn](https://yarnpkg.com/)
-
-### 2. 下載專案與安裝套件
-```bash
-# 進入專案目錄
-cd travelagent
-
-# 安裝相依套件
-npm install
-```
-
-### 3. 設定環境變數
-在 `travelagent/` 目錄下建立 `.env.local` 檔案，並填入您的金鑰資訊：
-
-```env
-# Supabase 設定 (請從 Supabase Dashboard 獲取)
-NEXT_PUBLIC_SUPABASE_URL=您的_SUPABASE_網址
-NEXT_PUBLIC_SUPABASE_ANON_KEY=您的_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY=您的_SERVICE_ROLE_KEY
-
-# 應用程式設定
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-
-# AI 引擎設定 (請填入 API Key)
-GEMINI_API_KEY=您的_API_KEY
-```
-
-### 4. 啟動開發伺服器
-```bash
-npm run dev
-```
-啟動後，開啟瀏覽器造訪 `http://localhost:3000` 即可看到執行結果。
+</div>
 
 ---
 
-## 📂 專案指令說明
+<a name="繁體中文"></a>
 
-- `npm run dev`：啟動本地開發模式。
-- `npm run build`：專案編譯（部署至生產環境前使用）。
-- `npm run lint`：執行程式碼檢查。
-- `npm run test`：執行單元測試。
+## 🇹🇼 繁體中文
+
+### 🚀 專案簡介
+**TravelAgent** 是一個專為專業旅遊顧問打造的「B2B 私人邀請制」行程規畫平台。透過整合 Google Gemini AI 與 Google Places API，我們將顧問從繁瑣的資料解析與初步排版中解放，讓科技成為專業服務最強大的後盾。
+
+### ✨ 核心特色
+- **智能行程匯入**：支援 PDF、Word 與純文字解析，自動將雜亂的行程轉化為結構化資料。
+- **AI 需求診斷 (Gap Analysis)**：自動偵測需求中的邏輯衝突或資訊缺失，並提供顧問詢問建議。
+- **動態路線編輯**：視覺化拖拽編輯每日落腳城市，支援實時日期計算。
+- **私房名單注入 (RAG)**：優先將顧問個人收藏的景點與餐廳排入 AI 生成的行程中。
+- **自動化邏輯審查 (Verifier)**：自動核對景點營業時間與地理距離，強制 AI 產出具備執行力的行程。
+
+### 🏗️ 技術堆疊
+- **框架**：Next.js 15 (App Router)
+- **語言**：TypeScript
+- **後端/資料庫**：Supabase (PostgreSQL + RLS + Auth)
+- **AI 模型**：Google Gemini 1.5/2.0/3.0 系列
+- **外部 API**：Google Places API (New), Distance Matrix API
+
+### 🛠️ 快速開始
+1. **Clone 專案**:
+   ```bash
+   git clone https://github.com/letztek/travelagent.git
+   cd travelagent/travelagent
+   ```
+2. **安裝依賴**:
+   ```bash
+   npm install
+   ```
+3. **設定環境變數**:
+   複製 `.env.example` 為 `.env.local` 並填入您的 API 金鑰。
+4. **啟動開發伺服器**:
+   ```bash
+   npm run dev
+   ```
 
 ---
 
-© 2026 TravelAgent. All rights reserved.
+<a name="english"></a>
+
+## 🇺🇸 English
+
+### 🚀 Project Introduction
+**TravelAgent** is a "B2B Invite-Only" itinerary planning platform tailored for professional travel consultants. By integrating Google Gemini AI and Google Places API, we free consultants from tedious data parsing and initial formatting, allowing technology to empower professional services.
+
+### ✨ Key Features
+- **Smart Itinerary Import**: Supports PDF, Word, and text parsing, automatically converting messy itineraries into structured data.
+- **AI Gap Analysis**: Automatically detects logical conflicts or missing information in requirements and provides questioning suggestions for consultants.
+- **Dynamic Route Editor**: Visualize and drag-and-drop daily destination cities with real-time date calculation.
+- **Personal Favorites Injection (RAG)**: Prioritizes the consultant's personal collection of spots and restaurants during AI generation.
+- **Automated Verification Sub-agent**: Automatically cross-checks attraction opening hours and geographical distances, forcing the AI to produce actionable itineraries.
+
+### 🏗️ Tech Stack
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Backend/DB**: Supabase (PostgreSQL + RLS + Auth)
+- **AI Models**: Google Gemini 1.5/2.0/3.0 Series
+- **External APIs**: Google Places API (New), Distance Matrix API
+
+### 🛠️ Quick Start
+1. **Clone the Repo**:
+   ```bash
+   git clone https://github.com/letztek/travelagent.git
+   cd travelagent/travelagent
+   ```
+2. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+3. **Environment Variables**:
+   Copy `.env.example` to `.env.local` and fill in your API keys.
+4. **Start Dev Server**:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## 📖 官方文檔 (Documentation)
+更詳細的系統架構、部署指南與操作手冊，請參閱我們的 **[GitBook 知識庫](https://letztek.gitbook.io/travelagent/)**。
+For more details on architecture, deployment, and user manuals, please visit our **[GitBook Knowledge Base](https://letztek.gitbook.io/travelagent/)**.

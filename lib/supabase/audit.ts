@@ -7,6 +7,8 @@ export interface AiAuditLog {
   model?: string;
   duration_ms?: number;
   error_code?: string;
+  retrieval_log?: any;
+  grounding_metadata?: any;
 }
 
 /**

@@ -40,3 +40,34 @@ export function reorderArray<T>(list: T[], startIndex: number, endIndex: number)
   result.splice(endIndex, 0, removed);
   return result;
 }
+
+/**
+ * Extracts and parses a JSON object from a string that might contain markdown blocks or extra text.
+ */
+export function extractJsonFromText(text: string): any {
+  // Try parsing directly first
+  try {
+    return JSON.parse(text);
+  } catch (e) {}
+
+  // Look for JSON within markdown code blocks
+  const markdownMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (markdownMatch && markdownMatch[1]) {
+    try {
+      return JSON.parse(markdownMatch[1]);
+    } catch (e) {}
+  }
+
+  // Look for the first '{' and the last '}'
+  const startIdx = text.indexOf('{');
+  const endIdx = text.lastIndexOf('}');
+  
+  if (startIdx !== -1 && endIdx !== -1 && startIdx < endIdx) {
+    try {
+      const jsonStr = text.substring(startIdx, endIdx + 1);
+      return JSON.parse(jsonStr);
+    } catch (e) {}
+  }
+
+  throw new Error('Failed to extract valid JSON from response');
+}

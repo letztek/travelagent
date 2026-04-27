@@ -8,15 +8,18 @@ vi.mock('next/cache', () => ({
 // Mock runItinerarySkill
 vi.mock('@/lib/skills/itinerary-generator', () => ({
   runItinerarySkill: vi.fn().mockResolvedValue({
-    days: [
-      {
-        day: 1,
-        date: '2026-06-01',
-        activities: [{ time_slot: 'Morning', activity: 'Test', description: 'Test desc' }],
-        meals: { breakfast: 'B', lunch: 'L', dinner: 'D' },
-        accommodation: 'Acc'
-      }
-    ]
+    itinerary: {
+      days: [
+        {
+          day: 1,
+          date: '2026-06-01',
+          activities: [{ time_slot: 'Morning', activity: 'Test', description: 'Test desc' }],
+          meals: { breakfast: 'B', lunch: 'L', dinner: 'D' },
+          accommodation: 'Acc'
+        }
+      ]
+    },
+    groundingMetadata: {}
   })
 }))
 

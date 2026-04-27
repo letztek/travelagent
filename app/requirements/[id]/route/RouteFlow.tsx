@@ -4,12 +4,14 @@ import { RouteConcept } from '@/schemas/route'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Plane, Train, Car, ArrowRight, Lightbulb } from 'lucide-react'
+import { getDateForDay } from '@/lib/utils/date-utils'
 
 interface RouteFlowProps {
   concept: RouteConcept
+  startDate?: string
 }
 
-export function RouteFlow({ concept }: RouteFlowProps) {
+export function RouteFlow({ concept, startDate }: RouteFlowProps) {
   const getTransportIcon = (transport?: string) => {
     if (!transport) return null
     if (transport.toLowerCase().includes('flight') || transport.includes('飛機')) return <Plane className="h-4 w-4" />
@@ -39,8 +41,15 @@ export function RouteFlow({ concept }: RouteFlowProps) {
         <div className="space-y-8 relative">
           {concept.nodes.map((node, idx) => (
             <div key={idx} className="flex gap-4">
-              <div className="relative z-10 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-md">
-                {node.day}
+              <div className="flex flex-col items-center gap-1 shrink-0 pt-1">
+                <div className="relative z-10 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-md">
+                  {node.day}
+                </div>
+                {startDate && (
+                  <span className="text-[10px] text-muted-foreground font-mono">
+                    {getDateForDay(startDate, node.day)}
+                  </span>
+                )}
               </div>
               <div className="flex-1 pt-1">
                 <div className="flex items-center gap-2 mb-1">

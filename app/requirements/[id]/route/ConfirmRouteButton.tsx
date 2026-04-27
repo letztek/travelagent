@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2, Sparkles } from 'lucide-react'
 import { RouteConcept } from '@/schemas/route'
 import { Requirement } from '@/schemas/requirement'
+import { useGlobalLoader } from '@/components/GlobalLoaderContext'
 
 interface ConfirmRouteButtonProps {
   requirement: Requirement

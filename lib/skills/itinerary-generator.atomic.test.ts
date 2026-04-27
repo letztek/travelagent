@@ -46,7 +46,7 @@ describe('itinerary-generator atomicity', () => {
     
     const result = await runItinerarySkill(requirement)
     
-    result.days.forEach(day => {
+    result.itinerary.days.forEach(day => {
       day.activities.forEach(act => {
         // Simple heuristic for non-atomic activities: containing sequential keywords
         const nonAtomicKeywords = ['接著', '隨後', '之後前往', '然後去']

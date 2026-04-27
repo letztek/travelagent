@@ -1,7 +1,7 @@
 import { Itinerary } from '@/schemas/itinerary'
 import { cachedPlacesService } from '../../services/google-places-cache'
 
-async function groundAndCache(query: string) {
+async function groundAndCache(query: string, activityObj?: any) {
   if (!query || query.length < 2) return
 
   // Skip very generic terms that might trigger too many false positives
@@ -10,7 +10,15 @@ async function groundAndCache(query: string) {
 
   try {
     // Calling searchText will automatically populate the local place_cache via CachedGooglePlacesService
-    await cachedPlacesService.searchText(query)
+    const results = await cachedPlacesService.searchText(query)
+    
+    if ((!results || results.length === 0) && activityObj) {
+      if (activityObj.description) {
+        activityObj.description = `[Warning: Place not found in Google Maps] ${activityObj.description}`
+      } else {
+        activityObj.description = '[Warning: Place not found in Google Maps]'
+      }
+    }
   } catch (error) {
     console.error(`Failed to ground and cache query "${query}":`, error)
   }
@@ -27,7 +35,7 @@ export async function groundItinerary(itinerary: Itinerary): Promise<Itinerary> 
   for (const day of newItinerary.days) {
     // 1. Ground Activities
     for (const activity of day.activities) {
-      await groundAndCache(activity.activity)
+      await groundAndCache(activity.activity, activity)
     }
 
     // 2. Ground Meals

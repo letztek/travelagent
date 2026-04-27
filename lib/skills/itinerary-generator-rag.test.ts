@@ -60,7 +60,7 @@ describe('Itinerary Generator RAG requirements', () => {
     
     // Check for Strict Identity instruction
     expect(call).toContain('【精準身份對齊 (Strict Identity Alignment)】')
-    expect(call).toContain('直接複製')
+    expect(call).toContain('直接使用該地點的名稱')
     expect(call).toContain('Ref ID')
   })
 

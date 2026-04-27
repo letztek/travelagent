@@ -11,10 +11,12 @@ import { AIErrorFallback } from '@/components/ui/ai-error-fallback'
 import { Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { useGlobalLoader } from '@/components/GlobalLoaderContext'
 
 export default function GapAnalysisPage() {
   const params = useParams()
   const router = useRouter()
+  const { showLoader, hideLoader } = useGlobalLoader()
   const id = params.id as string
 
   const [loading, setLoading] = useState(true)
@@ -25,6 +27,7 @@ export default function GapAnalysisPage() {
 
   const performAnalysis = useCallback(async (reqData: Requirement) => {
     setIsAnalyzing(true)
+    showLoader('AI 正在仔細閱讀您的行程細節...')
     setError(null)
     try {
       const result = await analyzeGaps(reqData)
@@ -44,6 +47,7 @@ export default function GapAnalysisPage() {
       setError(err.message || '分析過程發生錯誤')
     } finally {
       setIsAnalyzing(false)
+      hideLoader()
     }
   }, [id, router])
 
@@ -66,6 +70,7 @@ export default function GapAnalysisPage() {
     if (!requirement) return
 
     setLoading(true)
+    showLoader('正在儲存補充資訊並規劃路線...')
     const entries = Object.entries(answers)
     let updatedNotes = requirement.notes || ''
     
@@ -80,9 +85,11 @@ export default function GapAnalysisPage() {
     
     if (result.success) {
       router.push(`/requirements/${id}/route`)
+      hideLoader()
     } else {
       setError('儲存補充資訊失敗，請稍後再試。')
       setLoading(false)
+      hideLoader()
     }
   }
 

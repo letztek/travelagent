@@ -31,7 +31,7 @@ export async function searchFavorites(options: SearchFavoritesOptions) {
     const { data, error } = await supabase
       .from('user_favorites')
       .select('*')
-      .or(`name.ilike.%${options.query}%,description.ilike.%${options.query}%`)
+      .or(`name.ilike.%${options.query}%,description.ilike.%${options.query}%,metadata->>formattedAddress.ilike.%${options.query}%`)
       
     if (error) return { success: false, error }
     return { success: true, data }

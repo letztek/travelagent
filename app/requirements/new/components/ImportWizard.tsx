@@ -7,15 +7,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea'
 import { UploadCloud, FileText, Image as ImageIcon, X, Loader2 } from 'lucide-react'
 import { parseImportData, finalizeImport } from '../../import-actions'
+import { generateItinerary } from '@/app/itineraries/actions'
+import { Requirement } from '@/schemas/requirement'
 import { fileToBase64 } from '@/lib/utils/file-conversion'
 import { ImportReview } from './ImportReview'
 import { ImportParserResult } from '@/lib/skills/import-parser'
+import { useGlobalLoader } from '@/components/GlobalLoaderContext'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ALLOWED_TYPES = ['application/pdf', 'image/png', 'image/jpeg']
 
 export function ImportWizard() {
   const router = useRouter()
+  const { showLoader, hideLoader } = useGlobalLoader()
   const [files, setFiles] = useState<File[]>([])
   const [textInput, setTextInput] = useState('')
   const [isDragging, setIsDragging] = useState(false)
@@ -126,15 +130,34 @@ export function ImportWizard() {
         travel_dates: { start: formData.startDate, end: formData.endDate },
         travelers: { adult: Number(formData.adults), child: Number(formData.children), infant: 0, senior: 0 },
         budget_range: formData.budget,
-        preferences: { dietary: [], accommodation: [] },
+        preferences: { 
+          dietary: [], 
+          accommodation: [],
+          run_gap_analysis: formData.run_gap_analysis,
+          auto_add_to_favorites: formData.auto_add_to_favorites
+        },
         notes: `【從檔案匯入的原始行程摘要】\n標題：${parsedData.itinerary.title}\n\n${itinerarySummary}`
       }
 
       const result = await finalizeImport(metadata as any)
 
       if (result.success && result.requirementId) {
-        // Redirect to Gap Analyzer instead of final itinerary
-        router.push(`/requirements/${result.requirementId}/gap`)
+        if (formData.direct_generate) {
+          showLoader('正在為您直接生成最終詳細行程，請稍候...')
+          const genResult = await generateItinerary(metadata as Requirement, result.requirementId)
+          hideLoader()
+          if (genResult.success) {
+            router.push(`/itineraries/${genResult.data.id}`)
+          } else {
+            setError('生成失敗: ' + genResult.error)
+          }
+        } else if (formData.run_gap_analysis) {
+          // Redirect to Gap Analyzer
+          router.push(`/requirements/${result.requirementId}/gap`)
+        } else {
+          // Skip gap analysis and go directly to route planning
+          router.push(`/requirements/${result.requirementId}/route`)
+        }
       } else {
         setError(result.error || '建檔失敗')
       }

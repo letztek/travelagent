@@ -8,6 +8,7 @@ import { logger } from '../utils/logger'
 import { format, parseISO } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
 import { GoogleDistanceMatrixResponse } from '../types/google-places'
+import { extractJsonFromText } from '../utils/itinerary-utils'
 
 function formatDateWithWeekday(dateStr: string): string {
   try {
@@ -31,12 +32,19 @@ export interface FavoriteItem {
   }
 }
 
+export interface DestinationCoordinate {
+  name: string;
+  location: { latitude: number; longitude: number };
+}
+
 export async function runItinerarySkill(
   requirement: Requirement, 
   routeConcept?: RouteConcept,
   userFavorites?: FavoriteItem[],
-  distanceMatrix?: GoogleDistanceMatrixResponse
-): Promise<Itinerary> {
+  distanceMatrix?: GoogleDistanceMatrixResponse,
+  destination_coordinates?: DestinationCoordinate[],
+  retrievalLog?: any
+): Promise<{ itinerary: Itinerary; groundingMetadata?: any }> {
   const apiKey = process.env.GEMINI_API_KEY
   const primaryModelName = process.env.GEMINI_PRIMARY_MODEL || 'gemini-3-flash-preview'
   const fallbackModelName = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash'
@@ -47,7 +55,7 @@ export async function runItinerarySkill(
   }
 
   const genAI = new GoogleGenerativeAI(apiKey || 'mock-key')
-  const generationConfig = {
+  const fullJsonConfig = {
     responseMimeType: "application/json",
     responseSchema: {
       type: SchemaType.OBJECT,
@@ -108,7 +116,7 @@ export async function runItinerarySkill(
 
     【RAG 執行規範】
     1. **【意圖感知過濾 (Intent-based Filtering)】**：上述名單僅作為「建議池」，你必須根據本次行程的主題（如：${requirement.notes || '一般旅遊'}）與需求，僅選取符合本次行程主題的地點。不相關的地點請忽略。
-    2. **【精準身份對齊 (Strict Identity Alignment)】**：若你決定採用上述名單中的某個地點，你「必須」直接複製該 [Ref ID] 對應的名稱與描述，嚴禁根據你的內建知識進行重命名或修改。
+    2. **【精準身份對齊 (Strict Identity Alignment)】**：若你決定採用上述名單中的某個地點，你「必須」直接使用該地點的名稱，嚴禁在行程中輸出 [Ref ID: X] 這種標籤，也嚴禁根據你的內建知識進行重命名或修改。
     3. **【類別屬性對齊】**：
        - **[餐廳]** 類別的地點「必須優先」安排在 JSON 結構中的 \`meals\` (breakfast, lunch, dinner) 欄位中。
        - **[景點]** 類別的地點「必須」安排在 \`activities\` 陣列中。
@@ -117,7 +125,7 @@ export async function runItinerarySkill(
     ` : ''
 
   const isDistanceMatrixEnabled = process.env.GOOGLE_DISTANCE_MATRIX_ENABLED === 'true'
-  const distancePrompt = (isDistanceMatrixEnabled && distanceMatrix && distanceMatrix.rows.length > 0 && userFavorites && userFavorites.length > 1)
+  const distancePrompt = (isDistanceMatrixEnabled && distanceMatrix && distanceMatrix.rows.length > 0 && userFavorites && userFavorites.length > 0)
     ? `
     【交通距離與時程參考 (Distance Matrix)】
     以下是名單中各地點之間的交通參考（僅列出部分）：
@@ -145,6 +153,12 @@ export async function runItinerarySkill(
     ${favoritesPrompt}
     ${distancePrompt}
 
+    ${destination_coordinates && destination_coordinates.length > 0 ? `
+    【目的地精準座標】
+    以下是本次行程目的地的中心座標，請以此為基準判斷周邊景點的地理合理性：
+    ${destination_coordinates.map(d => `- ${d.name}: ${d.location.latitude}, ${d.location.longitude}`).join('\n    ')}
+    ` : ''}
+
     【需求細節】
     - 出發地：${requirement.origin || '未指定'}
     - 目的地：${requirement.destinations && requirement.destinations.length > 0 ? requirement.destinations.join(', ') : '未指定'}
@@ -163,13 +177,32 @@ export async function runItinerarySkill(
        - 如果一個時段有多個活動，請將其拆分為多個 JSON 物件放入陣列中。
        - 每個描述應專注於該特定地點或活動的體驗。
     5. 行程安排需考慮地理位置的順暢性，避免無謂的往返。
-    6. 請為這份行程起一個吸引人且符合主題的「標題」(title)，例如：「台東山海深度體驗 4 日」、「京都古都之美經典探索」。
+    6. **【地圖對齊要求 (Grounding)】**：你在安排每一個景點、餐廳或飯店時，你「必須」調用提供的 \`googleMaps\` 工具來確認該地點在現實中存在，並獲取精準的 Google 地標 ID。
+    7. **【輸出格式要求】**：你「必須」僅輸出純 JSON 格式，不要包含 Markdown 的程式碼區塊標籤（如 \`\`\`json ）。每個 \`days\` 陣列中的物件，都「必須」包含 \`activities\`, \`meals\` (含 breakfast, lunch, dinner), \`accommodation\` 欄位，不可遺漏。
+    8. 請為這份行程起一個吸引人且符合主題的「標題」(title)，例如：「台東山海深度體驗 4 日」、「京都古都之美經典探索」。
+
+    【JSON 結構範例】
+    {
+      "title": "行程標題",
+      "days": [
+        {
+          "day": 1,
+          "date": "YYYY-MM-DD",
+          "activities": [
+            { "time_slot": "Morning", "activity": "地點名稱", "description": "描述" }
+          ],
+          "meals": { "breakfast": "...", "lunch": "...", "dinner": "..." },
+          "accommodation": "..."
+        }
+      ]
+    }
   `
 
   const startTime = Date.now()
   let responseText = ''
   let errorCode: string | undefined
   let finalModelUsed = primaryModelName
+  let groundingMetadata: any
 
   try {
     const result = await withRetry(async (attempt) => {
@@ -177,14 +210,28 @@ export async function runItinerarySkill(
       if (attempt > 0) {
         logger.info(`Fallback triggered: Switching model to ${finalModelUsed} for attempt ${attempt + 1}`)
       }
+      
+      // Disable strict JSON mode for ALL models to allow Google Maps Grounding metadata to pass through.
+      // We rely on the extractJsonFromText utility to parse the response.
+      const currentGenerationConfig = { temperature: 0.2, topP: 0.8, topK: 40 };
+
       const model = genAI.getGenerativeModel({
         model: finalModelUsed,
-        generationConfig: generationConfig as any
+        generationConfig: currentGenerationConfig as any,
+        tools: [{ googleMaps: {} }] as any
       })
       return model.generateContent(systemPrompt)
     })
     const response = await result.response
     responseText = response.text()
+    // Extract grounding metadata if present
+    groundingMetadata = (response as any).candidates?.[0]?.groundingMetadata
+    
+    // Use robust JSON extraction since 2.5 might not strictly adhere to JSON mode when tools are used
+    const parsedData = extractJsonFromText(responseText)
+    const itinerary = itinerarySchema.parse(parsedData)
+    
+    return { itinerary, groundingMetadata }
   } catch (err: any) {
     errorCode = err.status?.toString() || err.message
     throw err
@@ -196,11 +243,9 @@ export async function runItinerarySkill(
       response: responseText,
       model: finalModelUsed,
       duration_ms: duration,
-      error_code: errorCode
+      error_code: errorCode,
+      retrieval_log: retrievalLog,
+      grounding_metadata: groundingMetadata
     }).catch(() => {}) // Prevent unhandled rejection in background task
   }
-
-  const parsedData = JSON.parse(responseText)
-  
-  return itinerarySchema.parse(parsedData)
 }

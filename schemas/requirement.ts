@@ -22,7 +22,9 @@ export const requirementSchema = z.object({
   preferences: z.object({
     dietary: z.array(z.string()).default([]),
     accommodation: z.array(z.string()).default([]),
-  }).default({ dietary: [], accommodation: [] }),
+    auto_add_to_favorites: z.boolean().optional().default(false),
+    run_gap_analysis: z.boolean().optional().default(true),
+  }).default({ dietary: [], accommodation: [], auto_add_to_favorites: false, run_gap_analysis: true }),
   notes: z.string().optional(),
 })
 

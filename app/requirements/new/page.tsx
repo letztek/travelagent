@@ -23,12 +23,14 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Switch } from '@/components/ui/switch'
 import { useRouter } from 'next/navigation'
 import { createRequirement } from '../actions'
 import { Loader2, Sparkles, PlaneTakeoff, MapPin, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { ImportWizard } from './components/ImportWizard'
 import { cn } from '@/lib/utils'
+import { useGlobalLoader } from '@/components/GlobalLoaderContext'
 
 const dietaryOptions = [
   { id: 'vegetarian', label: '素食' },
@@ -43,7 +45,8 @@ const accommodationOptions = [
   { id: 'resort', label: '渡假村' },
 ]
 
-const budgetOptions = [
+export const budgetOptions = [
+  { value: 'not_specified', label: '未指定 / 無上限' },
   { value: '30000_below', label: '30,000 以下' },
   { value: '30000_50000', label: '30,000 - 50,000' },
   { value: '50000_100000', label: '50,000 - 100,000' },
@@ -52,6 +55,7 @@ const budgetOptions = [
 
 export default function RequirementFormPage() {
   const router = useRouter()
+  const { showLoader, hideLoader } = useGlobalLoader()
   const [activeTab, setActiveTab] = useState<'manual' | 'import'>('manual')
   const [isSaving, setIsSaving] = useState(false)
   const [destInput, setDestInput] = useState('')
@@ -75,24 +79,31 @@ export default function RequirementFormPage() {
       preferences: {
         dietary: [],
         accommodation: [],
+        run_gap_analysis: true,
+        auto_add_to_favorites: false,
       },
       notes: '',
     },
   })
+async function onSubmit(values: Requirement) {
+  setIsSaving(true)
+  showLoader('正在儲存需求...')
+  const result = await createRequirement(values)
+  hideLoader()
+  setIsSaving(false)
 
-  async function onSubmit(values: Requirement) {
-    setIsSaving(true)
-    const result = await createRequirement(values)
-    setIsSaving(false)
-
-    if (result.success && result.data) {
+  if (result.success && result.data) {
+    if (values.preferences.run_gap_analysis) {
       // Redirect to the dedicated gap analysis page
       router.push(`/requirements/${result.data.id}/gap`)
     } else {
-      alert('儲存失敗：' + (typeof result.error === 'string' ? result.error : '格式錯誤'))
+      // Skip gap analysis and go directly to route planning
+      router.push(`/requirements/${result.data.id}/route`)
     }
+  } else {
+    alert('儲存失敗：' + (typeof result.error === 'string' ? result.error : '格式錯誤'))
   }
-
+}
   const handleAddDestination = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault()
@@ -286,24 +297,30 @@ export default function RequirementFormPage() {
               <FormField
                 control={form.control}
                 name="budget_range"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>總預算範圍</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="選擇預計總預算" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {budgetOptions.map(opt => (
-                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const travelers = form.watch('travelers')
+                  const totalTravelers = (travelers?.adult || 0) + (travelers?.senior || 0) + (travelers?.child || 0)
+                  const isPerPerson = totalTravelers >= 2
+
+                  return (
+                    <FormItem>
+                      <FormLabel data-testid="budget-label">{isPerPerson ? '每人預算' : '總預算範圍'}</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="選擇預計預算" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {budgetOptions.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
 
               <div className="space-y-4">
@@ -402,6 +419,53 @@ export default function RequirementFormPage() {
                 )}
               />
 
+              <div className="space-y-4 pt-4 border-t">
+                <FormField
+                  control={form.control}
+                  name="preferences.run_gap_analysis"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          執行 AI 需求診斷 (Gap Analysis)
+                        </FormLabel>
+                        <div className="text-sm text-muted-foreground">
+                          由 AI 幫您找出行程需求中的不合理處與潛在問題
+                        </div>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="preferences.auto_add_to_favorites"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          將結果自動加入我的最愛
+                        </FormLabel>
+                        <div className="text-sm text-muted-foreground">
+                          行程產出後，地點與餐廳會一併收錄至您的最愛清單
+                        </div>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <Button type="submit" className="w-full" disabled={isSaving}>
                 {isSaving ? (
                   <>
@@ -411,7 +475,7 @@ export default function RequirementFormPage() {
                 ) : (
                   <>
                     <Sparkles className="mr-2 h-4 w-4" />
-                    儲存需求並進行 AI 診斷
+                    儲存需求並進行後續處理
                   </>
                 )}
               </Button>

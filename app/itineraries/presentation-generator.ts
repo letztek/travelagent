@@ -4,6 +4,7 @@ import { Itinerary } from '@/schemas/itinerary'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { withRetry } from '@/lib/utils/ai-retry'
 import { logger } from '@/lib/utils/logger'
+import { extractLandmarks } from '@/lib/utils/extract-landmarks'
 
 const apiKey = process.env.GEMINI_API_KEY
 if (!apiKey) {
@@ -20,6 +21,17 @@ export async function generatePresentationPrompt(itinerary: Itinerary, language:
       ? "The response content (Slide Titles, Bullet points, Descriptions) MUST be in Traditional Chinese (繁體中文)."
       : "The response content (Slide Titles, Bullet points, Descriptions) MUST be in English.";
 
+    const landmarksData = extractLandmarks(itinerary)
+    const geoInstruction = `
+      【Geographic Grounding & Accuracy】
+      - 擷取到的主要目的地 (Main Destination): ${landmarksData.mainDestination}
+      - 擷取到的重要地標 (Key Landmarks): ${landmarksData.landmarks.slice(0, 10).join(', ')}
+      - 封面圖片必須高度對應行程的主要目的地或最具標誌性的地標。
+      - 內頁投影片必須包含具體對應的地標或景點，避免使用通用風景圖。
+      - 整體視覺風格必須符合當地的氛圍與特色。
+      - 標題或內文文字因為圖片背景滿版，蓋到一點沒關係，但盡可能不要蓋住圖片上的標誌性內容。
+    `
+
     const prompt = `
       You are a specialized creative writer for high-end, luxury travel proposals.
       Your task is to convert a detailed travel itinerary into a highly structured Markdown presentation script.
@@ -29,6 +41,8 @@ export async function generatePresentationPrompt(itinerary: Itinerary, language:
       - The tone MUST be poetic, engaging, and inspiring. Evoke a strong sense of wanderlust and premium experience.
       - Avoid robotic "timetable" descriptions. Transform "Morning: Visit Temple" into "Morning | A Serene Awakening at the Temple".
       - ${langInstruction}
+
+      ${geoInstruction}
 
       【Input Itinerary JSON】
       ${JSON.stringify(itinerary, null, 2)}

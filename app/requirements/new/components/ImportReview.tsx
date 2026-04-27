@@ -4,6 +4,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { budgetOptions } from '../page'
 
 interface ImportReviewProps {
   data: ImportParserResult
@@ -118,9 +127,67 @@ export function ImportReview({ data, onConfirm, onCancel }: ImportReviewProps) {
                   <Input id="adults" name="adults" type="number" min="1" value={formData.adults} onChange={handleChange} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="budget">總預算</Label>
-                  <Input id="budget" name="budget" value={formData.budget} onChange={handleChange} required />
+                  <Label htmlFor="budget">{Number(formData.adults) + Number(formData.children) >= 2 ? '每人預算' : '總預算範圍'}</Label>
+                  <Select value={formData.budget} onValueChange={(val) => setFormData({ ...formData, budget: val })}>
+                    <SelectTrigger id="budget">
+                      <SelectValue placeholder="選擇預計預算" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {budgetOptions.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label className="text-base font-semibold">
+                    跳過路線規劃，直接生成詳細行程
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    若檔案中已包含完整的行程順序與時間，可開啟此選項直接產生最終結果
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.direct_generate}
+                  onCheckedChange={(val) => setFormData({ ...formData, direct_generate: val, run_gap_analysis: val ? false : formData.run_gap_analysis })}
+                />
+              </div>
+
+              {!formData.direct_generate && (
+                <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-base font-semibold">
+                      執行 AI 需求診斷 (Gap Analysis)
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      由 AI 幫您找出行程需求中的不合理處與潛在問題
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData.run_gap_analysis}
+                    onCheckedChange={(val) => setFormData({ ...formData, run_gap_analysis: val })}
+                  />
+                </div>
+              )}
+
+              <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label className="text-base font-semibold">
+                    將結果自動加入我的最愛
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    行程產出後，地點與餐廳會一併收錄至您的最愛清單
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.auto_add_to_favorites}
+                  onCheckedChange={(val) => setFormData({ ...formData, auto_add_to_favorites: val })}
+                />
               </div>
             </div>
 

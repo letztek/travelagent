@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import { Toaster } from "@/components/ui/sonner";
+import { GlobalLoaderProvider } from "@/components/GlobalLoaderContext";
+import GlobalLoader from "@/components/GlobalLoader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,9 +32,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans bg-slate-50/50`}
         suppressHydrationWarning
       >
-        <Header />
-        {children}
-        <Toaster />
+        <GlobalLoaderProvider>
+          <Header />
+          {children}
+          <Toaster />
+          <GlobalLoader />
+        </GlobalLoaderProvider>
       </body>
     </html>
   );

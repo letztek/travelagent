@@ -6,14 +6,16 @@ import { RouteNode } from '@/schemas/route'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Plane, Train, Car, GripVertical, Trash2 } from 'lucide-react'
+import { getDateForDay } from '@/lib/utils/date-utils'
 
 interface SortableRouteNodeProps {
   id: string
   node: RouteNode
+  startDate?: string
   onDelete: () => void
 }
 
-export function SortableRouteNode({ id, node, onDelete }: SortableRouteNodeProps) {
+export function SortableRouteNode({ id, node, startDate, onDelete }: SortableRouteNodeProps) {
   const {
     attributes,
     listeners,
@@ -54,6 +56,11 @@ export function SortableRouteNode({ id, node, onDelete }: SortableRouteNodeProps
         <div className="relative z-10 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-md shrink-0">
           {node.day}
         </div>
+        {startDate && (
+          <span className="text-[10px] text-muted-foreground font-mono -mt-1">
+            {getDateForDay(startDate, node.day)}
+          </span>
+        )}
         <GripVertical className="h-4 w-4 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
       

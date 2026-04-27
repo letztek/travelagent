@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Favorite, FavoriteType, updateFavorite, suggestTags } from './actions'
+import { Favorite, FavoriteType, updateFavorite, suggestTags, deleteFavorite } from './actions'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Utensils, Home, Tag, Pencil, X, Plus, Check, Loader2, Sparkles, Star, ExternalLink, Clock, Globe, Phone } from 'lucide-react'
+import { MapPin, Utensils, Home, Tag, Pencil, X, Plus, Check, Loader2, Sparkles, Star, ExternalLink, Clock, Globe, Phone, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
@@ -43,6 +43,7 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
   const [newTag, setNewTag] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [isSuggesting, setIsSuggesting] = useState(false)
+  const [isDeleting, setIsDeleting] = useState<string | null>(null)
 
   const filteredFavorites = favorites.filter(fav => 
     filter === 'all' ? true : fav.type === filter
@@ -100,6 +101,19 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
     }
   }
 
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('確定要刪除這個收藏項目嗎？')) return
+    setIsDeleting(id)
+    const result = await deleteFavorite(id)
+    setIsDeleting(null)
+    if (result.success) {
+      setFavorites(favorites.filter(f => f.id !== id))
+      toast.success('已刪除收藏項目')
+    } else {
+      toast.error(result.error || '刪除失敗')
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex bg-slate-100 p-1 rounded-xl w-fit" role="tablist">
@@ -146,13 +160,23 @@ export default function FavoriteItemsList({ initialFavorites }: FavoriteItemsLis
                         {TYPE_LABELS[fav.type]}
                       </span>
                       {editingId !== fav.id && (
-                        <button 
-                          onClick={() => startEditing(fav)}
-                          aria-label="編輯"
-                          className="p-1 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
-                        >
-                          <Pencil size={14} />
-                        </button>
+                        <div className="flex gap-1">
+                          <button 
+                            onClick={() => startEditing(fav)}
+                            aria-label="編輯"
+                            className="p-1 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(fav.id)}
+                            aria-label="刪除"
+                            disabled={isDeleting === fav.id}
+                            className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+                          >
+                            {isDeleting === fav.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>

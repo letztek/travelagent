@@ -38,7 +38,7 @@ test('runItinerarySkill produces valid itinerary', async () => {
     notes: 'Test'
   }
 
-  const result = await runItinerarySkill(requirement as any)
+  const { itinerary: result } = await runItinerarySkill(requirement as any)
   expect(result.days).toHaveLength(1)
   expect(result.days[0].day).toBe(1)
 })

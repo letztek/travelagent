@@ -12,6 +12,8 @@ import { logAiAudit } from '@/lib/supabase/audit'
 import { AgentContext, ItineraryAgentResponse, ItineraryAgentResult } from './itinerary-agent'
 import { revalidatePath } from 'next/cache'
 import { searchFavorites } from '@/lib/services/favorites-search'
+import { cachedPlacesService } from '@/lib/services/google-places-cache'
+import { verifyItinerary } from '@/lib/skills/itinerary-verifier'
 
 export async function refineItineraryAction(
   currentItinerary: Itinerary, 
@@ -166,18 +168,73 @@ export async function generateItinerary(requirement: Requirement, requirementId:
       return { success: false, error: 'User not authenticated' }
     }
 
-    // Fetch user favorites using RAG search
-    const destination = requirement.destinations?.[0] || ''
-    const { data: favorites } = await searchFavorites({ query: destination })
+    // Fetch user favorites using RAG search with broader query
+    const destinations = requirement.destinations || []
+    const favoritesPromises = destinations.map(d => searchFavorites({ query: d }))
+    const searchResults = await Promise.all(favoritesPromises)
+    
+    const allFavorites = searchResults.flatMap(res => res.success ? (res.data as any) : [])
+    // Deduplicate by ID
+    const uniqueFavorites = Array.from(new Map(allFavorites.map(f => [f.id, f])).values())
 
-    const itineraryData = await runItinerarySkill(requirement, routeConcept, (favorites as any) || [])
+    // Fetch coordinates for destinations to provide better spatial context
+    const destinationCoordsPromises = destinations.map(async (d) => {
+      try {
+        const results = await cachedPlacesService.searchText(d);
+        if (results && results.length > 0 && results[0].location) {
+          return { name: d, location: results[0].location };
+        }
+      } catch (e) {
+        logger.error(`Failed to fetch coords for destination: ${d}`, e);
+      }
+      return null;
+    });
+    const destinationCoords = (await Promise.all(destinationCoordsPromises)).filter(Boolean) as any[];
+
+    const { itinerary: itineraryData, groundingMetadata } = await runItinerarySkill(
+      requirement, 
+      routeConcept, 
+      (uniqueFavorites as any) || [],
+      undefined,
+      destinationCoords,
+      uniqueFavorites
+    )
+
+    // Phase 4: Automated Verification & Refinement
+    let finalItinerary = itineraryData;
+    const verification = await verifyItinerary(itineraryData, groundingMetadata, routeConcept);
+    
+    if (!verification.valid) {
+      logger.info('Itinerary verification failed, attempting refinement...', { errors: verification.errors });
+      
+      const correctionPrompt = `
+        您之前生成的行程在邏輯檢查中發現以下問題，請針對這些問題進行修正，並確保其餘部分保持不變：
+        ${verification.errors.map(e => `- Day ${e.day} ${e.item}: ${e.message}`).join('\n        ')}
+        
+        請重新輸出完整的 JSON 行程。
+      `;
+
+      try {
+        const { itinerary: refinedData } = await runItinerarySkill(
+          { ...requirement, notes: (requirement.notes || '') + '\n[修正要求]: ' + correctionPrompt },
+          routeConcept,
+          (uniqueFavorites as any) || [],
+          undefined,
+          destinationCoords,
+          { original_errors: verification.errors }
+        );
+        finalItinerary = refinedData;
+      } catch (refineError) {
+        logger.error('Refinement failed, falling back to original itinerary', refineError);
+      }
+    }
     
     const { data, error } = await supabase
       .from('itineraries')
       .insert([
         {
           requirement_id: requirementId,
-          content: itineraryData,
+          content: finalItinerary,
           user_id: user.id
         }
       ])
@@ -192,6 +249,64 @@ export async function generateItinerary(requirement: Requirement, requirementId:
         code: error.code
       })
       return { success: false, error: `無法儲存行程至資料庫: ${error.message}` }
+    }
+
+    if (requirement.preferences?.auto_add_to_favorites) {
+      // Async operation to prevent blocking the user
+      (async () => {
+        try {
+          const newFavorites: any[] = [];
+          const seen = new Set<string>();
+
+          for (const day of finalItinerary.days) {
+            for (const act of day.activities) {
+              if (act.activity && !seen.has(act.activity)) {
+                seen.add(act.activity);
+                newFavorites.push({
+                  user_id: user.id,
+                  type: 'spot',
+                  name: act.activity,
+                  description: act.description,
+                  location_data: {},
+                  tags: []
+                });
+              }
+            }
+            if (day.accommodation && !seen.has(day.accommodation)) {
+              seen.add(day.accommodation);
+              newFavorites.push({
+                user_id: user.id,
+                type: 'accommodation',
+                name: day.accommodation,
+                location_data: {},
+                tags: []
+              });
+            }
+            const meals = [day.meals.breakfast, day.meals.lunch, day.meals.dinner];
+            for (const meal of meals) {
+              if (meal && !['機上', 'None', '無', '自理', '機上套餐', '飯店', '酒店'].includes(meal) && !seen.has(meal)) {
+                seen.add(meal);
+                newFavorites.push({
+                  user_id: user.id,
+                  type: 'food',
+                  name: meal,
+                  location_data: {},
+                  tags: []
+                });
+              }
+            }
+          }
+
+          if (newFavorites.length > 0) {
+            const { error: favError } = await supabase.from('user_favorites').insert(newFavorites);
+            if (favError) {
+              logger.error('Failed to auto-add favorites', favError);
+            }
+          }
+        } catch (e) {
+          logger.error('Error during auto_add_to_favorites execution', e);
+        }
+      })();
     }
 
     revalidatePath('/itineraries')
@@ -220,17 +335,65 @@ export async function regenerateItinerary(itineraryId: string) {
     const requirement = (original as any).requirements
     const routeConcept = (original as any).route_concepts?.content
 
-    // 1.5 Fetch user favorites using RAG search
-    const destination = requirement.destinations?.[0] || ''
-    const { data: favorites } = await searchFavorites({ query: destination })
+    // 1.5 Fetch user favorites using RAG search with broader query
+    const destinations = requirement.destinations || []
+    const favoritesPromises = destinations.map(d => searchFavorites({ query: d }))
+    const searchResults = await Promise.all(favoritesPromises)
+    const allFavorites = searchResults.flatMap(res => res.success ? (res.data as any) : [])
+    const uniqueFavorites = Array.from(new Map(allFavorites.map(f => [f.id, f])).values())
+
+    // Fetch coordinates for destinations to provide better spatial context
+    const destinationCoordsPromises = destinations.map(async (d) => {
+      try {
+        const results = await cachedPlacesService.searchText(d);
+        if (results && results.length > 0 && results[0].location) {
+          return { name: d, location: results[0].location };
+        }
+      } catch (e) {
+        logger.error(`Failed to fetch coords for destination: ${d}`, e);
+      }
+      return null;
+    });
+    const destinationCoords = (await Promise.all(destinationCoordsPromises)).filter(Boolean) as any[];
 
     // 2. Run skill again
-    const newItineraryData = await runItinerarySkill(requirement, routeConcept, (favorites as any) || [])
+    const { itinerary: newItineraryData, groundingMetadata } = await runItinerarySkill(
+      requirement, 
+      routeConcept, 
+      (uniqueFavorites as any) || [],
+      undefined,
+      destinationCoords,
+      uniqueFavorites
+    )
+
+    // Phase 4: Verification & Refinement
+    let finalRegenItinerary = newItineraryData;
+    const verification = await verifyItinerary(newItineraryData, groundingMetadata);
+
+    if (!verification.valid) {
+      logger.info('Regenerated itinerary verification failed, attempting refinement...', { errors: verification.errors });
+      const correctionPrompt = `
+        您之前生成的行程在邏輯檢查中發現以下問題，請針對這些問題進行修正：
+        ${verification.errors.map(e => `- Day ${e.day} ${e.item}: ${e.message}`).join('\n        ')}
+      `;
+
+      try {
+        const { itinerary: refinedRegenData } = await runItinerarySkill(
+          { ...requirement, notes: (requirement.notes || '') + '\n[修正要求]: ' + correctionPrompt },
+          routeConcept,
+          (uniqueFavorites as any) || [],
+          undefined,
+          destinationCoords,
+          { original_errors: verification.errors }
+        );
+        finalRegenItinerary = refinedRegenData;
+      } catch (e) {}
+    }
 
     // 3. Update existing itinerary
     const { data, error: updateError } = await supabase
       .from('itineraries')
-      .update({ content: newItineraryData })
+      .update({ content: finalRegenItinerary })
       .eq('id', itineraryId)
       .select()
       .single()

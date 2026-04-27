@@ -228,6 +228,7 @@ export function RouteEditor({ initialConcept, requirement, requirementId }: Rout
                       key={item.id} 
                       id={item.id} 
                       node={{ ...item, day: index + 1 }} 
+                      startDate={requirement.travel_dates?.start}
                       onDelete={() => handleDelete(item.id)}
                     />
                   ))}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { GapAnalysis, GapItem } from '@/schemas/gap-analysis'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -23,7 +23,30 @@ export function GapWizard({ analysis, onComplete, onCancel }: GapWizardProps) {
   const currentIssue = issues[currentIndex]
   const totalSteps = issues.length
 
+  useEffect(() => {
+    if (currentIssue) {
+      setCurrentInput(answers[currentIssue.field] || '')
+    }
+  }, [currentIndex, currentIssue, answers])
+
+  const handleBack = () => {
+    if (currentIssue && currentInput.trim()) {
+      setAnswers(prev => ({
+        ...prev,
+        [currentIssue.field]: currentInput.trim()
+      }))
+    }
+    
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1)
+    }
+  }
+
   const handleNext = () => {
+    if (!currentIssue) {
+      onComplete(answers)
+      return
+    }
     // Save current answer
     const newAnswers = { ...answers }
     if (currentInput.trim()) {
@@ -68,6 +91,16 @@ export function GapWizard({ analysis, onComplete, onCancel }: GapWizardProps) {
     )
   }
 
+  if (!currentIssue) {
+    return (
+      <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <CheckCircle2 className="h-12 w-12 text-green-500" />
+        <h3 className="text-lg font-semibold">分析完成</h3>
+        <Button onClick={() => onComplete(answers)}>繼續</Button>
+      </div>
+    )
+  }
+
   return (
     <Card className="border-0 shadow-none">
       <CardHeader>
@@ -104,6 +137,11 @@ export function GapWizard({ analysis, onComplete, onCancel }: GapWizardProps) {
           取消並返回
         </Button>
         <div className="flex gap-2">
+          {currentIndex > 0 && (
+            <Button variant="outline" onClick={handleBack}>
+              回到上一題
+            </Button>
+          )}
           <Button variant="outline" onClick={handleSkip}>
             <SkipForward className="mr-2 h-4 w-4" />
             跳過此題

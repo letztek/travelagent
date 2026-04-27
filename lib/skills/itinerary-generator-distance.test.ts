@@ -1,4 +1,4 @@
-import { expect, test, vi, beforeEach } from 'vitest'
+import { expect, test, vi, beforeEach, describe } from 'vitest'
 import { runItinerarySkill } from './itinerary-generator'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 

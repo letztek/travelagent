@@ -2,23 +2,28 @@ import { expect, test, vi, beforeEach } from 'vitest'
 import { generatePresentationPrompt } from './presentation-generator'
 import { Itinerary } from '@/schemas/itinerary'
 
-const mockGenerateContent = vi.fn().mockResolvedValue({
-  response: {
-    text: () => `
+// Mock Gemini SDK
+vi.mock('@google/generative-ai', () => {
+  const mockGenerateContent = vi.fn().mockResolvedValue({
+    response: {
+      text: () => `
 # Slide 1: Japan Trip
 ![Image Prompt: Cinematic view of Tokyo Tower]
-    `
+      `
+    }
+  })
+  return {
+    GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
+      getGenerativeModel: vi.fn().mockReturnValue({
+        generateContent: mockGenerateContent
+      })
+    })),
+    mockGenerateContent
   }
 })
 
-// Mock Gemini SDK
-vi.mock('@google/generative-ai', () => ({
-  GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
-    getGenerativeModel: vi.fn().mockReturnValue({
-      generateContent: mockGenerateContent
-    })
-  }))
-}))
+// @ts-expect-error - mockGenerateContent is exported by our manual mock above
+import { mockGenerateContent as injectedMock } from '@google/generative-ai'
 
 const mockItinerary: Itinerary = {
   title: '東京五日遊',

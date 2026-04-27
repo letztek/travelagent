@@ -46,7 +46,7 @@ describe('Itinerary Grounding Cache Logic', () => {
 
     vi.mocked(cachedPlacesService.searchText).mockResolvedValue([{
       id: 'place_id_123',
-      displayName: { text: 'Place Name' }
+      displayName: { text: 'Place Name', languageCode: 'en' }
     }])
 
     await groundItinerary(mockItinerary)

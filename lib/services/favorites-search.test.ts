@@ -32,7 +32,7 @@ describe('Favorites Search Service', () => {
     expect(mockSupabase.or).toHaveBeenCalledWith('name.ilike.%Taipei%,description.ilike.%Taipei%,metadata->>formattedAddress.ilike.%Taipei%')
     expect(result.success).toBe(true)
     expect(result.data).toHaveLength(1)
-    expect(result.data[0].metadata.formattedAddress).toContain('Taipei')
+    expect(result.data![0].metadata.formattedAddress).toContain('Taipei')
   })
 
   it('performs radius-based search correctly (simulated)', async () => {
@@ -57,6 +57,6 @@ describe('Favorites Search Service', () => {
 
     expect(result.success).toBe(true)
     expect(result.data).toHaveLength(1)
-    expect(result.data[0].name).toBe('Nearby')
+    expect(result.data![0].name).toBe('Nearby')
   })
 })

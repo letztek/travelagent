@@ -3,6 +3,7 @@ import { itinerarySchema, type Itinerary } from '@/schemas/itinerary'
 import { withRetry } from '../utils/ai-retry'
 import { logAiAudit } from '../supabase/audit'
 import { logger } from '../utils/logger'
+import { normalizeItinerary } from '../utils/itinerary-utils'
 
 export interface FileData {
   mimeType: string;
@@ -172,6 +173,11 @@ ${textInput}` : '無補充文字'}
   }
 
   const parsedData = JSON.parse(responseText)
+  
+  // Normalize time slots before validation
+  if (parsedData.itinerary) {
+    parsedData.itinerary = normalizeItinerary(parsedData.itinerary)
+  }
   
   // Validate inner itinerary with zod schema just to be safe (though Gemini JSON schema should handle it)
   parsedData.itinerary = itinerarySchema.parse(parsedData.itinerary)

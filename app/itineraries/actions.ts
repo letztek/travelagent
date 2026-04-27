@@ -14,6 +14,7 @@ import { revalidatePath } from 'next/cache'
 import { searchFavorites } from '@/lib/services/favorites-search'
 import { cachedPlacesService } from '@/lib/services/google-places-cache'
 import { verifyItinerary } from '@/lib/skills/itinerary-verifier'
+import { normalizeItinerary } from '@/lib/utils/itinerary-utils'
 
 export async function refineItineraryAction(
   currentItinerary: Itinerary, 
@@ -134,6 +135,11 @@ export async function refineItineraryAction(
     
     responseText = result.response.text()
     const parsed = JSON.parse(responseText)
+    
+    // Normalize time slots before validation
+    if (parsed.proposed_itinerary) {
+      parsed.proposed_itinerary = normalizeItinerary(parsed.proposed_itinerary)
+    }
     
     // Validate proposed_itinerary with zod
     itinerarySchema.parse(parsed.proposed_itinerary)

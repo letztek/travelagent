@@ -32,7 +32,11 @@ export async function logAiAudit(data: AiAuditLog) {
       ])
 
     if (error) {
-      logger.error('Failed to write AI audit log to database', { error, data })
+      if (error.code === 'PGRST204') {
+        logger.error('Failed to write AI audit log: Missing columns. Please run travelagent/supabase/migrations/20260402_update_ai_audit_logs.sql to update your database schema.', { error })
+      } else {
+        logger.error('Failed to write AI audit log to database', { error, data })
+      }
     } else {
       logger.debug('AI audit log recorded', { model: data.model, duration: data.duration_ms })
     }

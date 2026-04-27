@@ -71,3 +71,35 @@ export function extractJsonFromText(text: string): any {
 
   throw new Error('Failed to extract valid JSON from response');
 }
+
+/**
+ * Normalizes a time slot string to one of the three allowed values: Morning, Afternoon, Evening.
+ */
+export function normalizeTimeSlot(slot: any): 'Morning' | 'Afternoon' | 'Evening' {
+  if (typeof slot !== 'string') return 'Morning';
+  
+  const s = slot.toLowerCase();
+  if (s.includes('morning') || s.includes('上午') || s.includes('早')) return 'Morning';
+  if (s.includes('afternoon') || s.includes('下午') || s.includes('午')) return 'Afternoon';
+  if (s.includes('evening') || s.includes('night') || s.includes('晚上') || s.includes('晚')) return 'Evening';
+  
+  return 'Morning'; // Default fallback
+}
+
+/**
+ * Normalizes all activities in an itinerary to ensure they have valid time_slots.
+ */
+export function normalizeItinerary(data: any): any {
+  if (!data || !data.days || !Array.isArray(data.days)) return data;
+
+  const normalized = { ...data };
+  normalized.days = data.days.map((day: any) => ({
+    ...day,
+    activities: (day.activities || []).map((activity: any) => ({
+      ...activity,
+      time_slot: normalizeTimeSlot(activity.time_slot)
+    }))
+  }));
+
+  return normalized;
+}

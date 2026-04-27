@@ -2,6 +2,7 @@ import { GoogleGenerativeAI, SchemaType, type GenerationConfig } from '@google/g
 import { itinerarySchema, type Itinerary } from '@/schemas/itinerary'
 import { withRetry } from '@/lib/utils/ai-retry'
 import { logger } from '@/lib/utils/logger'
+import { normalizeItinerary } from '@/lib/utils/itinerary-utils'
 
 // NOTE: We cannot use logAiAudit here if this file is imported by Client Components
 // because logAiAudit eventually depends on next/headers which is server-only.
@@ -148,6 +149,11 @@ export async function refineItineraryWithAI(
     
     responseText = result.response.text()
     const parsed = JSON.parse(responseText)
+    
+    // Normalize time slots before validation
+    if (parsed.proposed_itinerary) {
+      parsed.proposed_itinerary = normalizeItinerary(parsed.proposed_itinerary)
+    }
     
     // Validate proposed_itinerary with zod
     itinerarySchema.parse(parsed.proposed_itinerary)

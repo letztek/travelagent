@@ -8,7 +8,7 @@ import { logger } from '../utils/logger'
 import { format, parseISO } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
 import { GoogleDistanceMatrixResponse } from '../types/google-places'
-import { extractJsonFromText } from '../utils/itinerary-utils'
+import { extractJsonFromText, normalizeItinerary } from '../utils/itinerary-utils'
 
 function formatDateWithWeekday(dateStr: string): string {
   try {
@@ -179,7 +179,8 @@ export async function runItinerarySkill(
     5. 行程安排需考慮地理位置的順暢性，避免無謂的往返。
     6. **【地圖對齊要求 (Grounding)】**：你在安排每一個景點、餐廳或飯店時，你「必須」調用提供的 \`googleMaps\` 工具來確認該地點在現實中存在，並獲取精準的 Google 地標 ID。
     7. **【輸出格式要求】**：你「必須」僅輸出純 JSON 格式，不要包含 Markdown 的程式碼區塊標籤（如 \`\`\`json ）。每個 \`days\` 陣列中的物件，都「必須」包含 \`activities\`, \`meals\` (含 breakfast, lunch, dinner), \`accommodation\` 欄位，不可遺漏。
-    8. 請為這份行程起一個吸引人且符合主題的「標題」(title)，例如：「台東山海深度體驗 4 日」、「京都古都之美經典探索」。
+    8. **【時間段要求】**：\`activities\` 中的 \`time_slot\` 「只能」是 "Morning", "Afternoon", "Evening" 其中之一。嚴禁使用如 "Late Morning" 或 "Night" 等其他值。
+    9. 請為這份行程起一個吸引人且符合主題的「標題」(title)，例如：「台東山海深度體驗 4 日」、「京都古都之美經典探索」。
 
     【JSON 結構範例】
     {
@@ -229,7 +230,10 @@ export async function runItinerarySkill(
     
     // Use robust JSON extraction since 2.5 might not strictly adhere to JSON mode when tools are used
     const parsedData = extractJsonFromText(responseText)
-    const itinerary = itinerarySchema.parse(parsedData)
+    
+    // Normalize time slots before validation to handle non-standard values like "Late Morning"
+    const normalizedData = normalizeItinerary(parsedData)
+    const itinerary = itinerarySchema.parse(normalizedData)
     
     return { itinerary, groundingMetadata }
   } catch (err: any) {

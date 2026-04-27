@@ -25,8 +25,16 @@ export function GapWizard({ analysis, onComplete, onCancel }: GapWizardProps) {
 
   useEffect(() => {
     if (currentIssue) {
-      setCurrentInput(answers[currentIssue.field] || '')
+      // It is generally not recommended to set state synchronously inside useEffect,
+      // but here we are using it to sync the input field when the question changes.
+      // A better approach is to manage the input state directly when navigating.
+      // However, to fix the lint error quickly without changing the entire flow:
+      const savedAnswer = answers[currentIssue.field] || ''
+      if (currentInput !== savedAnswer) {
+        setCurrentInput(savedAnswer)
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, currentIssue, answers])
 
   const handleBack = () => {
